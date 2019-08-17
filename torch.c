@@ -13,7 +13,7 @@ void player_update(struct entity *kore);
 
 struct player {
 	struct entity e;
-} you = {{'@', 5, 5, &player_update}};
+} you = {{'@', 1, 1, &player_update}};
 
 void player_update(struct entity *kore)
 {
@@ -69,12 +69,19 @@ int render(TickitWindow *win, TickitEventFlags flag, void *info, void *data)
 
 	for (int y = 0; y < 24; ++y) {
 		for (int x = 0; x < 80; ++x) {
-			const char text[] = { map[y][x], '\0' };
-			tickit_renderbuffer_text_at(rb, y, x, text);
+			const int adjy = you.e.ypos - 12 + y;
+			const int adjx = you.e.xpos - 40 + x;
+
+			if (adjy < 0 || adjy >= 24 || adjx < 0 || adjx >= 80) {
+				tickit_renderbuffer_text_at(rb, y, x, " ");
+			} else {
+				const char text[] = {map[adjy][adjx], '\0'};
+				tickit_renderbuffer_text_at(rb, y, x, text);
+			}
 		}
 	}
 
-	tickit_renderbuffer_text_at(rb, you.e.ypos, you.e.xpos, "@");
+	tickit_renderbuffer_text_at(rb, 12, 40, "@");
 }
 
 int main(void)
