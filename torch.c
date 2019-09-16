@@ -1,112 +1,123 @@
+#include "torch.h"
+
 #include <tickit.h>
 #include <stdlib.h>
 #include <stdio.h>
 
-struct entity {
-	char token;
-	int xpos, ypos;
+#define MAP_LINES 20
+#define MAP_COLS  40
 
-	void (*update)(struct entity *kore);
+struct tile map[MAP_LINES][MAP_COLS];
+
+const struct view view = {
+	.lines = 23, .cols = 79
 };
 
-void player_update(struct entity *kore);
-
-struct player {
-	struct entity e;
-} you = {{'@', 1, 1, &player_update}};
-
-void player_update(struct entity *kore)
-{
-	struct player *this = (struct player *)kore;
-}
-
-void player_left(void)
-{
-	you.e.xpos--;
-}
-
-void player_down(void)
-{
-	you.e.ypos++;
-}
-
-void player_up(void)
-{
-	you.e.ypos--;
-}
-
-void player_right(void)
-{
-	you.e.xpos++;
-}
-
-void (*key_handlers[])(void) = {
-	['h'] = player_left,
-	['j'] = player_down,
-	['k'] = player_up,
-	['l'] = player_right,
+struct entity player = {
+	.posx = 0, .posy = 0
 };
 
-int event_key(TickitWindow *win, TickitEventFlags flags, void *info, void *user)
+static void key_left(char key);
+static void key_up(char key);
+static void key_down(char key);
+static void key_right(char key);
+
+typedef void (*keymap_fn)(char key);
+keymap_fn keymap[] = {
+	['h'] = key_left,
+	['j'] = key_down,
+	['k'] = key_up,
+	['l'] = key_right
+};
+
+static int root_handle_key(TickitWindow *win, TickitEventFlags flags, void *info, void *data)
 {
-	TickitKeyEventInfo *key_info = info;
-	
-	if (key_handlers[key_info->str[0]]) {
-		key_handlers[key_info->str[0]]();
+	TickitKeyEventInfo *key = info;
+	switch (key->type) {
+	case TICKIT_KEYEV_TEXT: /* Pain. */
+		if (keymap[*key->str])
+			keymap[*key->str](*key->str);
 	}
 
 	tickit_window_expose(win, NULL);
+
+	return 1;
 }
 
-char map[24][80] = { 0 };
-
-int render(TickitWindow *win, TickitEventFlags flag, void *info, void *data)
+static int root_handle_expose(TickitWindow *win, TickitEventFlags flags, void *info, void *data)
 {
-	TickitExposeEventInfo *expose_info = info;
-	TickitRenderBuffer *rb = expose_info->rb;
+	TickitExposeEventInfo *exposed = info;
+	TickitRenderBuffer *rb = exposed->rb;
 
-	tickit_renderbuffer_eraserect(rb, &expose_info->rect);
+	tickit_renderbuffer_eraserect(rb, &exposed->rect);
 
-	for (int y = 0; y < 24; ++y) {
-		for (int x = 0; x < 80; ++x) {
-			const int adjy = you.e.ypos - 12 + y;
-			const int adjx = you.e.xpos - 40 + x;
+	const int viewy = player.posy - (view.lines / 2);
+	const int viewx = player.posx - (view.cols / 2);
 
-			if (adjy < 0 || adjy >= 24 || adjx < 0 || adjx >= 80) {
+	for (int y = 0; y < view.lines; ++y) {
+		for (int x = 0; x < view.cols; ++x) {
+			const int drawy = viewy + y;
+			const int drawx = viewx + x;
+
+			if (in_range(drawy, 0, MAP_LINES) && in_range(drawx, 0, MAP_COLS))
+				tickit_renderbuffer_text_at(rb, y, x, (char[]){map[drawy][drawx].sprite, '\0'});
+			else
 				tickit_renderbuffer_text_at(rb, y, x, " ");
-			} else {
-				const char text[] = {map[adjy][adjx], '\0'};
-				tickit_renderbuffer_text_at(rb, y, x, text);
-			}
 		}
 	}
 
-	tickit_renderbuffer_text_at(rb, 12, 40, "@");
+	tickit_renderbuffer_text_at(rb, view.lines / 2 + 1, view.cols / 2 + 1, "@");
+
+	return 1;
 }
 
-int main(void)
+void load_map(const char *filename)
 {
-	Tickit *t = tickit_new_stdio();
-	TickitWindow *rootwin = tickit_get_rootwin(t);
+	FILE *mapfd = fopen(filename, "r");
 
-	tickit_window_take_focus(rootwin);
-	tickit_window_set_cursor_visible(rootwin, false);
-
-	tickit_window_bind_event(rootwin, TICKIT_WINDOW_ON_KEY, 0, &event_key, NULL);
-	tickit_window_bind_event(rootwin, TICKIT_WINDOW_ON_EXPOSE, 0, &render, NULL);
-
-	FILE *mapfile = fopen("map", "r");
-	for (int y = 0; y < 24; ++y) {
-		for (int x = 0; x < 80; ++x) {
-			map[y][x] = fgetc(mapfile);
-		}
-
-		(void)fgetc;
+	for (size_t line = 0; line < MAP_LINES; ++line) {
+		fscanf(mapfd, "%s", map[line]);
 	}
-	fclose(mapfile);
 
-	tickit_run(t);
-	
-	tickit_unref(t);
+	fclose(mapfd);
+}
+
+int main(int argc, char *argv[])
+{
+	Tickit *tickit_instance = NULL;
+	tickit_instance = tickit_new_stdio();
+
+	TickitWindow *root = tickit_get_rootwin(tickit_instance);
+	tickit_window_bind_event(root, TICKIT_WINDOW_ON_KEY, 0, &root_handle_key, NULL);
+	tickit_window_bind_event(root, TICKIT_WINDOW_ON_EXPOSE, 0, &root_handle_expose, NULL);
+
+	load_map("map");
+
+	tickit_run(tickit_instance);
+
+	tickit_window_close(root);
+
+	tickit_unref(tickit_instance);
+
 	return EXIT_SUCCESS;
+}
+
+static void key_left(char key)
+{
+	player.posx--;
+}
+
+static void key_up(char key)
+{
+	player.posy--;
+}
+
+static void key_down(char key)
+{
+	player.posy++;
+}
+
+static void key_right(char key)
+{
+	player.posx++;
 }
