@@ -10,4 +10,11 @@ struct entity {
 	int posy;
 };
 
+#define MAP_LINES 20
+#define MAP_COLS  40
+
+struct dungeon {
+	struct tile map[MAP_LINES][MAP_COLS];
+};
+
 #endif

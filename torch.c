@@ -4,10 +4,11 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#define MAP_LINES 20
-#define MAP_COLS  40
+struct dungeon demo = {
+	.map = {0},
+};
 
-struct tile map[MAP_LINES][MAP_COLS];
+struct dungeon *current_dungeon = &demo;
 
 #define VIEW_LINES 23
 #define VIEW_COLS  79
@@ -59,7 +60,7 @@ static int root_handle_expose(TickitWindow *win, TickitEventFlags flags, void *i
 			const int drawx = viewx + x;
 
 			if (drawy >= 0 && drawy < MAP_LINES && drawx >= 0 && drawx < MAP_COLS)
-				tickit_renderbuffer_text_at(rb, y, x, (char[]){map[drawy][drawx].sprite, '\0'});
+				tickit_renderbuffer_text_at(rb, y, x, (char[]){current_dungeon->map[drawy][drawx].sprite, '\0'});
 			else
 				tickit_renderbuffer_text_at(rb, y, x, " ");
 		}
@@ -70,12 +71,12 @@ static int root_handle_expose(TickitWindow *win, TickitEventFlags flags, void *i
 	return 1;
 }
 
-void load_map(const char *filename)
+void load_demo_map(const char *filename)
 {
 	FILE *mapfd = fopen(filename, "r");
 
 	for (size_t line = 0; line < MAP_LINES; ++line) {
-		fscanf(mapfd, "%s", map[line]);
+		fscanf(mapfd, "%s", demo.map[line]);
 	}
 
 	fclose(mapfd);
@@ -90,7 +91,7 @@ int main(int argc, char *argv[])
 	tickit_window_bind_event(root, TICKIT_WINDOW_ON_KEY, 0, &root_handle_key, NULL);
 	tickit_window_bind_event(root, TICKIT_WINDOW_ON_EXPOSE, 0, &root_handle_expose, NULL);
 
-	load_map("map");
+	load_demo_map("map");
 
 	tickit_run(tickit_instance);
 
