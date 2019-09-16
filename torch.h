@@ -7,11 +7,6 @@ struct tile {
 	char sprite;
 };
 
-struct view {
-	int lines;
-	int cols;
-};
-
 struct entity {
 	int posx;
 	int posy;

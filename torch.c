@@ -9,9 +9,8 @@
 
 struct tile map[MAP_LINES][MAP_COLS];
 
-const struct view view = {
-	.lines = 23, .cols = 79
-};
+#define VIEW_LINES 23
+#define VIEW_COLS  79
 
 struct entity player = {
 	.posx = 0, .posy = 0
@@ -51,11 +50,11 @@ static int root_handle_expose(TickitWindow *win, TickitEventFlags flags, void *i
 
 	tickit_renderbuffer_eraserect(rb, &exposed->rect);
 
-	const int viewy = player.posy - (view.lines / 2);
-	const int viewx = player.posx - (view.cols / 2);
+	const int viewy = player.posy - (VIEW_LINES / 2);
+	const int viewx = player.posx - (VIEW_COLS / 2);
 
-	for (int y = 0; y < view.lines; ++y) {
-		for (int x = 0; x < view.cols; ++x) {
+	for (int y = 0; y < VIEW_LINES; ++y) {
+		for (int x = 0; x < VIEW_COLS; ++x) {
 			const int drawy = viewy + y;
 			const int drawx = viewx + x;
 
@@ -66,7 +65,7 @@ static int root_handle_expose(TickitWindow *win, TickitEventFlags flags, void *i
 		}
 	}
 
-	tickit_renderbuffer_text_at(rb, view.lines / 2 + 1, view.cols / 2 + 1, "@");
+	tickit_renderbuffer_text_at(rb, VIEW_LINES / 2 + 1, VIEW_COLS / 2 + 1, "@");
 
 	return 1;
 }
