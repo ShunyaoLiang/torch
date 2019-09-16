@@ -58,7 +58,7 @@ static int root_handle_expose(TickitWindow *win, TickitEventFlags flags, void *i
 			const int drawy = viewy + y;
 			const int drawx = viewx + x;
 
-			if (in_range(drawy, 0, MAP_LINES) && in_range(drawx, 0, MAP_COLS))
+			if (drawy >= 0 && drawy < MAP_LINES && drawx >= 0 && drawx < MAP_COLS)
 				tickit_renderbuffer_text_at(rb, y, x, (char[]){map[drawy][drawx].sprite, '\0'});
 			else
 				tickit_renderbuffer_text_at(rb, y, x, " ");

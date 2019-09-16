@@ -12,6 +12,4 @@ struct entity {
 	int posy;
 };
 
-#define in_range(n, low, high) (n >= low && n < high)
-
 #endif
