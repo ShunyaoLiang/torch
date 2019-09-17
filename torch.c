@@ -6,6 +6,7 @@
 
 struct dungeon demo = {
 	.map = {0},
+	.entities = LIST_HEAD_INIT(demo.entities)
 };
 
 struct dungeon *current_dungeon = &demo;
@@ -54,6 +55,7 @@ static int root_handle_expose(TickitWindow *win, TickitEventFlags flags, void *i
 	const int viewy = player.posy - (VIEW_LINES / 2);
 	const int viewx = player.posx - (VIEW_COLS / 2);
 
+	/* Draw map. */
 	for (int y = 0; y < VIEW_LINES; ++y) {
 		for (int x = 0; x < VIEW_COLS; ++x) {
 			const int drawy = viewy + y;
@@ -66,6 +68,13 @@ static int root_handle_expose(TickitWindow *win, TickitEventFlags flags, void *i
 		}
 	}
 
+	/* Draw non-player entities. */
+	struct entity *pos = NULL;
+	list_for_each_entry(pos, &current_dungeon->entities, list) {
+		tickit_renderbuffer_text_at(rb, pos->posy - viewy, pos->posx - viewx, (char[]){pos->sprite, '\0'});
+	}
+
+	/* Draw the player. */
 	tickit_renderbuffer_text_at(rb, VIEW_LINES / 2 + 1, VIEW_COLS / 2 + 1, "@");
 
 	return 1;
@@ -92,6 +101,31 @@ int main(int argc, char *argv[])
 	tickit_window_bind_event(root, TICKIT_WINDOW_ON_EXPOSE, 0, &root_handle_expose, NULL);
 
 	load_demo_map("map");
+
+	/* Don't fucking touch this. */
+	INIT_LIST_HEAD(&current_dungeon->entities);
+
+	struct entity snake = {
+		.posx = 3,
+		.posy = 4,
+		.sprite = 's',
+		.list = LIST_HEAD_INIT(snake.list)
+	};
+
+	struct entity demon = {
+		.posx = 6,
+		.posy = 6,
+		.sprite = 'd',
+		.list = LIST_HEAD_INIT(demon.list)
+	};
+
+	list_add(&snake.list, &current_dungeon->entities);
+	list_add(&demon.list, &current_dungeon->entities);
+
+	struct entity *pos = NULL;
+	list_for_each_entry(pos, &current_dungeon->entities, list) {
+		
+	}
 
 	tickit_run(tickit_instance);
 

@@ -1,6 +1,8 @@
 #ifndef TORCH
 #define TORCH
 
+#include "list.h"
+
 struct tile {
 	char sprite;
 };
@@ -8,6 +10,10 @@ struct tile {
 struct entity {
 	int posx;
 	int posy;
+
+	char sprite;
+
+	struct list_head list;
 };
 
 #define MAP_LINES 20
@@ -15,6 +21,7 @@ struct entity {
 
 struct dungeon {
 	struct tile map[MAP_LINES][MAP_COLS];
+	struct list_head entities;
 };
 
 #endif
