@@ -14,6 +14,8 @@ struct entity {
 	char sprite;
 
 	struct list_head list;
+
+	void (*update)(struct entity *this);
 };
 
 #define MAP_LINES 20

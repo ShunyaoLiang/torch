@@ -32,6 +32,14 @@ keymap_fn keymap[] = {
 	['l'] = key_right
 };
 
+static void update_entities(void)
+{
+	struct entity *pos = NULL;
+	list_for_each_entry(pos, &current_dungeon->entities, list) {
+		pos->update(pos);
+	}
+}
+
 static int root_handle_key(TickitWindow *win, TickitEventFlags flags, void *info, void *data)
 {
 	TickitKeyEventInfo *key = info;
@@ -40,6 +48,8 @@ static int root_handle_key(TickitWindow *win, TickitEventFlags flags, void *info
 		if (keymap[*key->str])
 			keymap[*key->str](*key->str);
 	}
+
+	update_entities();
 
 	tickit_window_expose(win, NULL);
 
@@ -92,6 +102,8 @@ void load_demo_map(const char *filename)
 	fclose(mapfd);
 }
 
+static void dumb_ai(struct entity *this);
+
 int main(int argc, char *argv[])
 {
 	Tickit *tickit_instance = NULL;
@@ -110,14 +122,16 @@ int main(int argc, char *argv[])
 		.posx = 3,
 		.posy = 4,
 		.sprite = 's',
-		.list = LIST_HEAD_INIT(snake.list)
+		.list = LIST_HEAD_INIT(snake.list),
+		.update = &dumb_ai
 	};
 
 	struct entity demon = {
 		.posx = 6,
 		.posy = 6,
 		.sprite = 'd',
-		.list = LIST_HEAD_INIT(demon.list)
+		.list = LIST_HEAD_INIT(demon.list),
+		.update = &dumb_ai
 	};
 
 	list_add(&snake.list, &current_dungeon->entities);
@@ -155,4 +169,9 @@ static void key_down(char key)
 static void key_right(char key)
 {
 	player.posx++;
+}
+
+static void dumb_ai(struct entity *this)
+{
+	this->posx++;
 }
