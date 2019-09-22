@@ -20,7 +20,9 @@ struct entity {
 #define MAP_COLS  40
 
 struct dungeon {
-	struct tile map[MAP_LINES][MAP_COLS];
+	struct tile tile_map[MAP_LINES][MAP_COLS];
+	float light_map[MAP_LINES][MAP_COLS];
+
 	struct list_head entities;
 };
 

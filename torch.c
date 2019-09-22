@@ -5,7 +5,8 @@
 #include <stdio.h>
 
 struct dungeon demo = {
-	.map = {0},
+	.tile_map = {0},
+	.light_map = {0},
 	.entities = LIST_HEAD_INIT(demo.entities)
 };
 
@@ -62,7 +63,7 @@ static int root_handle_expose(TickitWindow *win, TickitEventFlags flags, void *i
 			const int drawx = viewx + x;
 
 			if (drawy >= 0 && drawy < MAP_LINES && drawx >= 0 && drawx < MAP_COLS)
-				tickit_renderbuffer_text_at(rb, y, x, (char[]){current_dungeon->map[drawy][drawx].sprite, '\0'});
+				tickit_renderbuffer_text_at(rb, y, x, (char[]){current_dungeon->tile_map[drawy][drawx].sprite, '\0'});
 			else
 				tickit_renderbuffer_text_at(rb, y, x, " ");
 		}
@@ -85,7 +86,7 @@ void load_demo_map(const char *filename)
 	FILE *mapfd = fopen(filename, "r");
 
 	for (size_t line = 0; line < MAP_LINES; ++line) {
-		fscanf(mapfd, "%s", demo.map[line]);
+		fscanf(mapfd, "%s", demo.tile_map[line]);
 	}
 
 	fclose(mapfd);
