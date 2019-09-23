@@ -16,7 +16,7 @@ struct dungeon *current_dungeon = &demo;
 #define VIEW_COLS  79
 
 struct entity player = {
-	.posx = 0, .posy = 0
+	.posx = 0, .posy = 0, .sprite = '@'
 };
 
 static void key_left(char key);
@@ -86,7 +86,7 @@ static int root_handle_expose(TickitWindow *win, TickitEventFlags flags, void *i
 	}
 
 	/* Draw the player. */
-	tickit_renderbuffer_text_at(rb, VIEW_LINES / 2 + 1, VIEW_COLS / 2 + 1, "@");
+	tickit_renderbuffer_text_at(rb, VIEW_LINES / 2 + 1, VIEW_COLS / 2 + 1, (char[]){player.sprite, '\0'});
 
 	return 1;
 }
