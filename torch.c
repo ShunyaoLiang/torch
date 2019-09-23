@@ -4,6 +4,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#define stringify(c) ((char[]){c, '\0'})
+
 struct dungeon demo = {
 	.tile_map = {0},
 	.light_map = {0},
@@ -73,7 +75,7 @@ static int root_handle_expose(TickitWindow *win, TickitEventFlags flags, void *i
 			const int drawx = viewx + x;
 
 			if (drawy >= 0 && drawy < MAP_LINES && drawx >= 0 && drawx < MAP_COLS)
-				tickit_renderbuffer_text_at(rb, y, x, (char[]){current_dungeon->tile_map[drawy][drawx].sprite, '\0'});
+				tickit_renderbuffer_text_at(rb, y, x, stringify(current_dungeon->tile_map[drawy][drawx].sprite));
 			else
 				tickit_renderbuffer_text_at(rb, y, x, " ");
 		}
@@ -82,11 +84,11 @@ static int root_handle_expose(TickitWindow *win, TickitEventFlags flags, void *i
 	/* Draw non-player entities. */
 	struct entity *pos = NULL;
 	list_for_each_entry(pos, &current_dungeon->entities, list) {
-		tickit_renderbuffer_text_at(rb, pos->posy - viewy, pos->posx - viewx, (char[]){pos->sprite, '\0'});
+		tickit_renderbuffer_text_at(rb, pos->posy - viewy, pos->posx - viewx, stringify(pos->sprite));
 	}
 
 	/* Draw the player. */
-	tickit_renderbuffer_text_at(rb, VIEW_LINES / 2 + 1, VIEW_COLS / 2 + 1, (char[]){player.sprite, '\0'});
+	tickit_renderbuffer_text_at(rb, VIEW_LINES / 2 + 1, VIEW_COLS / 2 + 1, stringify(player.sprite));
 
 	return 1;
 }
