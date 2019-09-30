@@ -1,31 +1,18 @@
 #ifndef TORCH
 #define TORCH
 
-#include "list.h"
+#include <tickit.h>
+#include <stdint.h>
 
-struct tile {
-	char sprite;
-};
+/* Viewport size. */
+#define VIEW_LINES 23
+#define VIEW_COLS  79
 
-struct entity {
-	int posx;
-	int posy;
+typedef unsigned int uint;
 
-	char sprite;
-
-	struct list_head list;
-
-	void (*update)(struct entity *this);
-};
-
-#define MAP_LINES 20
-#define MAP_COLS  40
-
-struct dungeon {
-	struct tile tile_map[MAP_LINES][MAP_COLS];
-	float light_map[MAP_LINES][MAP_COLS];
-
-	struct list_head entities;
+struct sprite {
+	TickitPenRGB8 colour;
+	char token;
 };
 
 #endif

@@ -1,179 +1,241 @@
+#include "floor.h"
+#include "entity.h"
+#include "list.h"
 #include "torch.h"
 
 #include <tickit.h>
-#include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
-#define stringify(c) ((char[]){c, '\0'})
+struct floor demo;
+struct floor *cur_floor = &demo;
 
-struct dungeon demo = {
-	.tile_map = {0},
-	.light_map = {0},
-	.entities = LIST_HEAD_INIT(demo.entities)
-};
-
-struct dungeon *current_dungeon = &demo;
-
-#define VIEW_LINES 23
-#define VIEW_COLS  79
+void player_update(struct entity *this);
+void light_update(struct entity *this);
 
 struct entity player = {
-	.posx = 0, .posy = 0, .sprite = '@'
+	.posx = 0,
+	.posy = 0,
+	.sprite = { 
+		.colour = { .r = 17, .g = 70, .b = 13 },
+		.token = '@',
+	},
+	.update = player_update,
+	.speed = 1,
+	.order = 10,
+	.list = LIST_HEAD_INIT(player.list),
 };
 
-static void key_left(char key);
-static void key_up(char key);
-static void key_down(char key);
-static void key_right(char key);
+static void demo_load_map(const char *filename);
 
-typedef void (*keymap_fn)(char key);
-keymap_fn keymap[] = {
-	['h'] = key_left,
-	['j'] = key_down,
-	['k'] = key_up,
-	['l'] = key_right
-};
+static int main_win_draw(TickitWindow *win, TickitEventFlags flags, void *info, void *user);
+static int main_win_key(TickitWindow *win, TickitEventFlags flags, void *info, void *user);
 
-static void update_entities(void)
+int main(void)
 {
-	struct entity *pos = NULL;
-	list_for_each_entry(pos, &current_dungeon->entities, list) {
-		pos->update(pos);
-	}
-}
+	INIT_LIST_HEAD(&cur_floor->entities);
+	list_add(&player.list, &cur_floor->entities);
 
-static int root_handle_key(TickitWindow *win, TickitEventFlags flags, void *info, void *data)
-{
-	TickitKeyEventInfo *key = info;
-	switch (key->type) {
-	case TICKIT_KEYEV_TEXT: /* Pain. */
-		if (keymap[*key->str])
-			keymap[*key->str](*key->str);
-	}
-
-	update_entities();
-
-	tickit_window_expose(win, NULL);
-
-	return 1;
-}
-
-static int root_handle_expose(TickitWindow *win, TickitEventFlags flags, void *info, void *data)
-{
-	TickitExposeEventInfo *exposed = info;
-	TickitRenderBuffer *rb = exposed->rb;
-
-	tickit_renderbuffer_eraserect(rb, &exposed->rect);
-
-	const int viewy = player.posy - (VIEW_LINES / 2);
-	const int viewx = player.posx - (VIEW_COLS / 2);
-
-	/* Draw map. */
-	for (int y = 0; y < VIEW_LINES; ++y) {
-		for (int x = 0; x < VIEW_COLS; ++x) {
-			const int drawy = viewy + y;
-			const int drawx = viewx + x;
-
-			if (drawy >= 0 && drawy < MAP_LINES && drawx >= 0 && drawx < MAP_COLS)
-				tickit_renderbuffer_text_at(rb, y, x, stringify(current_dungeon->tile_map[drawy][drawx].sprite));
-			else
-				tickit_renderbuffer_text_at(rb, y, x, " ");
-		}
-	}
-
-	/* Draw non-player entities. */
-	struct entity *pos = NULL;
-	list_for_each_entry(pos, &current_dungeon->entities, list) {
-		tickit_renderbuffer_text_at(rb, pos->posy - viewy, pos->posx - viewx, stringify(pos->sprite));
-	}
-
-	/* Draw the player. */
-	tickit_renderbuffer_text_at(rb, VIEW_LINES / 2 + 1, VIEW_COLS / 2 + 1, stringify(player.sprite));
-
-	return 1;
-}
-
-void load_demo_map(const char *filename)
-{
-	FILE *mapfd = fopen(filename, "r");
-
-	for (size_t line = 0; line < MAP_LINES; ++line) {
-		fscanf(mapfd, "%s", demo.tile_map[line]);
-	}
-
-	fclose(mapfd);
-}
-
-static void dumb_ai(struct entity *this);
-
-int main(int argc, char *argv[])
-{
-	Tickit *tickit_instance = NULL;
-	tickit_instance = tickit_new_stdio();
-
-	TickitWindow *root = tickit_get_rootwin(tickit_instance);
-	tickit_window_bind_event(root, TICKIT_WINDOW_ON_KEY, 0, &root_handle_key, NULL);
-	tickit_window_bind_event(root, TICKIT_WINDOW_ON_EXPOSE, 0, &root_handle_expose, NULL);
-
-	load_demo_map("map");
-
-	/* Don't fucking touch this. */
-	INIT_LIST_HEAD(&current_dungeon->entities);
-
-	struct entity snake = {
-		.posx = 3,
-		.posy = 4,
-		.sprite = 's',
-		.list = LIST_HEAD_INIT(snake.list),
-		.update = &dumb_ai
+	struct light torch = {
+		.e = {
+			.posx = 2,
+			.posy = 2,
+			.sprite = { 
+				.colour = { .r = 255 },
+				.token = 't',
+			},
+			.update = light_update,
+			.speed = 1,
+			.order = 0,
+			.list = LIST_HEAD_INIT(torch.e.list),
+		},
+		.emit = 0.2f,
+		.duration = 10,
 	};
+	list_add(&torch.e.list, &cur_floor->entities);
+	
+	demo_load_map("map");
 
-	struct entity demon = {
-		.posx = 6,
-		.posy = 6,
-		.sprite = 'd',
-		.list = LIST_HEAD_INIT(demon.list),
-		.update = &dumb_ai
-	};
+	Tickit *tickit_instance = tickit_new_stdio();
 
-	list_add(&snake.list, &current_dungeon->entities);
-	list_add(&demon.list, &current_dungeon->entities);
-
-	struct entity *pos = NULL;
-	list_for_each_entry(pos, &current_dungeon->entities, list) {
-		
-	}
+	TickitWindow *main_win = tickit_get_rootwin(tickit_instance);
+	tickit_window_bind_event(main_win, TICKIT_WINDOW_ON_EXPOSE, 0, main_win_draw, NULL);
+	tickit_window_bind_event(main_win, TICKIT_WINDOW_ON_KEY, 0, main_win_key, NULL);
 
 	tickit_run(tickit_instance);
-
-	tickit_window_close(root);
+	
+	tickit_window_close(main_win);
 
 	tickit_unref(tickit_instance);
 
 	return EXIT_SUCCESS;
 }
 
-static void key_left(char key)
+static void demo_load_map(const char *filename)
 {
-	player.posx--;
+	FILE *mapfd = fopen(filename, "r");
+
+	/* Make this not shit please. */
+	for (size_t line = 0; line < MAP_LENGTH; ++line) {
+		for (size_t col = 0; col < MAP_WIDTH; ++col) {
+			fscanf(mapfd, "%1s", &demo.map[line][col].sprite.token);
+		}
+	}
+
+	fclose(mapfd);
 }
 
-static void key_up(char key)
+struct blend_data {
+	TickitPenRGB8 colour;
+	float light;
+} blend_buffer[MAP_LENGTH][MAP_WIDTH];
+
+void player_update(struct entity *this)
 {
-	player.posy--;
+	blend_buffer[this->posy][this->posx].light = 1.f;
 }
 
-static void key_down(char key)
+void light_update(struct entity *this)
 {
-	player.posy++;
+	blend_buffer[this->posy-1][this->posx-1].colour.r = 255;
+	blend_buffer[this->posy-1][this->posx].colour.r = 255;
+	blend_buffer[this->posy-1][this->posx+1].colour.r = 255;
+	blend_buffer[this->posy][this->posx-1].colour.r = 255;
+	blend_buffer[this->posy][this->posx].colour.r = 255;
+	blend_buffer[this->posy][this->posx+1].colour.r = 255;
+	blend_buffer[this->posy+1][this->posx-1].colour.r = 255;
+	blend_buffer[this->posy+1][this->posx].colour.r = 255;
+	blend_buffer[this->posy+1][this->posx+1].colour.r = 255;
+
+	blend_buffer[this->posy-1][this->posx-1].light = 0.5f;
+	blend_buffer[this->posy-1][this->posx].light = 0.5f;
+	blend_buffer[this->posy-1][this->posx+1].light = 0.5f;
+	blend_buffer[this->posy][this->posx-1].light = 0.5f;
+	blend_buffer[this->posy][this->posx].light = 1.f;
+	blend_buffer[this->posy][this->posx+1].light = 0.5f;
+	blend_buffer[this->posy+1][this->posx-1].light = 0.5f;
+	blend_buffer[this->posy+1][this->posx].light = 0.5f;
+	blend_buffer[this->posy+1][this->posx+1].light = 0.5f;
 }
 
-static void key_right(char key)
+struct blend_data blend_buffer_at(int y, int x)
 {
-	player.posx++;
+	if (y >= 0 && y < MAP_LENGTH && x >= 0 && x < MAP_WIDTH) {
+		return blend_buffer[y][x];
+	} else {
+		return (struct blend_data){ 0 };
+	}
 }
 
-static void dumb_ai(struct entity *this)
+void blend_buffer_flush_light(void)
 {
-	this->posx++;
+	for (int y = 0; y < MAP_LENGTH; ++y) {
+		for (int x = 0; x < MAP_WIDTH; ++x) {
+			cur_floor->map[y][x].light = blend_buffer[y][x].light;
+		}
+	}
+}
+
+struct tile floor_map_at(const struct floor *floor, int y, int x)
+{
+	if (y >= 0 && y < MAP_LENGTH && x >= 0 && x < MAP_WIDTH) {
+		return floor->map[y][x];
+	} else {
+		return (struct tile){ .sprite = { .token = ' ' } };
+	}
+}
+
+struct sprite blend_sprite(struct sprite sprite, struct blend_data blend)
+{
+	sprite.colour.r += blend.colour.r;
+	sprite.colour.g += blend.colour.g;
+	sprite.colour.b += blend.colour.b;
+
+	sprite.colour.r *= blend.light;
+	sprite.colour.g *= blend.light;
+	sprite.colour.b *= blend.light;
+
+	return sprite;
+}
+
+void draw_map(TickitRenderBuffer *rb, TickitPen *pen, int viewy, int viewx)
+{
+	for (int line = 0; line < VIEW_LINES; ++line) {
+		for (int col = 0; col < VIEW_COLS; ++col) {
+			/* Get map coordinates of the tile to be drawn at (col, line). */
+			const int drawy = viewy + line;
+			const int drawx = viewx + col;
+
+			const struct blend_data blend_data = blend_buffer_at(drawy, drawx);
+			struct sprite to_draw = floor_map_at(cur_floor, drawy, drawx).sprite;
+			to_draw = blend_sprite(to_draw, blend_data);
+
+			tickit_pen_set_colour_attr(pen, TICKIT_PEN_FG, 3);
+			tickit_pen_set_colour_attr_rgb8(pen, TICKIT_PEN_FG, to_draw.colour);
+			tickit_renderbuffer_setpen(rb, pen);
+			tickit_renderbuffer_text_at(rb, line, col, (char[]){ to_draw.token, '\0' });
+		}
+	}
+}
+
+void draw_entities(TickitRenderBuffer *rb, TickitPen *pen, int viewy, int viewx)
+{
+	struct entity *pos = NULL;
+	list_for_each_entry(pos, &cur_floor->entities, list) {
+		/* Get terminal coordinates of the entity to be drawn. */
+		const int line = pos->posy - viewy;
+		const int col = pos->posx - viewx;
+
+		const struct blend_data blend_data = blend_buffer_at(pos->posy, pos->posx);
+		struct sprite to_draw = pos->sprite;
+		to_draw = blend_sprite(to_draw, blend_data);
+
+		tickit_pen_set_colour_attr(pen, TICKIT_PEN_FG, 3);
+		tickit_pen_set_colour_attr_rgb8(pen, TICKIT_PEN_FG, to_draw.colour);
+		tickit_renderbuffer_setpen(rb, pen);
+		tickit_renderbuffer_text_at(rb, line, col, (char[]){ to_draw.token, '\0' });
+	}
+}
+
+static int main_win_draw(TickitWindow *win, TickitEventFlags flags, void *info, void *user)
+{
+	TickitExposeEventInfo *exposed = info;
+	TickitRenderBuffer *rb = exposed->rb;
+	tickit_renderbuffer_eraserect(rb, &exposed->rect);
+	TickitPen *pen = tickit_pen_new();
+	tickit_pen_set_colour_attr(pen, TICKIT_PEN_BG, 0);
+	tickit_pen_set_colour_attr_rgb8(pen, TICKIT_PEN_BG, (TickitPenRGB8){ .r = 0, .g = 0, .b = 0});
+
+	/* Get map coordinates of the top-left tile to be drawn. */
+	const int viewy = player.posy - VIEW_LINES / 2;
+	const int viewx = player.posx - VIEW_COLS / 2;
+
+	draw_map(rb, pen, viewy, viewx);
+	draw_entities(rb, pen, viewy, viewx);
+
+	return 1;
+}
+
+void update_entities(void)
+{
+	struct entity *pos = NULL;
+	list_for_each_entry(pos, &cur_floor->entities, list) {
+		pos->update ? pos->update(pos) : fprintf(stderr, "torch: entity lacks update function");
+	}
+}
+
+static int main_win_key(TickitWindow *win, TickitEventFlags flags, void *info, void *user)
+{
+	/* ... */
+
+	/* Clear the blend buffer. */
+	memset(blend_buffer, 0, sizeof(blend_buffer));
+
+	update_entities();
+
+	/* Write light levels to the actual tile map. */
+	blend_buffer_flush_light();
+
+	tickit_window_expose(win, NULL);
+	return 1;
 }
