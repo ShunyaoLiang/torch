@@ -17,7 +17,7 @@ struct entity player = {
 	.posx = 0,
 	.posy = 0,
 	.sprite = { 
-		.colour = { .r = 17, .g = 70, .b = 13 },
+		.colour = { .r = 85, .g = 178, .b = 194 },
 		.token = '@',
 	},
 	.update = player_update,
@@ -53,7 +53,7 @@ int main(void)
 		.duration = 10,
 	};
 	list_add(&torch.e.list, &cur_floor->entities);
-	
+
 	demo_load_map("map");
 
 	Tickit *tickit_instance = tickit_new_stdio();
@@ -92,7 +92,7 @@ struct blend_data {
 
 void player_update(struct entity *this)
 {
-	blend_buffer[this->posy][this->posx].light = 1.f;
+	blend_buffer[this->posy][this->posx].light = 0.2f;
 }
 
 void light_update(struct entity *this)
@@ -147,13 +147,17 @@ struct tile floor_map_at(const struct floor *floor, int y, int x)
 
 struct sprite blend_sprite(struct sprite sprite, struct blend_data blend)
 {
-	sprite.colour.r += blend.colour.r;
-	sprite.colour.g += blend.colour.g;
-	sprite.colour.b += blend.colour.b;
-
 	sprite.colour.r *= blend.light;
 	sprite.colour.g *= blend.light;
 	sprite.colour.b *= blend.light;
+
+	sprite.colour.r += blend.colour.r * blend.light;
+	sprite.colour.g += blend.colour.g * blend.light;
+	sprite.colour.b += blend.colour.b * blend.light;
+
+	sprite.colour.r /= 2;
+	sprite.colour.g /= 2;
+	sprite.colour.b /= 2;
 
 	return sprite;
 }
@@ -224,9 +228,25 @@ void update_entities(void)
 	}
 }
 
+static void player_move_left(int key);
+static void player_move_down(int key);
+static void player_move_up(int key);
+static void player_move_right(int key);
+
+void (*main_win_keymap[])(int key) = {
+	['h'] = player_move_left,
+	['j'] = player_move_down,
+	['k'] = player_move_up,
+	['l'] = player_move_right,
+};
+
 static int main_win_key(TickitWindow *win, TickitEventFlags flags, void *info, void *user)
 {
-	/* ... */
+	TickitKeyEventInfo *key = info;
+	switch (key->type) {
+	case TICKIT_KEYEV_TEXT: /* Pain. */
+		main_win_keymap[*key->str] ? main_win_keymap[*key->str](*key->str) : 0;
+	}
 
 	/* Clear the blend buffer. */
 	memset(blend_buffer, 0, sizeof(blend_buffer));
@@ -238,4 +258,24 @@ static int main_win_key(TickitWindow *win, TickitEventFlags flags, void *info, v
 
 	tickit_window_expose(win, NULL);
 	return 1;
+}
+
+static void player_move_left(int key)
+{
+	player.posx--;
+}
+
+static void player_move_down(int key)
+{
+	player.posy++;
+}
+
+static void player_move_up(int key)
+{
+	player.posy--;
+}
+
+static void player_move_right(int key)
+{
+	player.posx++;
 }
