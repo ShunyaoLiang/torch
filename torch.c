@@ -1,6 +1,7 @@
 #include "floor.h"
 #include "entity.h"
 #include "list.h"
+#include "blend.h"
 #include "torch.h"
 
 #include <tickit.h>
@@ -85,55 +86,34 @@ static void demo_load_map(const char *filename)
 	fclose(mapfd);
 }
 
-struct blend_data {
-	TickitPenRGB8 colour;
-	float light;
-} blend_buffer[MAP_LENGTH][MAP_WIDTH];
 
 void player_update(struct entity *this)
 {
-	blend_buffer[this->posy][this->posx].light = 0.2f;
+	blend_buffer_add(this->posy, this->posx, this->sprite.colour.r,
+		this->sprite.colour.g, this->sprite.colour.b, 0.0f);
 }
 
 void light_update(struct entity *this)
 {
-	blend_buffer[this->posy-1][this->posx-1].colour.r = 255;
-	blend_buffer[this->posy-1][this->posx].colour.r = 255;
-	blend_buffer[this->posy-1][this->posx+1].colour.r = 255;
-	blend_buffer[this->posy][this->posx-1].colour.r = 255;
-	blend_buffer[this->posy][this->posx].colour.r = 255;
-	blend_buffer[this->posy][this->posx+1].colour.r = 255;
-	blend_buffer[this->posy+1][this->posx-1].colour.r = 255;
-	blend_buffer[this->posy+1][this->posx].colour.r = 255;
-	blend_buffer[this->posy+1][this->posx+1].colour.r = 255;
+	blend_buffer_add(this->posy, this->posx, 255, 0, 0, 1.f);
+	blend_buffer_add(this->posy, this->posx+1, 255, 0, 0, 1.f);
+	blend_buffer_add(this->posy, this->posx+2, 255, 0, 0, 1.f / 4);
+	blend_buffer_add(this->posy, this->posx+3, 255, 0, 0, 1.f / 9);
+	blend_buffer_add(this->posy, this->posx+4, 255, 0, 0, 1.f / 16);
+	blend_buffer_add(this->posy, this->posx+5, 255, 0, 0, 1.f / 25);
 
-	blend_buffer[this->posy-1][this->posx-1].light = 0.5f;
-	blend_buffer[this->posy-1][this->posx].light = 0.5f;
-	blend_buffer[this->posy-1][this->posx+1].light = 0.5f;
-	blend_buffer[this->posy][this->posx-1].light = 0.5f;
-	blend_buffer[this->posy][this->posx].light = 1.f;
-	blend_buffer[this->posy][this->posx+1].light = 0.5f;
-	blend_buffer[this->posy+1][this->posx-1].light = 0.5f;
-	blend_buffer[this->posy+1][this->posx].light = 0.5f;
-	blend_buffer[this->posy+1][this->posx+1].light = 0.5f;
-}
+	blend_buffer_add(this->posy+1, this->posx, 255, 0, 0, 1.f);
+	blend_buffer_add(this->posy+2, this->posx, 255, 0, 0, 1.f / 4);
+	blend_buffer_add(this->posy+3, this->posx, 255, 0, 0, 1.f / 9);
+	blend_buffer_add(this->posy+4, this->posx, 255, 0, 0, 1.f / 16);
+	blend_buffer_add(this->posy+5, this->posx, 255, 0, 0, 1.f / 25);
 
-struct blend_data blend_buffer_at(int y, int x)
-{
-	if (y >= 0 && y < MAP_LENGTH && x >= 0 && x < MAP_WIDTH) {
-		return blend_buffer[y][x];
-	} else {
-		return (struct blend_data){ 0 };
-	}
-}
+	blend_buffer_add(this->posy+2, this->posx, 0, 0, 255, 1.f / 25);
+	blend_buffer_add(this->posy+3, this->posx, 0, 0, 255, 1.f / 16);
+	blend_buffer_add(this->posy+4, this->posx, 0, 0, 255, 1.f / 9);
+	blend_buffer_add(this->posy+5, this->posx, 0, 0, 255, 1.f / 4);
+	blend_buffer_add(this->posy+6, this->posx, 0, 0, 255, 1.f);
 
-void blend_buffer_flush_light(void)
-{
-	for (int y = 0; y < MAP_LENGTH; ++y) {
-		for (int x = 0; x < MAP_WIDTH; ++x) {
-			cur_floor->map[y][x].light = blend_buffer[y][x].light;
-		}
-	}
 }
 
 struct tile floor_map_at(const struct floor *floor, int y, int x)
@@ -143,23 +123,6 @@ struct tile floor_map_at(const struct floor *floor, int y, int x)
 	} else {
 		return (struct tile){ .sprite = { .token = ' ' } };
 	}
-}
-
-struct sprite blend_sprite(struct sprite sprite, struct blend_data blend)
-{
-	sprite.colour.r *= blend.light;
-	sprite.colour.g *= blend.light;
-	sprite.colour.b *= blend.light;
-
-	sprite.colour.r += blend.colour.r * blend.light;
-	sprite.colour.g += blend.colour.g * blend.light;
-	sprite.colour.b += blend.colour.b * blend.light;
-
-	sprite.colour.r /= 2;
-	sprite.colour.g /= 2;
-	sprite.colour.b /= 2;
-
-	return sprite;
 }
 
 void draw_map(TickitRenderBuffer *rb, TickitPen *pen, int viewy, int viewx)
@@ -172,10 +135,10 @@ void draw_map(TickitRenderBuffer *rb, TickitPen *pen, int viewy, int viewx)
 
 			const struct blend_data blend_data = blend_buffer_at(drawy, drawx);
 			struct sprite to_draw = floor_map_at(cur_floor, drawy, drawx).sprite;
-			to_draw = blend_sprite(to_draw, blend_data);
+			TickitPenRGB8 colour = blend_sprite(blend_data, to_draw);
 
 			tickit_pen_set_colour_attr(pen, TICKIT_PEN_FG, 3);
-			tickit_pen_set_colour_attr_rgb8(pen, TICKIT_PEN_FG, to_draw.colour);
+			tickit_pen_set_colour_attr_rgb8(pen, TICKIT_PEN_FG, colour);
 			tickit_renderbuffer_setpen(rb, pen);
 			tickit_renderbuffer_text_at(rb, line, col, (char[]){ to_draw.token, '\0' });
 		}
@@ -190,12 +153,16 @@ void draw_entities(TickitRenderBuffer *rb, TickitPen *pen, int viewy, int viewx)
 		const int line = pos->posy - viewy;
 		const int col = pos->posx - viewx;
 
+		/* Don't draw the entity if they are beyond the viewport. */
+		if (line < 0 || line >= VIEW_LINES || col < 0 || col >= VIEW_COLS)
+			continue;
+
 		const struct blend_data blend_data = blend_buffer_at(pos->posy, pos->posx);
 		struct sprite to_draw = pos->sprite;
-		to_draw = blend_sprite(to_draw, blend_data);
+		TickitPenRGB8 colour = blend_sprite(blend_data, to_draw);
 
 		tickit_pen_set_colour_attr(pen, TICKIT_PEN_FG, 3);
-		tickit_pen_set_colour_attr_rgb8(pen, TICKIT_PEN_FG, to_draw.colour);
+		tickit_pen_set_colour_attr_rgb8(pen, TICKIT_PEN_FG, colour);
 		tickit_renderbuffer_setpen(rb, pen);
 		tickit_renderbuffer_text_at(rb, line, col, (char[]){ to_draw.token, '\0' });
 	}
@@ -228,12 +195,12 @@ void update_entities(void)
 	}
 }
 
-static void player_move_left(int key);
-static void player_move_down(int key);
-static void player_move_up(int key);
-static void player_move_right(int key);
+static void player_move_left(void);
+static void player_move_down(void);
+static void player_move_up(void);
+static void player_move_right(void);
 
-void (*main_win_keymap[])(int key) = {
+void (*main_win_keymap[])(void) = {
 	['h'] = player_move_left,
 	['j'] = player_move_down,
 	['k'] = player_move_up,
@@ -245,14 +212,11 @@ static int main_win_key(TickitWindow *win, TickitEventFlags flags, void *info, v
 	TickitKeyEventInfo *key = info;
 	switch (key->type) {
 	case TICKIT_KEYEV_TEXT: /* Pain. */
-		main_win_keymap[*key->str] ? main_win_keymap[*key->str](*key->str) : 0;
+		main_win_keymap[*key->str] ? main_win_keymap[*key->str]() : 0;
 	}
 
-	/* Clear the blend buffer. */
-	memset(blend_buffer, 0, sizeof(blend_buffer));
-
+	blend_buffer_clear();
 	update_entities();
-
 	/* Write light levels to the actual tile map. */
 	blend_buffer_flush_light();
 
@@ -260,22 +224,22 @@ static int main_win_key(TickitWindow *win, TickitEventFlags flags, void *info, v
 	return 1;
 }
 
-static void player_move_left(int key)
+static void player_move_left(void)
 {
 	player.posx--;
 }
 
-static void player_move_down(int key)
+static void player_move_down(void)
 {
 	player.posy++;
 }
 
-static void player_move_up(int key)
+static void player_move_up(void)
 {
 	player.posy--;
 }
 
-static void player_move_right(int key)
+static void player_move_right(void)
 {
 	player.posx++;
 }
