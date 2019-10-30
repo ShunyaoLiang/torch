@@ -6,22 +6,27 @@
 #include "entity.h"
 
 struct tile {
-	const char *what;
 	struct sprite sprite;
 	float light;
-	uint solid : 1;
-	struct entity *above;
 };
 
+#define MAP_LINES 20
+#define MAP_COLS  40
+
+struct floor_map {
+	struct tile tiles[MAP_LINES][MAP_COLS];
+//	struct point *corners;
+};
+
+typedef struct list_head entity_list;
+
 struct floor {
-//	struct tile **map;
-//	int width, length;
-#define MAP_LENGTH 20
-#define MAP_WIDTH  40
-	struct tile map[MAP_LENGTH][MAP_WIDTH];
-	struct list_head entities;
+	struct floor_map map;
+	entity_list entities;
 };
 
 extern struct floor *cur_floor;
+
+void floor_add_entity(struct floor *floor, struct entity *new);
 
 #endif

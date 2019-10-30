@@ -1,5 +1,12 @@
-all: torch.c torch.h entity.h floor.h list.h blend
-	gcc torch.c blend.o -ltickit
+CC = clang
+CFLAGS = -Wall
+LDFLAGS = -ltickit
 
-blend: blend.c blend.h floor.h
-	gcc blend.c -c
+all: torch
+	$(CC) torch.o $(CFLAGS) $(LDFLAGS)
+
+torch: torch.c torch.h list.h
+	$(CC) torch.c -c $(CFLAGS)
+
+debug: torch.c torch.h list.h
+	$(CC) torch.c -g $(CFLAGS) $(LDFLAGS)
