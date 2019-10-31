@@ -1,6 +1,6 @@
 CC = clang
 CFLAGS = -Wall
-LDFLAGS = -ltickit
+LDFLAGS = -ltickit -lm
 
 all: torch
 	$(CC) torch.o $(CFLAGS) $(LDFLAGS)

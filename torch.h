@@ -36,13 +36,15 @@ struct tile {
 	uint8_t r, g, b;
 	char token;
 	int light;
+	int dr, dg, db;
+	struct entity *on;
 };
 
 #define MAP_LINES 20
 #define MAP_COLS  40
 
 struct floor {
- struct tile tile_map[MAP_LINES][MAP_COLS];
+	struct tile tile_map[MAP_LINES][MAP_COLS];
 	entity_list entities;
 };
 
