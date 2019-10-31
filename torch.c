@@ -16,14 +16,10 @@ TickitWindowEventFn main_win_draw;
 
 void update_entities(entity_list *entities);
 
-struct tile tile_map_at(struct tile (*map)[MAP_LINES][MAP_COLS], int line, int col);
-
 void entity_move_pos_rel(struct entity *e, int y, int x);
 
 static void demo_floor_load_map(const char *filename);
 static void demo_add_entities(void);
-
-void clear_lights(void);
 
 void draw_map(TickitRenderBuffer *rb, TickitPen *pen);
 void draw_entities(TickitRenderBuffer *rb, TickitPen *pen);
@@ -50,7 +46,7 @@ int main(void)
 
 	demo_floor_load_map("map");
 	INIT_LIST_HEAD(&demo_floor.entities);
-	list_add(&player.list, &cur_floor->entities);
+	floor_add_entity(cur_floor, &player);
 
 	demo_add_entities();
 
@@ -76,15 +72,15 @@ static void demo_floor_load_map(const char *filename)
 	/* Make this not shit please. */
 	for (size_t line = 0; line < MAP_LINES; ++line) {
 		for (size_t col = 0; col < MAP_COLS; ++col) {
-			fscanf(mapfd, "%c", &demo_floor.tile_map[line][col].token);
-			demo_floor.tile_map[line][col].light = 0;
-			demo_floor.tile_map[line][col].r = 51;
-			demo_floor.tile_map[line][col].g = 51;
-			demo_floor.tile_map[line][col].b = 51;
+			fscanf(mapfd, "%c", &demo_floor.map[line][col].token);
+			demo_floor.map[line][col].light = 0;
+			demo_floor.map[line][col].r = 51;
+			demo_floor.map[line][col].g = 51;
+			demo_floor.map[line][col].b = 51;
 
-			if (demo_floor.tile_map[line][col].token != '.') {
-				demo_floor.tile_map[line][col].g = 150;
-				demo_floor.tile_map[line][col].b = 150;
+			if (demo_floor.map[line][col].token != '.') {
+				demo_floor.map[line][col].g = 150;
+				demo_floor.map[line][col].b = 150;
 			}
 		}
 		(void)fgetc(mapfd);
@@ -104,8 +100,8 @@ def_entity_fn(demo_player_update)
 {
 	int y = this->posy;
 	int x = this->posx;
-	struct tile (*map)[MAP_LINES][MAP_COLS] = &cur_floor->tile_map;
-	const int radius = 1;
+	struct tile (*map)[MAP_LINES][MAP_COLS] = &cur_floor->map;
+	const int radius = 4;
 	for (int drawy = y - radius; drawy <= y + radius; ++drawy) {
 		for (int drawx = x - radius; drawx <= x + radius; ++drawx) {	
 			const int distance = sqrt((drawx - x) * (drawx - x) + (drawy - y) * (drawy - y)); 
@@ -130,7 +126,7 @@ def_entity_fn(demo_torch_update)
 
 	y = this->posy;
 	x = this->posx;
-	struct tile (*map)[MAP_LINES][MAP_COLS] = &cur_floor->tile_map;
+	struct tile (*map)[MAP_LINES][MAP_COLS] = &cur_floor->map;
 	const int radius = 8;
 	for (int drawy = y - radius; drawy <= y + radius; ++drawy) {
 		for (int drawx = x - radius; drawx <= x + radius; ++drawx) {	
@@ -150,12 +146,6 @@ def_entity_fn(demo_torch_update)
 def_entity_fn(demo_torch_destroy)
 {
 
-}
-
-void floor_add_entity(struct floor *f, struct entity *e)
-{
-	list_add(&e->list, &f->entities);
-	f->tile_map[e->posy][e->posx].on = e;
 }
 
 static void demo_add_entities(void)
@@ -188,10 +178,10 @@ void clear_lights(void)
 {
 	for (size_t line = 0; line < MAP_LINES; ++line) {
 		for (size_t col = 0; col < MAP_COLS; ++col) {
-			cur_floor->tile_map[line][col].light = 0;
-			cur_floor->tile_map[line][col].dr = 0;
-			cur_floor->tile_map[line][col].dg = 0;
-			cur_floor->tile_map[line][col].db = 0;
+			cur_floor->map[line][col].light = 0;
+			cur_floor->map[line][col].dr = 0;
+			cur_floor->map[line][col].dg = 0;
+			cur_floor->map[line][col].db = 0;
 		}
 	}
 }
@@ -218,7 +208,7 @@ int main_win_on_key(TickitWindow *win, TickitEventFlags flags, void *info, void 
 			main_win_keymap[*key->str]();
 	}
 
-	clear_lights();
+	floor_map_clear_lights();
 	update_entities(&cur_floor->entities);
 
 	tickit_window_expose(win, NULL);
@@ -251,20 +241,12 @@ void update_entities(entity_list *entities)
 	}
 }
 
-struct tile tile_map_at(struct tile (*map)[MAP_LINES][MAP_COLS], int line, int col)
-{
-	if (floor_in_bounds(line, col))
-		return (*map)[line][col];
-	else
-		return (struct tile){ 0 };
-}
-
 void entity_move_pos(struct entity *e, int y, int x)
 {
-	if (floor_in_bounds(y, x) && !cur_floor->tile_map[y][x].on) {
-		struct tile *tile = &cur_floor->tile_map[e->posy][e->posx];
+	if (floor_map_in_bounds(y, x) && !cur_floor->map[y][x].on) {
+		struct tile *tile = &cur_floor->map[e->posy][e->posx];
 		tile->on = NULL;
-		cur_floor->tile_map[y][x].on = e;
+		cur_floor->map[y][x].on = e;
 		e->posy = y;
 		e->posx = x;
 	}
@@ -282,7 +264,7 @@ void __draw_map(TickitRenderBuffer *rb, TickitPen *pen, struct tile (*map)[MAP_L
 
 	for (int line = 0; line < VIEW_LINES; ++line) {
 		for (int col = 0; col < VIEW_COLS; ++col) {
-			struct tile tile = tile_map_at(map, viewy + line, viewx + col);
+			struct tile tile = floor_map_at(map, viewy + line, viewx + col);
 			whatdoicallthis(rb, pen, tile.r * tile.light + tile.dr, tile.g * tile.light + tile.dg, tile.b * tile.light + tile.db);
 			tickit_renderbuffer_text_at(rb, line, col, (char[]){tile.token, '\0'});
 		}
@@ -291,7 +273,7 @@ void __draw_map(TickitRenderBuffer *rb, TickitPen *pen, struct tile (*map)[MAP_L
 
 void draw_map(TickitRenderBuffer *rb, TickitPen *pen)
 {
-	__draw_map(rb, pen, &cur_floor->tile_map);
+	__draw_map(rb, pen, &cur_floor->map);
 }
 
 void __draw_entities(TickitRenderBuffer *rb, TickitPen *pen, entity_list *entities)
@@ -302,7 +284,7 @@ void __draw_entities(TickitRenderBuffer *rb, TickitPen *pen, entity_list *entiti
 		int col = pos->posx - (player.posx - VIEW_COLS / 2);
 		if (line >= VIEW_LINES || col >= VIEW_COLS)
 			continue;
-		struct tile tile = tile_map_at(&cur_floor->tile_map, pos->posy, pos->posx);
+		struct tile tile = floor_map_at(&cur_floor->map, pos->posy, pos->posx);
 		fprintf(debug_log, "dr: %d dg: %d db: %d", tile.dr, tile.dg, tile.db);
 		whatdoicallthis(rb, pen, pos->r + tile.dr, pos->g + tile.dg, pos->b + tile.db);
 		tickit_renderbuffer_text_at(rb, line, col, (char[]){ pos->token, '\0'});

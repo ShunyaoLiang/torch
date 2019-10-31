@@ -10,11 +10,7 @@
 #define VIEW_LINES 23
 #define VIEW_COLS  79
 
-typedef unsigned int uint;
-
-struct point {
-	int y, x;
-};
+#define back(arr) (arr[sizeof(arr)/sizeof(*arr)])
 
 struct entity;
 
@@ -30,8 +26,7 @@ struct entity {
 	struct list_head list;
 };
 
-typedef struct list_head entity_list;
-
+/* Floor */
 struct tile {
 	uint8_t r, g, b;
 	char token;
@@ -43,11 +38,23 @@ struct tile {
 #define MAP_LINES 20
 #define MAP_COLS  40
 
+typedef struct tile tile_map[MAP_LINES][MAP_COLS];
+typedef struct list_head entity_list;
+
 struct floor {
-	struct tile tile_map[MAP_LINES][MAP_COLS];
+	tile_map map;
 	entity_list entities;
 };
 
 extern struct floor *cur_floor;
+
+struct tile floor_map_at(tile_map *map, int y, int x);
+int         floor_map_in_bounds(int y, int x);
+void        floor_map_clear_lights(void);
+
+void floor_add_entity(struct floor *floor, struct entity *entity);
+
+#define floor_for_each_tile(pos, floor) \
+	for (pos = *floor->map; pos != back(floor->map); ++pos)
 
 #endif
