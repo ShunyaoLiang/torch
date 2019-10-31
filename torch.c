@@ -9,6 +9,8 @@
 #define def_main_win_key_fn(name) void name(void)
 typedef def_main_win_key_fn(main_win_key_fn);
 
+def_entity_fn(demo_player_update);
+
 TickitWindowEventFn main_win_on_key;
 TickitWindowEventFn main_win_draw;
 
@@ -33,10 +35,10 @@ struct floor *cur_floor = &demo_floor;
 FILE *debug_log;
 
 struct entity player = {
-	.r = 255, .g = 102, .b = 77,
+	.r = 151, .g = 151, .b = 151,
 	.token = '@',
 	.posy = 17, .posx = 28,
-	.update = NULL,
+	.update = demo_player_update,
 	.destroy = NULL,
 	.list = LIST_HEAD_INIT(player.list),
 };
@@ -91,7 +93,33 @@ static void demo_floor_load_map(const char *filename)
 	fclose(mapfd);
 }
 
+int floor_in_bounds(int line, int col)
+{
+	return line >= 0 && line < MAP_LINES && col >= 0 && col < MAP_COLS;
+}
+
 #include <math.h>
+
+def_entity_fn(demo_player_update)
+{
+	int y = this->posy;
+	int x = this->posx;
+	struct tile (*map)[MAP_LINES][MAP_COLS] = &cur_floor->tile_map;
+	const int radius = 1;
+	for (int drawy = y - radius; drawy <= y + radius; ++drawy) {
+		for (int drawx = x - radius; drawx <= x + radius; ++drawx) {	
+			const int distance = sqrt((drawx - x) * (drawx - x) + (drawy - y) * (drawy - y)); 
+			if (!(distance <= radius) || !floor_in_bounds(drawy, drawx))
+				continue;
+
+			const float dlight = 0.2f / distance;
+			(*map)[drawy][drawx].light += dlight;
+			(*map)[drawy][drawx].dr += this->r * dlight;
+			(*map)[drawy][drawx].dg += this->g * dlight;
+			(*map)[drawy][drawx].db += this->b * dlight;
+		}
+	}
+}
 
 def_entity_fn(demo_torch_update)
 {
@@ -102,16 +130,15 @@ def_entity_fn(demo_torch_update)
 
 	y = this->posy;
 	x = this->posx;
-	
 	struct tile (*map)[MAP_LINES][MAP_COLS] = &cur_floor->tile_map;
-	const int radius = 3;
+	const int radius = 8;
 	for (int drawy = y - radius; drawy <= y + radius; ++drawy) {
 		for (int drawx = x - radius; drawx <= x + radius; ++drawx) {	
-			const int distance = sqrt((drawx - x) * (drawx - x) + (drawy - y) * (drawy - y)); 
+			const int distance = floor(sqrt((drawx - x) * (drawx - x) + (drawy - y) * (drawy - y))); 
 			if (!(distance <= radius) || !floor_in_bounds(drawy, drawx))
 				continue;
 
-			const float dlight = 0.5f / distance;
+			const float dlight = 0.7f / distance / distance;
 			(*map)[drawy][drawx].light += dlight;
 			(*map)[drawy][drawx].dr += this->r * dlight;
 			(*map)[drawy][drawx].dg += this->g * dlight;
@@ -123,6 +150,12 @@ def_entity_fn(demo_torch_update)
 def_entity_fn(demo_torch_destroy)
 {
 
+}
+
+void floor_add_entity(struct floor *f, struct entity *e)
+{
+	list_add(&e->list, &f->entities);
+	f->tile_map[e->posy][e->posx].on = e;
 }
 
 static void demo_add_entities(void)
@@ -143,12 +176,12 @@ static void demo_add_entities(void)
 	torch.r = 0x5e;
 	torch.g = 0xba;
 	torch.b = 0xc9;
-	torch.posy = 13;
-	torch.posx = 9;
+	torch.posy = 10;
+	torch.posx = 14;
 	memcpy(t2, &torch, sizeof(torch));
 
-	list_add(&t1->list, &cur_floor->entities);
-	list_add(&t2->list, &cur_floor->entities);
+	floor_add_entity(cur_floor, t1);
+	floor_add_entity(cur_floor, t2);
 }
 
 void clear_lights(void)
@@ -163,13 +196,6 @@ void clear_lights(void)
 	}
 }
 
-/* Temporary workaround. Allows (most) keyboard input to be mapped to an
-   initialized NULL value. */
-def_main_win_key_fn(nothing)
-{
-	return;
-}
-
 def_main_win_key_fn(player_move_left);
 def_main_win_key_fn(player_move_down);
 def_main_win_key_fn(player_move_up);
@@ -180,7 +206,7 @@ main_win_key_fn *main_win_keymap[] = {
 	['j'] = player_move_down,
 	['k'] = player_move_up,
 	['l'] = player_move_right,
-	[255] = nothing,
+	[255] = NULL,
 };
 
 int main_win_on_key(TickitWindow *win, TickitEventFlags flags, void *info, void *user)
@@ -191,11 +217,7 @@ int main_win_on_key(TickitWindow *win, TickitEventFlags flags, void *info, void 
 		if (main_win_keymap[*key->str])
 			main_win_keymap[*key->str]();
 	}
-/*
-	player.r *= 5;
-	player.g *= 5;
-	player.b *= 5;
-*/
+
 	clear_lights();
 	update_entities(&cur_floor->entities);
 
@@ -227,11 +249,6 @@ void update_entities(entity_list *entities)
 		if (pos->update)
 			pos->update(pos);
 	}
-}
-
-int floor_in_bounds(int line, int col)
-{
-	return line >= 0 && line < MAP_LINES && col >= 0 && col < MAP_COLS;
 }
 
 struct tile tile_map_at(struct tile (*map)[MAP_LINES][MAP_COLS], int line, int col)
@@ -266,7 +283,7 @@ void __draw_map(TickitRenderBuffer *rb, TickitPen *pen, struct tile (*map)[MAP_L
 	for (int line = 0; line < VIEW_LINES; ++line) {
 		for (int col = 0; col < VIEW_COLS; ++col) {
 			struct tile tile = tile_map_at(map, viewy + line, viewx + col);
-			whatdoicallthis(rb, pen, tile.r + tile.dr, tile.g + tile.dg, tile.b + tile.db);
+			whatdoicallthis(rb, pen, tile.r * tile.light + tile.dr, tile.g * tile.light + tile.dg, tile.b * tile.light + tile.db);
 			tickit_renderbuffer_text_at(rb, line, col, (char[]){tile.token, '\0'});
 		}
 	}
