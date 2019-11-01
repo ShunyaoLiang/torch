@@ -11,6 +11,14 @@ void entity_move_pos(struct entity *entity, int y, int x)
 			.dr = tile.dr, .dg = tile.dg, .db = tile.db,
 			.on = entity,
 		});
+		tile = floor_map_at(cur_floor, entity->posy, entity->posx);
+		floor_map_set(cur_floor, entity->posy, entity->posx, (struct tile){
+			.r = tile.r, .g = tile.g, .b = tile.b,
+			.token = tile.token,
+			.light = tile.light,
+			.dr = tile.dr, .dg = tile.dg, .db = tile.db,
+			.on = NULL,
+		});
 
 		entity->posy = y;
 		entity->posx = x;
