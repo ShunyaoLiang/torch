@@ -10,11 +10,12 @@ struct floor *cur_floor = &demo_floor;
 void demo_floor_load_map(const char *filename)
 {
 	FILE *mapfd = fopen(filename, "r");
+	floor_map_generate(&demo_floor);
 
 	/* Make this not shit please. */
 	for (size_t line = 0; line < MAP_LINES; ++line) {
 		for (size_t col = 0; col < MAP_COLS; ++col) {
-			fscanf(mapfd, "%c", &demo_floor.map[line][col].token);
+//			fscanf(mapfd, "%c", &demo_floor.map[line][col].token);
 			demo_floor.map[line][col].light = 0;
 			demo_floor.map[line][col].r = 51;
 			demo_floor.map[line][col].g = 51;

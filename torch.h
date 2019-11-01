@@ -66,6 +66,7 @@ extern struct floor *cur_floor;
 struct tile floor_map_at(struct floor *floor, int y, int x);
 int         floor_map_in_bounds(int y, int x);
 void        floor_map_clear_lights(void);
+void        floor_map_generate(struct floor *floor);
 
 void floor_add_entity(struct floor *floor, struct entity *entity);
 

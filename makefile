@@ -28,8 +28,8 @@ main_win: torch.h
 demo: torch.h
 	$(CC) demo.c -c $(CFLAGS)
 
-debug: torch.c torch.h list.h
-	$(CC) torch.c -g $(CFLAGS) $(LDFLAGS)
+debug: torch.h list.h
+	$(CC) *.c -g $(CFLAGS) $(LDFLAGS)
 
 clean:
 	rm $(objects)
