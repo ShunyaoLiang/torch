@@ -4,13 +4,15 @@
 #include "list.h"
 
 #include <tickit.h>
+#include <stdio.h>
 #include <stdint.h>
 
-/* Viewport size. */
-#define VIEW_LINES 23
-#define VIEW_COLS  79
-
 #define back(arr) (arr[sizeof(arr)/sizeof(*arr)])
+
+extern FILE *debug_log;
+
+#define def_main_win_key_fn(name) void name(void)
+typedef def_main_win_key_fn(main_win_key_fn);
 
 /* Entity */
 struct entity;
@@ -25,10 +27,19 @@ struct entity {
 	entity_fn *update;
 	entity_fn *destroy;
 	struct list_head list;
+	struct floor *floor;
 };
 
 void entity_move_pos(struct entity *e, int y, int x);
 void entity_move_pos_rel(struct entity *e, int y, int x);
+
+/* Player */
+extern struct entity player;
+
+def_main_win_key_fn(player_move_left);
+def_main_win_key_fn(player_move_down);
+def_main_win_key_fn(player_move_up);
+def_main_win_key_fn(player_move_right);
 
 /* Floor */
 struct tile {
@@ -36,7 +47,7 @@ struct tile {
 	char token;
 	int light;
 	int dr, dg, db;
-	struct entity *on;
+	struct entity *entity;
 };
 
 #define MAP_LINES 20
@@ -53,13 +64,36 @@ struct floor {
 extern struct floor *cur_floor;
 
 struct tile floor_map_at(struct floor *floor, int y, int x);
-void        floor_map_set(struct floor *floor, int y, int x, struct tile tile);
 int         floor_map_in_bounds(int y, int x);
 void        floor_map_clear_lights(void);
 
 void floor_add_entity(struct floor *floor, struct entity *entity);
 
+void floor_update_entities(struct floor *floor);
+
 #define floor_for_each_tile(pos, floor) \
 	for (pos = *floor->map; pos != back(floor->map); ++pos)
+
+/* Draw */
+#define VIEW_LINES 23
+#define VIEW_COLS  79
+
+void draw_map(TickitRenderBuffer *rb, TickitPen *pen);
+void draw_entities(TickitRenderBuffer *rb, TickitPen *pen);
+void whatdoicallthis(TickitRenderBuffer *rb, TickitPen *pen, uint8_t r, uint8_t g, uint8_t b);
+
+/* Main Window */
+TickitWindowEventFn main_win_on_key;
+TickitWindowEventFn main_win_draw;
+
+/* Demo */
+void demo_floor_load_map(const char *filename);
+
+def_entity_fn(demo_player_destroy);
+def_entity_fn(demo_player_update);
+
+void demo_add_entities(void);
+
+extern struct floor demo_floor;
 
 #endif

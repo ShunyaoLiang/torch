@@ -33,5 +33,15 @@ void floor_map_clear_lights(void)
 void floor_add_entity(struct floor *floor, struct entity *entity)
 {
 	list_add(&entity->list, &floor->entities);
-	floor->map[entity->posy][entity->posx].on = entity;
+	entity->floor = floor;
+	floor->map[entity->posy][entity->posx].entity = entity;
+}
+
+void floor_update_entities(struct floor *floor)
+{
+	struct entity *pos;
+	list_for_each_entry(pos, &floor->entities, list) {
+		if (pos->update)
+			pos->update(pos);
+	}
 }
