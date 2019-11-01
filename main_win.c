@@ -30,7 +30,7 @@ int main_win_draw(TickitWindow *win, TickitEventFlags flags, void *info, void *u
 {
 	TickitExposeEventInfo *exposed = info;
 	TickitRenderBuffer *rb = exposed->rb;
-//	tickit_renderbuffer_eraserect(rb, &exposed->rect);
+	tickit_renderbuffer_eraserect(rb, &exposed->rect);
 
 	TickitPen *pen = tickit_pen_new();
 	tickit_pen_set_colour_attr(pen, TICKIT_PEN_BG, 0);
