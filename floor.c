@@ -1,12 +1,17 @@
 #include "torch.h"
 #include "list.h"
 
-struct tile floor_map_at(tile_map *map, int y, int x)
+struct tile floor_map_at(struct floor *floor, int y, int x)
 {
 	if (floor_map_in_bounds(y, x))
-		return (*map)[y][x];
+		return (floor->map)[y][x];
 	else
 		return (struct tile){ 0 };
+}
+
+void floor_map_set(struct floor *floor, int y, int x, struct tile tile)
+{
+	(floor->map)[y][x] = tile;
 }
 
 int floor_map_in_bounds(int y, int x)

@@ -174,18 +174,6 @@ static void demo_add_entities(void)
 	floor_add_entity(cur_floor, t2);
 }
 
-void clear_lights(void)
-{
-	for (size_t line = 0; line < MAP_LINES; ++line) {
-		for (size_t col = 0; col < MAP_COLS; ++col) {
-			cur_floor->map[line][col].light = 0;
-			cur_floor->map[line][col].dr = 0;
-			cur_floor->map[line][col].dg = 0;
-			cur_floor->map[line][col].db = 0;
-		}
-	}
-}
-
 def_main_win_key_fn(player_move_left);
 def_main_win_key_fn(player_move_down);
 def_main_win_key_fn(player_move_up);
@@ -241,22 +229,6 @@ void update_entities(entity_list *entities)
 	}
 }
 
-void entity_move_pos(struct entity *e, int y, int x)
-{
-	if (floor_map_in_bounds(y, x) && !cur_floor->map[y][x].on) {
-		struct tile *tile = &cur_floor->map[e->posy][e->posx];
-		tile->on = NULL;
-		cur_floor->map[y][x].on = e;
-		e->posy = y;
-		e->posx = x;
-	}
-}
-
-void entity_move_pos_rel(struct entity *e, int y, int x)
-{
-	entity_move_pos(e, y + e->posy, x + e->posx);
-}
-
 void __draw_map(TickitRenderBuffer *rb, TickitPen *pen, struct tile (*map)[MAP_LINES][MAP_COLS])
 {
 	const int viewy = player.posy - VIEW_LINES / 2;
@@ -264,7 +236,7 @@ void __draw_map(TickitRenderBuffer *rb, TickitPen *pen, struct tile (*map)[MAP_L
 
 	for (int line = 0; line < VIEW_LINES; ++line) {
 		for (int col = 0; col < VIEW_COLS; ++col) {
-			struct tile tile = floor_map_at(map, viewy + line, viewx + col);
+			struct tile tile = floor_map_at(cur_floor, viewy + line, viewx + col);
 			whatdoicallthis(rb, pen, tile.r * tile.light + tile.dr, tile.g * tile.light + tile.dg, tile.b * tile.light + tile.db);
 			tickit_renderbuffer_text_at(rb, line, col, (char[]){tile.token, '\0'});
 		}

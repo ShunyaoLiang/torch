@@ -12,6 +12,7 @@
 
 #define back(arr) (arr[sizeof(arr)/sizeof(*arr)])
 
+/* Entity */
 struct entity;
 
 #define def_entity_fn(name) void name(struct entity *this)
@@ -25,6 +26,9 @@ struct entity {
 	entity_fn *destroy;
 	struct list_head list;
 };
+
+void entity_move_pos(struct entity *e, int y, int x);
+void entity_move_pos_rel(struct entity *e, int y, int x);
 
 /* Floor */
 struct tile {
@@ -48,7 +52,8 @@ struct floor {
 
 extern struct floor *cur_floor;
 
-struct tile floor_map_at(tile_map *map, int y, int x);
+struct tile floor_map_at(struct floor *floor, int y, int x);
+void        floor_map_set(struct floor *floor, int y, int x, struct tile tile);
 int         floor_map_in_bounds(int y, int x);
 void        floor_map_clear_lights(void);
 
