@@ -10,7 +10,10 @@ static void __draw_map(TickitRenderBuffer *rb, TickitPen *pen, struct tile (*map
 	for (int line = 0; line < VIEW_LINES; ++line) {
 		for (int col = 0; col < VIEW_COLS; ++col) {
 			struct tile tile = floor_map_at(cur_floor, viewy + line, viewx + col);
-			whatdoicallthis(rb, pen, tile.r * tile.light + tile.dr, tile.g * tile.light + tile.dg, tile.b * tile.light + tile.db);
+			uint8_t r = min(tile.r * tile.light + tile.dr, 255);
+			uint8_t g = min(tile.g * tile.light + tile.dg, 255);
+			uint8_t b = min(tile.b * tile.light + tile.db, 255);
+			whatdoicallthis(rb, pen, r, g, b);
 			tickit_renderbuffer_text_at(rb, line, col, (char[]){tile.token, '\0'});
 		}
 	}
@@ -30,8 +33,11 @@ static void __draw_entities(TickitRenderBuffer *rb, TickitPen *pen, entity_list 
 		if (line >= VIEW_LINES || col >= VIEW_COLS)
 			continue;
 		struct tile tile = floor_map_at(cur_floor, pos->posy, pos->posx);
-		fprintf(debug_log, "dr: %d dg: %d db: %d", tile.dr, tile.dg, tile.db);
-		whatdoicallthis(rb, pen, pos->r + tile.dr, pos->g + tile.dg, pos->b + tile.db);
+		fprintf(debug_log, "tile.light: ", tile.light);	
+		uint8_t r = min(pos->r * tile.light + tile.dr, 255);
+		uint8_t g = min(pos->g * tile.light + tile.dg, 255);
+		uint8_t b = min(pos->b * tile.light + tile.db, 255);
+		whatdoicallthis(rb, pen, r, g, b);
 		tickit_renderbuffer_text_at(rb, line, col, (char[]){ pos->token, '\0'});
 	}
 }

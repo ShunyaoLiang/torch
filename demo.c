@@ -37,14 +37,14 @@ def_entity_fn(demo_player_update)
 	int y = this->posy;
 	int x = this->posx;
 	struct tile (*map)[MAP_LINES][MAP_COLS] = &cur_floor->map;
-	const int radius = 10;
+	const int radius = 5;
 	for (int drawy = y - radius; drawy <= y + radius; ++drawy) {
 		for (int drawx = x - radius; drawx <= x + radius; ++drawx) {	
 			const int distance = sqrt((drawx - x) * (drawx - x) + (drawy - y) * (drawy - y)); 
 			if (!(distance <= radius) || !floor_map_in_bounds(drawy, drawx))
 				continue;
 
-			const float dlight = 0.3f / distance;
+			const float dlight = 0.3f / (distance + 1);
 			(*map)[drawy][drawx].light += dlight;
 			(*map)[drawy][drawx].dr += this->r * dlight;
 			(*map)[drawy][drawx].dg += this->g * dlight;
@@ -63,14 +63,14 @@ def_entity_fn(demo_torch_update)
 	y = this->posy;
 	x = this->posx;
 	struct tile (*map)[MAP_LINES][MAP_COLS] = &cur_floor->map;
-	const int radius = 16;
+	const int radius = 5;
 	for (int drawy = y - radius; drawy <= y + radius; ++drawy) {
 		for (int drawx = x - radius; drawx <= x + radius; ++drawx) {	
 			const int distance = floor(sqrt((drawx - x) * (drawx - x) + (drawy - y) * (drawy - y))); 
 			if (!(distance <= radius) || !floor_map_in_bounds(drawy, drawx))
 				continue;
 
-			const float dlight = 0.7f / distance / distance;
+			const float dlight = 0.7f / (distance + 1);
 			(*map)[drawy][drawx].light += dlight;
 			(*map)[drawy][drawx].dr += this->r * dlight;
 			(*map)[drawy][drawx].dg += this->g * dlight;

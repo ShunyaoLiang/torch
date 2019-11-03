@@ -8,6 +8,7 @@
 #include <stdint.h>
 
 #define back(arr) (arr[sizeof(arr)/sizeof(*arr)])
+#define min(a, b) (a < b ? a : b)
 
 typedef unsigned int uint;
 
