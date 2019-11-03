@@ -53,8 +53,8 @@ struct tile {
 	uint walk : 1;
 };
 
-#define MAP_LINES 20
-#define MAP_COLS  40
+#define MAP_LINES 100
+#define MAP_COLS  100
 
 typedef struct tile tile_map[MAP_LINES][MAP_COLS];
 typedef struct list_head entity_list;

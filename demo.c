@@ -37,7 +37,7 @@ def_entity_fn(demo_player_update)
 	int y = this->posy;
 	int x = this->posx;
 	struct tile (*map)[MAP_LINES][MAP_COLS] = &cur_floor->map;
-	const int radius = 4;
+	const int radius = 10;
 	for (int drawy = y - radius; drawy <= y + radius; ++drawy) {
 		for (int drawx = x - radius; drawx <= x + radius; ++drawx) {	
 			const int distance = sqrt((drawx - x) * (drawx - x) + (drawy - y) * (drawy - y)); 
@@ -63,7 +63,7 @@ def_entity_fn(demo_torch_update)
 	y = this->posy;
 	x = this->posx;
 	struct tile (*map)[MAP_LINES][MAP_COLS] = &cur_floor->map;
-	const int radius = 8;
+	const int radius = 16;
 	for (int drawy = y - radius; drawy <= y + radius; ++drawy) {
 		for (int drawx = x - radius; drawx <= x + radius; ++drawx) {	
 			const int distance = floor(sqrt((drawx - x) * (drawx - x) + (drawy - y) * (drawy - y))); 

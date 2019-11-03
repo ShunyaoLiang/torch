@@ -13,6 +13,7 @@ typedef cell cell_grid[MAP_LINES][MAP_COLS];
 static void __populate_grid(cell_grid grid, float rate);
 static void __iterate_grid(cell_grid grid, int birth, int survive);
 static int __cell_alive_neighbours(cell_grid grid, int y, int x);
+static int __cell_grid_at(cell_grid grid, int y, int x);
 
 static void __floor_write_grid(struct floor *floor, cell_grid grid);
 
@@ -82,16 +83,24 @@ static int __cell_alive_neighbours(cell_grid grid, int y, int x)
 		}
 */
 
-	grid[y-1][x-1] ? alive++ : 0;
-	grid[y-1][x] ? alive++ : 0;
-	grid[y-1][x+1] ? alive++ : 0;
-	grid[y][x-1] ? alive++ : 0;
-	grid[y][x+1] ? alive++ : 0;
-	grid[y+1][x-1] ? alive++ : 0;
-	grid[y+1][x] ? alive++ : 0;
-	grid[y+1][x+1] ? alive++ : 0;
-
+	__cell_grid_at(grid, y - 1, x - 1) ? alive++ : 0;
+	__cell_grid_at(grid, y - 1, x) ? alive++ : 0;
+	__cell_grid_at(grid, y - 1, x + 1) ? alive++ : 0;
+	__cell_grid_at(grid, y, x - 1) ? alive++ : 0;
+	__cell_grid_at(grid, y, x + 1) ? alive++ : 0;
+	__cell_grid_at(grid, y + 1, x - 1) ? alive++ : 0;
+	__cell_grid_at(grid, y + 1, x) ? alive++ : 0;
+	__cell_grid_at(grid, y + 1, x + 1) ? alive++ : 0;
+	
 	return alive;
+}
+
+static int __cell_grid_at(cell_grid grid, int y, int x)
+{
+	if (floor_map_in_bounds(y, x))
+		return grid[y][x];
+	else
+		return 1;
 }
 
 static void __floor_write_grid(struct floor *floor, cell_grid grid)
