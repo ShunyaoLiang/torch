@@ -109,7 +109,7 @@ void demo_add_entities(void)
 
 	floor_add_entity(cur_floor, t1);
 	floor_add_entity(cur_floor, t2);
-/*
+
 	struct entity rock = {
 		.r = 170, .g = 170, .b = 170,
 		.token = '?',
@@ -123,5 +123,5 @@ void demo_add_entities(void)
 	struct entity *r = malloc(sizeof(rock));
 	memcpy(r, &rock, sizeof(rock));
 	floor_add_entity(cur_floor, r);
-*/
+
 }
