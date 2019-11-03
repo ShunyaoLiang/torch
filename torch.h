@@ -9,6 +9,8 @@
 
 #define back(arr) (arr[sizeof(arr)/sizeof(*arr)])
 
+typedef unsigned int uint;
+
 extern FILE *debug_log;
 
 #define def_main_win_key_fn(name) void name(void)
@@ -48,6 +50,7 @@ struct tile {
 	int light;
 	int dr, dg, db;
 	struct entity *entity;
+	uint walk : 1;
 };
 
 #define MAP_LINES 20
@@ -63,10 +66,14 @@ struct floor {
 
 extern struct floor *cur_floor;
 
+enum floor_type {
+	CAVE,
+};
+
 struct tile floor_map_at(struct floor *floor, int y, int x);
 int         floor_map_in_bounds(int y, int x);
 void        floor_map_clear_lights(void);
-void        floor_map_generate(struct floor *floor);
+void        floor_map_generate(struct floor *floor, enum floor_type type);
 
 void floor_add_entity(struct floor *floor, struct entity *entity);
 

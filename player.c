@@ -4,7 +4,7 @@
 struct entity player = {
 	.r = 151, .g = 151, .b = 151,
 	.token = '@',
-	.posy = 17, .posx = 28,
+	.posy = 13, .posx = 14,
 	.update = demo_player_update,
 	.destroy = NULL,
 	.list = LIST_HEAD_INIT(player.list),

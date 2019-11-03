@@ -10,7 +10,7 @@ struct floor *cur_floor = &demo_floor;
 void demo_floor_load_map(const char *filename)
 {
 	FILE *mapfd = fopen(filename, "r");
-	floor_map_generate(&demo_floor);
+	floor_map_generate(&demo_floor, CAVE);
 
 	/* Make this not shit please. */
 	for (size_t line = 0; line < MAP_LINES; ++line) {
@@ -44,7 +44,7 @@ def_entity_fn(demo_player_update)
 			if (!(distance <= radius) || !floor_map_in_bounds(drawy, drawx))
 				continue;
 
-			const float dlight = 0.2f / distance;
+			const float dlight = 0.3f / distance;
 			(*map)[drawy][drawx].light += dlight;
 			(*map)[drawy][drawx].dr += this->r * dlight;
 			(*map)[drawy][drawx].dg += this->g * dlight;
@@ -109,4 +109,19 @@ void demo_add_entities(void)
 
 	floor_add_entity(cur_floor, t1);
 	floor_add_entity(cur_floor, t2);
+/*
+	struct entity rock = {
+		.r = 170, .g = 170, .b = 170,
+		.token = '?',
+		.posy = 13, 13,
+		.update = NULL,
+		.destroy = NULL,
+		.list = LIST_HEAD_INIT(torch.list),
+		.floor = cur_floor,
+	};
+
+	struct entity *r = malloc(sizeof(rock));
+	memcpy(r, &rock, sizeof(rock));
+	floor_add_entity(cur_floor, r);
+*/
 }
