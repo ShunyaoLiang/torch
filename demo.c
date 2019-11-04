@@ -87,7 +87,7 @@ def_entity_fn(demo_torch_destroy)
 void demo_add_entities(void)
 {
 	struct entity torch = {
-		.r = 0xe2, .g = 0x58, .b = 0x22,
+		.r = 0xe2, .g = /*0x58*/0, .b = 0x22,
 		.token = 't',
 		.posy = 12, .posx = 7,
 		.update = demo_torch_update,
@@ -101,7 +101,7 @@ void demo_add_entities(void)
 
 	memcpy(t1, &torch, sizeof(torch));
 	torch.r = 0x5e;
-	torch.g = 0xba;
+	torch.g = /*0xba*/0;
 	torch.b = 0xc9;
 	torch.posy = 12;
 	torch.posx = 8;

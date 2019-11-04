@@ -89,7 +89,6 @@ void floor_update_entities(struct floor *floor);
 
 void draw_map(TickitRenderBuffer *rb, TickitPen *pen);
 void draw_entities(TickitRenderBuffer *rb, TickitPen *pen);
-void whatdoicallthis(TickitRenderBuffer *rb, TickitPen *pen, uint8_t r, uint8_t g, uint8_t b);
 
 /* Main Window */
 TickitWindowEventFn main_win_on_key;

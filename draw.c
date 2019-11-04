@@ -2,6 +2,8 @@
 
 #include <tickit.h>
 
+void intern_pen_set_colour(TickitRenderBuffer *rb, TickitPen *pen, uint8_t r, uint8_t g, uint8_t b);
+
 static void __draw_map(TickitRenderBuffer *rb, TickitPen *pen, struct tile (*map)[MAP_LINES][MAP_COLS])
 {
 	const int viewy = player.posy - VIEW_LINES / 2;
@@ -13,7 +15,7 @@ static void __draw_map(TickitRenderBuffer *rb, TickitPen *pen, struct tile (*map
 			uint8_t r = min(tile.r * tile.light + tile.dr, 255);
 			uint8_t g = min(tile.g * tile.light + tile.dg, 255);
 			uint8_t b = min(tile.b * tile.light + tile.db, 255);
-			whatdoicallthis(rb, pen, r, g, b);
+			intern_pen_set_colour(rb, pen, r, g, b);
 			tickit_renderbuffer_text_at(rb, line, col, (char[]){tile.token, '\0'});
 		}
 	}
@@ -37,7 +39,7 @@ static void __draw_entities(TickitRenderBuffer *rb, TickitPen *pen, entity_list 
 		uint8_t r = min(pos->r * tile.light + tile.dr, 255);
 		uint8_t g = min(pos->g * tile.light + tile.dg, 255);
 		uint8_t b = min(pos->b * tile.light + tile.db, 255);
-		whatdoicallthis(rb, pen, r, g, b);
+		intern_pen_set_colour(rb, pen, r, g, b);
 		tickit_renderbuffer_text_at(rb, line, col, (char[]){ pos->token, '\0'});
 	}
 }
@@ -47,7 +49,7 @@ void draw_entities(TickitRenderBuffer *rb, TickitPen *pen)
 	__draw_entities(rb, pen, &cur_floor->entities);
 }
 
-void whatdoicallthis(TickitRenderBuffer *rb, TickitPen *pen, uint8_t r, uint8_t g, uint8_t b)
+void intern_pen_set_colour(TickitRenderBuffer *rb, TickitPen *pen, uint8_t r, uint8_t g, uint8_t b)
 {
 	tickit_pen_set_colour_attr(pen, TICKIT_PEN_FG, 1);
 	TickitPenRGB8 rgb = { .r = r, .g = g, .b = b };
