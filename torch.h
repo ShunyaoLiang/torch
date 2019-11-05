@@ -43,6 +43,10 @@ def_main_win_key_fn(player_move_left);
 def_main_win_key_fn(player_move_down);
 def_main_win_key_fn(player_move_up);
 def_main_win_key_fn(player_move_right);
+def_main_win_key_fn(player_move_upleft);
+def_main_win_key_fn(player_move_upright);
+def_main_win_key_fn(player_move_downleft);
+def_main_win_key_fn(player_move_downright);
 
 /* Floor */
 struct tile {
@@ -101,6 +105,8 @@ def_entity_fn(demo_player_destroy);
 def_entity_fn(demo_player_update);
 
 void demo_add_entities(void);
+
+def_main_win_key_fn(place_torch);
 
 extern struct floor demo_floor;
 

@@ -125,3 +125,26 @@ void demo_add_entities(void)
 	floor_add_entity(cur_floor, r);
 
 }
+
+struct entity demo_new_torch(int y, int x)
+{
+	struct entity torch = {
+		.r = 0xe2, .g = 0, .b = 0x22,
+		.token = 't',
+		.posy = y, .posx = x,
+		.update = demo_torch_update,
+		.destroy = demo_torch_destroy,
+		.list = LIST_HEAD_INIT(torch.list),
+		.floor = cur_floor,
+	};
+
+	return torch;
+}
+
+def_main_win_key_fn(place_torch)
+{
+	struct entity torch = demo_new_torch(player.posy, player.posx);
+	struct entity *t = malloc(sizeof(torch));
+	memcpy(t, &torch, sizeof(torch));
+	floor_add_entity(cur_floor, t);
+}
