@@ -1,5 +1,5 @@
 CC = clang
-CFLAGS = -Wall
+CFLAGS = -Wall -O3
 LDFLAGS = -ltickit -lm
 
 objects = torch.o entity.o player.o floor.o draw.o main_win.o demo.o
