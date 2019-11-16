@@ -44,7 +44,7 @@ def_entity_fn(demo_player_update)
 			if (!(distance <= radius) || !floor_map_in_bounds(drawy, drawx))
 				continue;
 
-			const float dlight = 0.3f / (distance + 1);
+			const float dlight = 0.3f / (distance + 1) / (distance + 1);
 			(*map)[drawy][drawx].light += dlight;
 			(*map)[drawy][drawx].dr += this->r * dlight;
 			(*map)[drawy][drawx].dg += this->g * dlight;
@@ -70,7 +70,7 @@ def_entity_fn(demo_torch_update)
 			if (!(distance <= radius) || !floor_map_in_bounds(drawy, drawx))
 				continue;
 
-			const float dlight = 0.7f / (distance + 1);
+			const float dlight = 0.7f / (distance + 1) / (distance + 1);
 			(*map)[drawy][drawx].light += dlight;
 			(*map)[drawy][drawx].dr += this->r * dlight;
 			(*map)[drawy][drawx].dg += this->g * dlight;

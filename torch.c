@@ -14,6 +14,8 @@ FILE *debug_log;
 int main(void)
 {
 	srand(time(NULL));
+	/* libtickit 0.3.2 only enables direct (true) colors when TERM is set to "xterm". */
+	putenv("TERM=xterm");
 	debug_log = fopen("debug_log", "w");
 
 	demo_floor_load_map("map");
