@@ -2,7 +2,7 @@
 
 #include <tickit.h>
 
-void intern_pen_set_colour(TickitRenderBuffer *rb, TickitPen *pen, uint8_t r, uint8_t g, uint8_t b);
+static void intern_pen_set_colour(TickitRenderBuffer *rb, TickitPen *pen, uint8_t r, uint8_t g, uint8_t b);
 
 static void __draw_map(TickitRenderBuffer *rb, TickitPen *pen, struct tile (*map)[MAP_LINES][MAP_COLS])
 {
@@ -35,7 +35,6 @@ static void __draw_entities(TickitRenderBuffer *rb, TickitPen *pen, entity_list 
 		if (line >= VIEW_LINES || col >= VIEW_COLS)
 			continue;
 		struct tile tile = floor_map_at(cur_floor, pos->posy, pos->posx);
-		fprintf(debug_log, "tile.light: ", tile.light);	
 		uint8_t r = min(pos->r * tile.light + tile.dr, 255);
 		uint8_t g = min(pos->g * tile.light + tile.dg, 255);
 		uint8_t b = min(pos->b * tile.light + tile.db, 255);
@@ -49,7 +48,7 @@ void draw_entities(TickitRenderBuffer *rb, TickitPen *pen)
 	__draw_entities(rb, pen, &cur_floor->entities);
 }
 
-void intern_pen_set_colour(TickitRenderBuffer *rb, TickitPen *pen, uint8_t r, uint8_t g, uint8_t b)
+static void intern_pen_set_colour(TickitRenderBuffer *rb, TickitPen *pen, uint8_t r, uint8_t g, uint8_t b)
 {
 	tickit_pen_set_colour_attr(pen, TICKIT_PEN_FG, 1);
 	TickitPenRGB8 rgb = { .r = r, .g = g, .b = b };

@@ -7,6 +7,8 @@
 struct floor demo_floor;
 struct floor *cur_floor = &demo_floor;
 
+static void cast_light(struct tile (*map)[MAP_LINES][MAP_COLS], int radius, int y, int x, float bright, int r, int g, int b);
+
 void demo_floor_load_map(const char *filename)
 {
 	FILE *mapfd = fopen(filename, "r");
@@ -37,20 +39,7 @@ def_entity_fn(demo_player_update)
 	int y = this->posy;
 	int x = this->posx;
 	struct tile (*map)[MAP_LINES][MAP_COLS] = &cur_floor->map;
-	const int radius = 5;
-	for (int drawy = y - radius; drawy <= y + radius; ++drawy) {
-		for (int drawx = x - radius; drawx <= x + radius; ++drawx) {	
-			const int distance = sqrt((drawx - x) * (drawx - x) + (drawy - y) * (drawy - y)); 
-			if (!(distance <= radius) || !floor_map_in_bounds(drawy, drawx))
-				continue;
-
-			const float dlight = 0.3f / (distance + 1) / (distance + 1);
-			(*map)[drawy][drawx].light += dlight;
-			(*map)[drawy][drawx].dr += this->r * dlight;
-			(*map)[drawy][drawx].dg += this->g * dlight;
-			(*map)[drawy][drawx].db += this->b * dlight;
-		}
-	}
+	cast_light(map, 5, y, x, 0.3f, this->r, this->g, this->b);
 }
 
 def_entity_fn(demo_torch_update)
@@ -63,20 +52,7 @@ def_entity_fn(demo_torch_update)
 	y = this->posy;
 	x = this->posx;
 	struct tile (*map)[MAP_LINES][MAP_COLS] = &cur_floor->map;
-	const int radius = 5;
-	for (int drawy = y - radius; drawy <= y + radius; ++drawy) {
-		for (int drawx = x - radius; drawx <= x + radius; ++drawx) {	
-			const int distance = floor(sqrt((drawx - x) * (drawx - x) + (drawy - y) * (drawy - y))); 
-			if (!(distance <= radius) || !floor_map_in_bounds(drawy, drawx))
-				continue;
-
-			const float dlight = 0.7f / (distance + 1) / (distance + 1);
-			(*map)[drawy][drawx].light += dlight;
-			(*map)[drawy][drawx].dr += this->r * dlight;
-			(*map)[drawy][drawx].dg += this->g * dlight;
-			(*map)[drawy][drawx].db += this->b * dlight;
-		}
-	}
+	cast_light(map, 5, y, x, 0.7f, this->r, this->g, this->b);
 }
 
 def_entity_fn(demo_torch_destroy)
@@ -147,4 +123,21 @@ def_main_win_key_fn(place_torch)
 	struct entity *t = malloc(sizeof(torch));
 	memcpy(t, &torch, sizeof(torch));
 	floor_add_entity(cur_floor, t);
+}
+
+static void cast_light(struct tile (*map)[MAP_LINES][MAP_COLS], int radius, int y, int x, float bright, int r, int g, int b)
+{
+	for (int drawy = y - radius; drawy <= y + radius; ++drawy) {
+		for (int drawx = x - radius; drawx <= x + radius; ++drawx) {	
+			const int distance = sqrt((drawx - x) * (drawx - x) + (drawy - y) * (drawy - y)); 
+			if (!(distance <= radius) || !floor_map_in_bounds(drawy, drawx))
+				continue;
+
+			const float dlight = bright / (distance + 1) / (distance + 1);
+			(*map)[drawy][drawx].light += dlight;
+			(*map)[drawy][drawx].dr += r * dlight;
+			(*map)[drawy][drawx].dg += g * dlight;
+			(*map)[drawy][drawx].db += b * dlight;
+		}
+	}
 }

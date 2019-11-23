@@ -6,9 +6,6 @@
 #include <time.h>
 #include <stdlib.h>
 
-TickitWindowEventFn main_win_on_key;
-TickitWindowEventFn main_win_draw;
-
 FILE *debug_log;
 
 int main(void)
