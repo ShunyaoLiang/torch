@@ -16,7 +16,7 @@ static void __draw_map(TickitRenderBuffer *rb, TickitPen *pen, struct tile (*map
 			uint8_t g = min(tile.g * tile.light + tile.dg, 255);
 			uint8_t b = min(tile.b * tile.light + tile.db, 255);
 			intern_pen_set_colour(rb, pen, r, g, b);
-			tickit_renderbuffer_text_at(rb, line, col, (char[]){tile.token, '\0'});
+			tickit_renderbuffer_char_at(rb, line, col, tile.token);
 		}
 	}
 }
@@ -39,7 +39,7 @@ static void __draw_entities(TickitRenderBuffer *rb, TickitPen *pen, entity_list 
 		uint8_t g = min(pos->g * tile.light + tile.dg, 255);
 		uint8_t b = min(pos->b * tile.light + tile.db, 255);
 		intern_pen_set_colour(rb, pen, r, g, b);
-		tickit_renderbuffer_text_at(rb, line, col, (char[]){ pos->token, '\0'});
+		tickit_renderbuffer_char_at(rb, line, col, pos->token);
 	}
 }
 
