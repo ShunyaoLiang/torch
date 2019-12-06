@@ -4,7 +4,7 @@
 
 static void intern_pen_set_colour(TickitRenderBuffer *rb, TickitPen *pen, uint8_t r, uint8_t g, uint8_t b);
 
-static void __draw_map(TickitRenderBuffer *rb, TickitPen *pen, struct tile (*map)[MAP_LINES][MAP_COLS])
+static void __draw_map(TickitRenderBuffer *rb, TickitPen *pen, tile_map *map)
 {
 	const int viewy = player.posy - VIEW_LINES / 2;
 	const int viewx = player.posx - VIEW_COLS / 2;

@@ -7,7 +7,7 @@
 struct floor demo_floor;
 struct floor *cur_floor = &demo_floor;
 
-static void cast_light(struct tile (*map)[MAP_LINES][MAP_COLS], int radius, int y, int x, float bright, int r, int g, int b);
+static void cast_light(tile_map *map, int radius, int y, int x, float bright, int r, int g, int b);
 
 void demo_floor_load_map(const char *filename)
 {
@@ -125,7 +125,7 @@ def_main_win_key_fn(place_torch)
 	floor_add_entity(cur_floor, t);
 }
 
-static void cast_light(struct tile (*map)[MAP_LINES][MAP_COLS], int radius, int y, int x, float bright, int r, int g, int b)
+static void cast_light(tile_map *map, int radius, int y, int x, float bright, int r, int g, int b)
 {
 	for (int drawy = y - radius; drawy <= y + radius; ++drawy) {
 		for (int drawx = x - radius; drawx <= x + radius; ++drawx) {	
