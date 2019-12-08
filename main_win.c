@@ -45,6 +45,8 @@ int main_win_draw(TickitWindow *win, TickitEventFlags flags, void *info, void *u
 	draw_map(rb, pen);
 	draw_entities(rb, pen);
 
+	tickit_pen_unref(pen);
+
 	return 1;
 }
 
