@@ -127,11 +127,6 @@ struct tile floor_map_at(struct floor *floor, int y, int x)
 		return (struct tile){ .token = ' ' };
 }
 
-void floor_map_set(struct floor *floor, int y, int x, struct tile tile)
-{
-	(floor->map)[y][x] = tile;
-}
-
 int floor_map_in_bounds(int y, int x)
 {
 	return y >= 0 && y < MAP_LINES && x >= 0 && x < MAP_COLS;
