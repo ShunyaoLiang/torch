@@ -195,7 +195,7 @@ static void __cast_light(tile_map *map, int x, int y, int radius, int row,
 			if ((uint)(dx * dx + dy * dy) < radius2 && !drawn_to[ay][ax]) {
 				drawn_to[ay][ax] = 1;
 				int distance = sqrt(dx * dx + dy * dy);
-				const float dlight = bright / (distance + 1);
+				const float dlight = bright / (distance + 1) / (distance + 1);
 				struct tile tile = (*map)[ay][ax];
 				(*map)[ay][ax].light = dlight + tile.light;
 				(*map)[ay][ax].dr = min(r * dlight + tile.dr, 255);
