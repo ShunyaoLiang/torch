@@ -8,6 +8,10 @@ struct floor demo_floor;
 struct floor *cur_floor = &demo_floor;
 
 static void cast_light(tile_map *map, int radius, int y, int x, float bright, int r, int g, int b);
+static void __cast_light(tile_map *map,int x, int y, int radius, int row,
+	float start_slope, float end_slope, int xx, int xy, int yx, int yy,
+	float bright, int r, int g, int b);
+
 
 void demo_floor_load_map(const char *filename)
 {
@@ -102,10 +106,18 @@ void demo_add_entities(void)
 
 }
 
+#include <stdint.h>
+#include <stdlib.h>
+
 struct entity demo_new_torch(int y, int x)
 {
+	uint8_t r = rand() % 256;
+	uint8_t g = rand() % 256;
+	uint8_t b = rand() % 256;
+
 	struct entity torch = {
-		.r = 0xe2, .g = 0, .b = 0x22,
+		//.r = 0xe2, .g = 0, .b = 0x22,
+		.r = r, .g = g, .b = b,
 		.token = 't',
 		.posy = y, .posx = x,
 		.update = demo_torch_update,
@@ -125,19 +137,91 @@ def_main_win_key_fn(place_torch)
 	floor_add_entity(cur_floor, t);
 }
 
+int drawn_to[MAP_LINES][MAP_COLS] = { 0 };
+
 static void cast_light(tile_map *map, int radius, int y, int x, float bright, int r, int g, int b)
 {
-	for (int drawy = y - radius; drawy <= y + radius; ++drawy) {
-		for (int drawx = x - radius; drawx <= x + radius; ++drawx) {	
-			const int distance = sqrt((drawx - x) * (drawx - x) + (drawy - y) * (drawy - y)); 
-			if (!(distance <= radius) || !floor_map_in_bounds(drawy, drawx))
-				continue;
+	__cast_light(map, x, y, radius, 1, 1.0, 0.0, 1, 0, 0, 1, bright, r, g, b);
+	__cast_light(map, x, y, radius, 1, 1.0, 0.0, 0, 1, 1, 0, bright, r, g, b);
+	__cast_light(map, x, y, radius, 1, 1.0, 0.0, 0, -1, 1, 0, bright, r, g, b);
+	__cast_light(map, x, y, radius, 1, 1.0, 0.0, -1, 0, 0, 1, bright, r, g, b);
+	__cast_light(map, x, y, radius, 1, 1.0, 0.0, -1, 0, 0, -1, bright, r, g, b);
+	__cast_light(map, x, y, radius, 1, 1.0, 0.0, 0, -1, -1, 0, bright, r, g, b);
+	__cast_light(map, x, y, radius, 1, 1.0, 0.0, 0, 1, -1, 0, bright, r, g, b);
+	__cast_light(map, x, y, radius, 1, 1.0, 0.0, 1, 0, 0, -1, bright, r, g, b);
 
-			const float dlight = bright / (distance + 1) / (distance + 1);
-			(*map)[drawy][drawx].light += dlight;
-			(*map)[drawy][drawx].dr += r * dlight;
-			(*map)[drawy][drawx].dg += g * dlight;
-			(*map)[drawy][drawx].db += b * dlight;
+	struct tile tile = (*map)[y][x];
+	(*map)[y][x].light = bright + tile.light;
+	(*map)[y][x].dr = min(r * bright + tile.dr, 255);
+	(*map)[y][x].dg = min(g * bright + tile.dg, 255);
+	(*map)[y][x].db = min(b * bright + tile.db, 255);
+
+	memset(drawn_to, 0, (sizeof(drawn_to[0][0]) * MAP_LINES * MAP_COLS));
+}
+
+static void __cast_light(tile_map *map, int x, int y, int radius, int row,
+	float start_slope, float end_slope, int xx, int xy, int yx, int yy,
+	float bright, int r, int g, int b)
+{
+	if (start_slope < end_slope) {
+		return;
+	}
+
+	float next_start_slope = start_slope;
+	for (int i = row; i <= radius; ++i) {
+		int blocked = 0;
+		for (int dx = -i, dy = -i; dx <= 0; dx++) {
+			float l_slope = (dx - 0.5) / (dy + 0.5);
+			float r_slope = (dx + 0.5) / (dy - 0.5);
+			if (start_slope < r_slope) {
+				continue;
+			} else if (end_slope > l_slope) {
+				break;
+			}
+
+			int sax = dx * xx + dy * xy;
+			int say = dx * yx + dy * yy;
+			if ((sax < 0 && abs(sax) > x) ||
+				(say < 0 && abs(say) > y)) {
+				continue;
+			}
+			uint ax = x + sax;
+			uint ay = y + say;
+			if (!floor_map_in_bounds(ay, ax)) {
+				continue;
+			}
+
+			uint radius2 = radius * radius;
+			if ((uint)(dx * dx + dy * dy) < radius2 && !drawn_to[ay][ax]) {
+				drawn_to[ay][ax] = 1;
+				int distance = sqrt(dx * dx + dy * dy);
+				const float dlight = bright / (distance + 1);
+				struct tile tile = (*map)[ay][ax];
+				(*map)[ay][ax].light = dlight + tile.light;
+				(*map)[ay][ax].dr = min(r * dlight + tile.dr, 255);
+				(*map)[ay][ax].dg = min(g * dlight + tile.dg, 255);
+				(*map)[ay][ax].db = min(b * dlight + tile.db, 255);
+			}
+
+			struct tile tile = (*map)[ay][ax];
+			if (blocked) {
+				if (!tile.walk || tile.entity) {
+					next_start_slope = r_slope;
+					continue;
+				} else {
+					blocked = 0;
+					start_slope = next_start_slope;
+				}
+			} else if (!tile.walk || tile.entity) {
+				blocked = 1;
+				next_start_slope = r_slope;
+				__cast_light(map, x, y, radius, i + 1,
+					start_slope, l_slope, xx, xy, yx, yy,
+					bright, r, g, b);
+			}
+		}
+		if (blocked) {
+			break;
 		}
 	}
 }
