@@ -8,7 +8,7 @@ struct floor demo_floor;
 struct floor *cur_floor = &demo_floor;
 
 static void cast_light(tile_map *map, int radius, int y, int x, float bright, int r, int g, int b);
-static void __cast_light(tile_map *map,int x, int y, int radius, int row,
+static void cast_octant(tile_map *map,int x, int y, int radius, int row,
 	float start_slope, float end_slope, int xx, int xy, int yx, int yy,
 	float bright, int r, int g, int b);
 
@@ -141,14 +141,14 @@ int drawn_to[MAP_LINES][MAP_COLS] = { 0 };
 
 static void cast_light(tile_map *map, int radius, int y, int x, float bright, int r, int g, int b)
 {
-	__cast_light(map, x, y, radius, 1, 1.0, 0.0, 1, 0, 0, 1, bright, r, g, b);
-	__cast_light(map, x, y, radius, 1, 1.0, 0.0, 0, 1, 1, 0, bright, r, g, b);
-	__cast_light(map, x, y, radius, 1, 1.0, 0.0, 0, -1, 1, 0, bright, r, g, b);
-	__cast_light(map, x, y, radius, 1, 1.0, 0.0, -1, 0, 0, 1, bright, r, g, b);
-	__cast_light(map, x, y, radius, 1, 1.0, 0.0, -1, 0, 0, -1, bright, r, g, b);
-	__cast_light(map, x, y, radius, 1, 1.0, 0.0, 0, -1, -1, 0, bright, r, g, b);
-	__cast_light(map, x, y, radius, 1, 1.0, 0.0, 0, 1, -1, 0, bright, r, g, b);
-	__cast_light(map, x, y, radius, 1, 1.0, 0.0, 1, 0, 0, -1, bright, r, g, b);
+	cast_octant(map, x, y, radius, 1, 1.0, 0.0, 1, 0, 0, 1, bright, r, g, b);
+	cast_octant(map, x, y, radius, 1, 1.0, 0.0, 0, 1, 1, 0, bright, r, g, b);
+	cast_octant(map, x, y, radius, 1, 1.0, 0.0, 0, -1, 1, 0, bright, r, g, b);
+	cast_octant(map, x, y, radius, 1, 1.0, 0.0, -1, 0, 0, 1, bright, r, g, b);
+	cast_octant(map, x, y, radius, 1, 1.0, 0.0, -1, 0, 0, -1, bright, r, g, b);
+	cast_octant(map, x, y, radius, 1, 1.0, 0.0, 0, -1, -1, 0, bright, r, g, b);
+	cast_octant(map, x, y, radius, 1, 1.0, 0.0, 0, 1, -1, 0, bright, r, g, b);
+	cast_octant(map, x, y, radius, 1, 1.0, 0.0, 1, 0, 0, -1, bright, r, g, b);
 
 	struct tile tile = (*map)[y][x];
 	(*map)[y][x].light = bright + tile.light;
@@ -159,7 +159,7 @@ static void cast_light(tile_map *map, int radius, int y, int x, float bright, in
 	memset(drawn_to, 0, (sizeof(drawn_to[0][0]) * MAP_LINES * MAP_COLS));
 }
 
-static void __cast_light(tile_map *map, int x, int y, int radius, int row,
+static void cast_octant(tile_map *map, int x, int y, int radius, int row,
 	float start_slope, float end_slope, int xx, int xy, int yx, int yy,
 	float bright, int r, int g, int b)
 {
@@ -215,7 +215,7 @@ static void __cast_light(tile_map *map, int x, int y, int radius, int row,
 			} else if (!tile.walk || tile.entity) {
 				blocked = 1;
 				next_start_slope = r_slope;
-				__cast_light(map, x, y, radius, i + 1,
+				cast_octant(map, x, y, radius, i + 1,
 					start_slope, l_slope, xx, xy, yx, yy,
 					bright, r, g, b);
 			}
