@@ -9,6 +9,7 @@
 
 #define back(arr) (arr[sizeof(arr)/sizeof(*arr)])
 #define min(a, b) (a < b ? a : b)
+#define max(a, b) (a > b ? a : b)
 
 typedef unsigned int uint;
 
@@ -97,6 +98,7 @@ void draw_entities(TickitRenderBuffer *rb, TickitPen *pen);
 /* Main Window */
 TickitWindowEventFn main_win_on_key;
 TickitWindowEventFn main_win_draw;
+TickitWindowEventFn main_win_resize;
 
 /* Demo */
 void demo_floor_load_map(const char *filename);

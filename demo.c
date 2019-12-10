@@ -56,7 +56,7 @@ def_entity_fn(demo_torch_update)
 	y = this->posy;
 	x = this->posx;
 	struct tile (*map)[MAP_LINES][MAP_COLS] = &cur_floor->map;
-	cast_light(map, 5, y, x, 0.7f, this->r, this->g, this->b);
+	cast_light(map, 6, y, x, 1.f, this->r, this->g, this->b);
 }
 
 def_entity_fn(demo_torch_destroy)
