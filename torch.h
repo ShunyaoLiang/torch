@@ -8,6 +8,10 @@
 #include <stdint.h>
 
 #define back(arr) (arr[sizeof(arr)/sizeof(*arr)])
+#define min(a, b) (a < b ? a : b)
+#define max(a, b) (a > b ? a : b)
+
+typedef unsigned int uint;
 
 extern FILE *debug_log;
 
@@ -40,6 +44,10 @@ def_main_win_key_fn(player_move_left);
 def_main_win_key_fn(player_move_down);
 def_main_win_key_fn(player_move_up);
 def_main_win_key_fn(player_move_right);
+def_main_win_key_fn(player_move_upleft);
+def_main_win_key_fn(player_move_upright);
+def_main_win_key_fn(player_move_downleft);
+def_main_win_key_fn(player_move_downright);
 
 /* Floor */
 struct tile {
@@ -48,10 +56,11 @@ struct tile {
 	int light;
 	int dr, dg, db;
 	struct entity *entity;
+	uint walk : 1;
 };
 
-#define MAP_LINES 20
-#define MAP_COLS  40
+#define MAP_LINES 100
+#define MAP_COLS  100
 
 typedef struct tile tile_map[MAP_LINES][MAP_COLS];
 typedef struct list_head entity_list;
@@ -63,9 +72,14 @@ struct floor {
 
 extern struct floor *cur_floor;
 
+enum floor_type {
+	CAVE,
+};
+
 struct tile floor_map_at(struct floor *floor, int y, int x);
 int         floor_map_in_bounds(int y, int x);
 void        floor_map_clear_lights(void);
+void        floor_map_generate(struct floor *floor, enum floor_type type);
 
 void floor_add_entity(struct floor *floor, struct entity *entity);
 
@@ -80,11 +94,11 @@ void floor_update_entities(struct floor *floor);
 
 void draw_map(TickitRenderBuffer *rb, TickitPen *pen);
 void draw_entities(TickitRenderBuffer *rb, TickitPen *pen);
-void whatdoicallthis(TickitRenderBuffer *rb, TickitPen *pen, uint8_t r, uint8_t g, uint8_t b);
 
 /* Main Window */
 TickitWindowEventFn main_win_on_key;
 TickitWindowEventFn main_win_draw;
+TickitWindowEventFn main_win_resize;
 
 /* Demo */
 void demo_floor_load_map(const char *filename);
@@ -93,6 +107,8 @@ def_entity_fn(demo_player_destroy);
 def_entity_fn(demo_player_update);
 
 void demo_add_entities(void);
+
+def_main_win_key_fn(place_torch);
 
 extern struct floor demo_floor;
 
