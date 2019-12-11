@@ -10,6 +10,7 @@
 #define back(arr) (arr[sizeof(arr)/sizeof(*arr)])
 #define min(a, b) (a < b ? a : b)
 #define max(a, b) (a > b ? a : b)
+#define clamp(v, lo, hi) ((v < lo) ? lo : (hi < v) ? hi : v)
 
 typedef unsigned int uint;
 
