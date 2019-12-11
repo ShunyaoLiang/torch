@@ -6,8 +6,8 @@ static void intern_pen_set_colour(TickitRenderBuffer *rb, TickitPen *pen, uint8_
 
 static void __draw_map(TickitRenderBuffer *rb, TickitPen *pen, tile_map *map)
 {
-	const int viewy = max(player.posy - VIEW_LINES / 2, 0);
-	const int viewx = max(player.posx - VIEW_COLS / 2, 0);
+	const int viewy = clamp(player.posy - VIEW_LINES / 2, 0, MAP_LINES - VIEW_LINES);
+	const int viewx = clamp(player.posx - VIEW_COLS / 2, 0, MAP_COLS - VIEW_COLS);
 
 	for (int line = 0; line < VIEW_LINES; ++line) {
 		for (int col = 0; col < VIEW_COLS; ++col) {
@@ -30,8 +30,8 @@ static void __draw_entities(TickitRenderBuffer *rb, TickitPen *pen, entity_list 
 {
 	struct entity *pos;
 	list_for_each_entry(pos, entities, list) {
-		int line = pos->posy - max((player.posy - VIEW_LINES / 2), 0);
-		int col = pos->posx - max((player.posx - VIEW_COLS / 2), 0);
+		int line = pos->posy - clamp((player.posy - VIEW_LINES / 2), 0, MAP_LINES - VIEW_LINES);
+		int col = pos->posx - clamp((player.posx - VIEW_COLS / 2), 0, MAP_COLS - VIEW_COLS);
 		if (line >= VIEW_LINES || col >= VIEW_COLS)
 			continue;
 		struct tile tile = floor_map_at(cur_floor, pos->posy, pos->posx);
