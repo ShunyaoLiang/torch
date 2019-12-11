@@ -50,5 +50,7 @@ int main_win_draw(TickitWindow *win, TickitEventFlags flags, void *info, void *u
 	return 1;
 }
 
-
-
+int main_win_resize(TickitWindow *win, TickitEventFlags flags, void *info, void *user)
+{
+	return 1;
+}
