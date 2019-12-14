@@ -34,6 +34,7 @@ struct entity {
 	entity_fn *destroy;
 	struct list_head list;
 	struct floor *floor;
+	uint blocks_light : 1;
 };
 
 void entity_move_pos(struct entity *e, int y, int x);

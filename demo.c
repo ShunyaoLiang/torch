@@ -191,6 +191,7 @@ struct entity demo_new_torch(int y, int x)
 		.destroy = demo_torch_destroy,
 		.list = LIST_HEAD_INIT(torch.list),
 		.floor = cur_floor,
+		.blocks_light = 0,
 	};
 
 	return torch;
@@ -241,6 +242,7 @@ struct entity demo_new_snake(int y, int x)
 		.destroy = NULL,
 		.list = LIST_HEAD_INIT(snake.list),
 		.floor = &demo_floor,
+		.blocks_light = 0,
 	};
 
 	return snake;
@@ -309,14 +311,14 @@ static void raycast_octant_at(tile_map map, int y, int x, int radius, int row,
 
 			struct tile tile = map[ay][ax];
 			if (blocked) {
-				if (!tile.walk || tile.entity) {
+				if (!tile.walk || (tile.entity ? tile.entity->blocks_light : tile.entity)) {
 					next_start_slope = tr_slope;
 					continue;
 				} else {
 					blocked = false;
 					start_slope = next_start_slope;
 				}
-			} else if (!tile.walk || tile.entity) {
+			} else if (!tile.walk || (tile.entity ? tile.entity->blocks_light : tile.entity)) {
 				blocked = true;
 				next_start_slope = tr_slope;
 				raycast_octant_at(map, y, x, radius, row + 1,

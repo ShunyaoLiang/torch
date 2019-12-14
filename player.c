@@ -10,6 +10,7 @@ struct entity player = {
 	.update = demo_player_update,
 	.destroy = NULL,
 	.list = LIST_HEAD_INIT(player.list),
+	.blocks_light = 1,
 };
 
 bool player_lantern_on = true;

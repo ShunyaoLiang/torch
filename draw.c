@@ -46,7 +46,7 @@ void draw_map(TickitRenderBuffer *rb, TickitPen *pen)
 
 static void __draw_entities(TickitRenderBuffer *rb, TickitPen *pen, entity_list *entities)
 {
-	raycast_at(cur_floor->map, player.posy, player.posx, 10, &set_visible, NULL);
+	raycast_at(cur_floor->map, player.posy, player.posx, 100, &set_visible, NULL);
 
 	struct entity *pos;
 	list_for_each_entry(pos, entities, list) {
