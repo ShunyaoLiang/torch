@@ -24,7 +24,7 @@ void demo_place_torch(int y, int x);
 
 void demo_floor_load_map(const char *filename)
 {
-	FILE *mapfp = fopen(filename, "r");
+//	FILE *mapfp = fopen(filename, "r");
 	floor_map_generate(&demo_floor, CAVE);
 
 	/* Make this not shit please. */
@@ -41,10 +41,10 @@ void demo_floor_load_map(const char *filename)
 				demo_floor.map[line][col].b = 51;
 			}
 		}
-		(void)fgetc(mapfp);
+//		(void)fgetc(mapfp);
 	}
 
-	fclose(mapfp);
+//	fclose(mapfp);
 
 	for (int i = 0; i < 20; ++i) {
 		int y = rand() % MAP_LINES;
