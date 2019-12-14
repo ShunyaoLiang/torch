@@ -20,7 +20,7 @@ static void raycast_octant_at(tile_map map, int y, int x, int radius, int row,
 	void *context);
 
 struct entity demo_new_snake(int y, int x);
-void demo_place_torch(int y, int x);
+void demo_place_snake(int y, int x);
 
 void demo_floor_load_map(const char *filename)
 {
@@ -49,7 +49,7 @@ void demo_floor_load_map(const char *filename)
 	for (int i = 0; i < 20; ++i) {
 		int y = rand() % MAP_LINES;
 		int x = rand() % MAP_COLS;
-		demo_place_torch(y, x);
+		demo_place_snake(y, x);
 	}
 }
 
@@ -97,7 +97,7 @@ def_entity_fn(demo_player_update)
 		}
 	}
 	//cast_light(this->floor->map, y, x, 6, 0.3f, this->r, this->g, this->b);
-	raycast_at(this->floor->map, y, x, 6, &cast_light_at,
+	raycast_at(this->floor->map, y, x, 50, &cast_light_at,
 		&(struct light_info) {
 			.map = &this->floor->map,
 			.bright = bright, .y = y, .x = x,
@@ -116,7 +116,7 @@ def_entity_fn(demo_torch_update)
 	y = this->posy;
 	x = this->posx;
 	//cast_light(this->floor->map, y, x, 6, 1.f, this->r, this->g, this->b);
-	raycast_at(this->floor->map, y, x, 6, &cast_light_at,
+	raycast_at(this->floor->map, y, x, 50, &cast_light_at,
 		&(struct light_info) {
 			.map = &this->floor->map,
 			.bright = 1.f, .y = y, .x = x, 
@@ -205,7 +205,7 @@ def_main_win_key_fn(place_torch)
 	floor_add_entity(cur_floor, t);
 }
 
-void demo_place_torch(int y, int x)
+void demo_place_snake(int y, int x)
 {
 	struct entity snake = demo_new_snake(y, x);
 	struct entity *s = malloc(sizeof(snake));

@@ -8,7 +8,7 @@ all: $(objects)
 	$(CC) $(objects) $(CFLAGS) $(LDFLAGS) -o bin/torch
 
 debug: src/torch.h lib/list.h
-	$(CC) *.c -g $(CFLAGS) $(LDFLAGS) -o bin/debug
+	$(CC) src/*.c -g $(CFLAGS) $(LDFLAGS) -o bin/debug
 
 clean:
 	rm -f $(objects)

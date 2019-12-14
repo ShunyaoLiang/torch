@@ -17,7 +17,7 @@ static void __draw_map(TickitRenderBuffer *rb, TickitPen *pen, tile_map *map)
 	const int viewy = clamp(player.posy - VIEW_LINES / 2, 0, MAP_LINES - VIEW_LINES);
 	const int viewx = clamp(player.posx - VIEW_COLS / 2, 0, MAP_COLS - VIEW_COLS);
 
-	raycast_at(cur_floor->map, player.posy, player.posx, 10, &set_visible, NULL);
+	raycast_at(cur_floor->map, player.posy, player.posx, 100, &set_visible, NULL);
 
 	for (int line = 0; line < VIEW_LINES; ++line) {
 		for (int col = 0; col < VIEW_COLS; ++col) {
