@@ -11,4 +11,4 @@ debug: torch.h list.h bin/libtickit.a
 	$(CC) *.c -g $(CFLAGS) $(LDFLAGS) -o bin/debug
 
 clean:
-	rm $(objects)
+	rm -f $(objects)
