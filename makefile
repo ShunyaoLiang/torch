@@ -1,8 +1,8 @@
 CC = clang
-CFLAGS = -Wall -O3
+CFLAGS = -Wall -O3 -I lib/
 LDFLAGS = -ltermkey -lunibilium -Lbin -ltickit -lm
 
-objects = torch.o entity.o player.o floor.o draw.o main_win.o demo.o
+objects = $(addprefix src/, torch.o entity.o player.o floor.o draw.o main_win.o demo.o)
 
 all: $(objects) bin/libtickit.a
 	$(CC) $(objects) $(CFLAGS) $(LDFLAGS) -o bin/torch
