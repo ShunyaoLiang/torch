@@ -13,8 +13,8 @@ int main(void)
 	srand(time(NULL));
 	debug_log = fopen("debug_log", "w");
 
-	demo_floor_load_map("map");
 	INIT_LIST_HEAD(&demo_floor.entities);
+	demo_floor_load_map("map");
 	floor_add_entity(cur_floor, &player);
 
 	demo_add_entities();

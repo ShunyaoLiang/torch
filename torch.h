@@ -6,6 +6,7 @@
 #include <tickit.h>
 #include <stdio.h>
 #include <stdint.h>
+#include <stdbool.h>
 
 #define back(arr) (arr[sizeof(arr)/sizeof(*arr)])
 #define min(a, b) (a < b ? a : b)
@@ -40,6 +41,9 @@ void entity_move_pos_rel(struct entity *e, int y, int x);
 
 /* Player */
 extern struct entity player;
+extern bool player_lantern_on;
+extern int player_fuel;
+extern int player_torches;
 
 def_main_win_key_fn(player_move_left);
 def_main_win_key_fn(player_move_down);
@@ -49,12 +53,13 @@ def_main_win_key_fn(player_move_upleft);
 def_main_win_key_fn(player_move_upright);
 def_main_win_key_fn(player_move_downleft);
 def_main_win_key_fn(player_move_downright);
+def_main_win_key_fn(player_toggle_lantern);
 
 /* Floor */
 struct tile {
 	uint8_t r, g, b;
 	char token;
-	int light;
+	float light;
 	int dr, dg, db;
 	struct entity *entity;
 	uint walk : 1;
@@ -110,6 +115,7 @@ def_entity_fn(demo_player_update);
 void demo_add_entities(void);
 
 def_main_win_key_fn(place_torch);
+def_main_win_key_fn(demo_get_fuel);
 
 extern struct floor demo_floor;
 
