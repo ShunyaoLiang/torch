@@ -54,7 +54,7 @@ def_main_win_key_fn(player_move_downright);
 struct tile {
 	uint8_t r, g, b;
 	char token;
-	int light;
+	float light;
 	int dr, dg, db;
 	struct entity *entity;
 	uint walk : 1;
