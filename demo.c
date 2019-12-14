@@ -15,13 +15,8 @@ static void cast_octant(tile_map map, int y, int x, int radius, float bright,
 	int r, int g, int b, int row, float start_slope, float end_slope,
 	int xx, int xy, int yx, int yy);
 
-#define def_raycast_fn(name) void name(int y, int x, void *context)
-typedef def_raycast_fn(raycast_fn);
-
-void raycast_octant_at(tile_map map, int y, int x, int radius, int row,
+static void raycast_octant_at(tile_map map, int y, int x, int radius, int row,
 	float start_slope, float end_slope, int octant, raycast_fn *callback,
-	void *context);
-void raycast_at(tile_map map, int y, int x, int radius, raycast_fn *callback,
 	void *context);
 
 struct entity demo_new_snake(int y, int x);
@@ -264,7 +259,7 @@ void raycast_at(tile_map map, int y, int x, int radius, raycast_fn *callback,
 			callback, context);
 }
 
-void raycast_octant_at(tile_map map, int y, int x, int radius, int row,
+static void raycast_octant_at(tile_map map, int y, int x, int radius, int row,
 	float start_slope, float end_slope, int octant, raycast_fn *callback,
 	void *context)
 {

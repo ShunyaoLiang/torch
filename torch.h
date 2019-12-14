@@ -119,4 +119,10 @@ def_main_win_key_fn(demo_get_fuel);
 
 extern struct floor demo_floor;
 
+#define def_raycast_fn(name) void name(int y, int x, void *context)
+typedef def_raycast_fn(raycast_fn);
+
+void raycast_at(tile_map map, int y, int x, int radius, raycast_fn *callback,
+	void *context);
+
 #endif
