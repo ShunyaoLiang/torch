@@ -1,6 +1,6 @@
 CC = clang
 CFLAGS = -Wall -O3
-LDFLAGS = -ltermkey -lunibilium -Llib -ltickit -lm
+LDFLAGS = -ltermkey -lunibilium -Lbin -ltickit -lm
 
 objects = torch.o entity.o player.o floor.o draw.o main_win.o demo.o
 
