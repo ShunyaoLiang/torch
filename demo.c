@@ -24,6 +24,9 @@ void raycast_octant_at(tile_map map, int y, int x, int radius, int row,
 void raycast_at(tile_map map, int y, int x, int radius, raycast_fn *callback,
 	void *context);
 
+struct entity demo_new_snake(int y, int x);
+void demo_place_torch(int y, int x);
+
 void demo_floor_load_map(const char *filename)
 {
 	FILE *mapfp = fopen(filename, "r");
@@ -39,14 +42,20 @@ void demo_floor_load_map(const char *filename)
 			demo_floor.map[line][col].b = 51;
 
 			if (demo_floor.map[line][col].token != '.') {
-				demo_floor.map[line][col].g = 150;
-				demo_floor.map[line][col].b = 150;
+				demo_floor.map[line][col].g = 51;
+				demo_floor.map[line][col].b = 51;
 			}
 		}
 		(void)fgetc(mapfp);
 	}
 
 	fclose(mapfp);
+
+	for (int i = 0; i < 20; ++i) {
+		int y = rand() % MAP_LINES;
+		int x = rand() % MAP_COLS;
+		demo_place_torch(y, x);
+	}
 }
 
 int drawn_to[MAP_LINES][MAP_COLS] = { 0 };
@@ -57,6 +66,8 @@ struct light_info {
 	int y, x;
 	int r, g, b;
 };
+
+#include <assert.h>
 
 def_raycast_fn(cast_light_at)
 {
@@ -70,7 +81,8 @@ def_raycast_fn(cast_light_at)
 	if (y == info->y && x == info->x) {
 		(*info->map)[y][x].light += info->bright;
 	} else {
-		(*info->map)[y][x].light += floor(dlight);
+		(*info->map)[y][x].light += dlight;
+//		assert((*info->map)[y][x].light > 0);
 		(*info->map)[y][x].dr = min(info->r * dlight + tile.dr, 255);
 		(*info->map)[y][x].dg = min(info->g * dlight + tile.dg, 255);
 		(*info->map)[y][x].db = min(info->b * dlight + tile.db, 255);
@@ -81,11 +93,19 @@ def_entity_fn(demo_player_update)
 {
 	int y = this->posy;
 	int x = this->posx;
+	float bright = player_lantern_on && player_fuel > 0 ? 0.5f : 0.1f;
+	if (player_lantern_on) {
+		if (player_fuel > 0) {
+			player_fuel--;
+		} else {
+			player_lantern_on = false;
+		}
+	}
 	//cast_light(this->floor->map, y, x, 6, 0.3f, this->r, this->g, this->b);
 	raycast_at(this->floor->map, y, x, 6, &cast_light_at,
 		&(struct light_info) {
 			.map = &this->floor->map,
-			.bright = 0.3f, .y = y, .x = x,
+			.bright = bright, .y = y, .x = x,
 			.r = this->r, .g = this->g, .b = this->b,
 		});
 	memset(drawn_to, 0, (sizeof(drawn_to[0][0]) * MAP_LINES * MAP_COLS));
@@ -96,7 +116,7 @@ def_entity_fn(demo_torch_update)
 	int y = (rand() % 3 - 1);
 	int x = (rand() % 3 - 1);
 
-	entity_move_pos_rel(this, y, x);
+//	entity_move_pos_rel(this, y, x);
 
 	y = this->posy;
 	x = this->posx;
@@ -187,6 +207,48 @@ def_main_win_key_fn(place_torch)
 	struct entity *t = malloc(sizeof(torch));
 	memcpy(t, &torch, sizeof(torch));
 	floor_add_entity(cur_floor, t);
+}
+
+void demo_place_torch(int y, int x)
+{
+	struct entity snake = demo_new_snake(y, x);
+	struct entity *s = malloc(sizeof(snake));
+	memcpy(s, &snake, sizeof(snake));
+	floor_add_entity(&demo_floor, s);
+}
+
+def_entity_fn(demo_snake_update)
+{
+	int y = 0;
+	int x = 0;
+	if (this->posy < player.posy)
+		y = 1;
+	else if (this->posy > player.posy)
+		y = -1;
+	if (this->posx < player.posx)
+		x = 1;
+	else if (this->posx > player.posx)
+		x = -1;
+
+	entity_move_pos_rel(this, y, x);
+
+	if (floor_map_at(this->floor, this->posy, this->posx).light > 0.2)
+		entity_move_pos_rel(this, -y, -x);
+}
+
+struct entity demo_new_snake(int y, int x)
+{
+	struct entity snake = {
+		.r = 0xa, .g = 0xCA, .b = 0xa,
+		.token = 's',
+		.posy = y, .posx = x,
+		.update = demo_snake_update,
+		.destroy = NULL,
+		.list = LIST_HEAD_INIT(snake.list),
+		.floor = &demo_floor,
+	};
+
+	return snake;
 }
 
 void raycast_octant_at(tile_map map, int y, int x, int radius, int row,
@@ -360,4 +422,9 @@ static void cast_octant(tile_map map, int y, int x, int radius, float bright,
 			break;
 		}
 	}
+}
+
+def_main_win_key_fn(demo_get_fuel)
+{
+	player_fuel += 10;
 }

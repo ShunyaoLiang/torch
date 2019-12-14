@@ -12,6 +12,8 @@ main_win_key_fn *main_win_keymap[] = {
 	['b'] = player_move_downleft,
 	['n'] = player_move_downright,
 	['t'] = place_torch,
+	['e'] = player_toggle_lantern,
+	['E'] = demo_get_fuel,
 	[255] = NULL,
 };
 
