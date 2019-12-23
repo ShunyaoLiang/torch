@@ -17,6 +17,9 @@ static void get_terminal_size();
 static void handle_resize(int signal);
 
 static void ui_buffer_realloc(void);
+static bool ui_buffer_in_bounds(int line, int col);
+
+static void move_cursor(int line, int col);
 
 int ui_lines;
 int ui_cols;
@@ -62,6 +65,11 @@ static void ui_buffer_realloc(void)
 		ui_buffer = realloc(ui_buffer, sizeof(struct ui_cell *) * ui_lines);
 		if (!ui_buffer)
 			goto fail;
+		for (int line = old_lines; line < ui_lines; ++line) {
+			ui_buffer[line] = malloc(sizeof(struct ui_cell) * ui_cols);
+			if (!ui_buffer[line])
+				goto fail;
+		}
 	}
 
 	if (ui_cols != old_cols) {
@@ -74,6 +82,9 @@ static void ui_buffer_realloc(void)
 				goto fail;
 		}
 	}
+
+	old_lines = ui_lines;
+	old_cols = ui_cols;
 
 	return;
 
@@ -99,13 +110,21 @@ void ui_dimensions(int *lines, int *cols)
 
 void ui_draw_at(int line, int col, struct ui_cell cell)
 {
-	if (line >= 0 && line < ui_lines && col >= 0 && col < ui_cols) {
+	if (ui_buffer_in_bounds(line, col)) {
 		ui_buffer[line][col] = cell;
 	}
 }
 
+static bool ui_buffer_in_bounds(int line, int col)
+{
+	return line >= 0 && line < ui_lines && col >= 0 && col < ui_cols;
+}
+
 void ui_flush(void)
 {
+	/* Move cursor to top left. */
+	move_cursor(0, 0);
+
 	struct ui_cell last = ui_buffer[0][0];
 	for (int line = 0; line < ui_lines; ++line) {
 		for (int col = 0; col < ui_cols; ++col) {
@@ -122,6 +141,12 @@ void ui_flush(void)
 		if (line != ui_lines - 1)
 			putchar('\n');
 	}
+}
+
+static void move_cursor(int line, int col)
+{
+	if (ui_buffer_in_bounds(line, col))
+		printf(CSI "%d;%dH", line, col);
 }
 
 struct ui_event ui_poll_event(void)
