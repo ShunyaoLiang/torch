@@ -13,6 +13,8 @@
 #define CSI "\e["
 #define ALTERNATE_SCREEN "?1049h"
 #define NORMAL_SCREEN "?1049l"
+#define HIDE_CURSOR "?25l"
+#define SHOW_CURSOR "?25h"
 
 static void get_terminal_size();
 static void handle_resize(int signal);
@@ -39,8 +41,7 @@ void ui_init(void)
 
 	ui_buffer_realloc();
 
-	printf("\e[38;2;0;0;0;48;2;0;0;0m");
-	printf(CSI ALTERNATE_SCREEN);
+	printf(CSI ALTERNATE_SCREEN CSI "38;2;0;0;0;48;2;0;0;0m" CSI HIDE_CURSOR CSI "H" CSI "J");
 
 	termkey_instance = termkey_new(STDIN_FILENO, TERMKEY_FLAG_UTF8);
 }
@@ -120,7 +121,7 @@ void ui_quit(void)
 {
 	termkey_destroy(termkey_instance);
 
-	printf(CSI NORMAL_SCREEN);
+	printf(CSI SHOW_CURSOR CSI NORMAL_SCREEN);
 }
 
 void ui_dimensions(int *lines, int *cols)
