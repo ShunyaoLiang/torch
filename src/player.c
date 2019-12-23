@@ -13,7 +13,7 @@ struct entity player = {
 	.blocks_light = 1,
 };
 
-bool player_lantern_on = true;
+bool player_lantern_on = false;
 int player_fuel = 100;
 int player_torches = 0;
 

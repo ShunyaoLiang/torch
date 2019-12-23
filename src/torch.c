@@ -21,9 +21,9 @@ int main(void)
 
 	ui_init();
 
-	struct ui_event event;
-	ui_flush();
-	while (event = ui_poll_event(), event.key != 'Q') {
+	struct ui_event event = { .key = 'e' };
+
+	do {
 		if (main_win_keymap[event.key])
 			main_win_keymap[event.key]();
 
@@ -34,7 +34,7 @@ int main(void)
 		draw_entities();
 
 		ui_flush();
-	}
+	} while (event = ui_poll_event(), event.key != 'Q');
 
 	ui_quit();
 

@@ -149,16 +149,15 @@ void ui_flush(void)
 	static char sgr_buf[100]; // look mum it's a SGR string
 	struct ui_cell this, last = sentinel_cell;
 
-	printf("\e[H");
-
 	for (int line = 0; line < ui_lines; ++line) {
+		move_cursor(line, 1);
 		for (int col = 0; col < ui_cols; ++col) {
 			this = ui_buffer[line][col];
 
 			int nparams = 0, sgr_params[10]; // rgb foreground only
 			int sgrlen = 0;
 
-			if(this.fg.r != last.fg.r || this.fg.g != last.fg.g || this.fg.b != last.fg.b) {
+			if (this.fg.r != last.fg.r || this.fg.g != last.fg.g || this.fg.b != last.fg.b) {
 				sgr_params[nparams++] = 38;
 				sgrlen += 3;
 				sgr_params[nparams++] = 2;
@@ -171,7 +170,7 @@ void ui_flush(void)
 				sgrlen += snprintf(NULL, 0, "%d;", this.fg.b);
 			}
 
-			if(this.bg.r != last.bg.r || this.bg.g != last.bg.g || this.bg.b != last.bg.b) {
+			if (this.bg.r != last.bg.r || this.bg.g != last.bg.g || this.bg.b != last.bg.b) {
 				sgr_params[nparams++] = 48;
 				sgrlen += 3;
 				sgr_params[nparams++] = 2;
@@ -184,13 +183,13 @@ void ui_flush(void)
 				sgrlen += snprintf(NULL, 0, "%d;", this.bg.b);
 			}
 
-			if(sgrlen) {
+			if (sgrlen) {
 				char *iter = sgr_buf;
 
 				iter += sprintf(iter, "\e[");
-				for(int i = 0; i < nparams-1; i++)
+				for (int i = 0; i < nparams-1; i++)
 					iter += sprintf(iter, "%d;", sgr_params[i]);
-				if(nparams > 0) // no semicolon for last parameter
+				if (nparams > 0) // no semicolon for last parameter
 					iter += sprintf(iter, "%d", sgr_params[nparams-1]);
 				sprintf(iter, "m");
 			} else
@@ -200,7 +199,6 @@ void ui_flush(void)
 
 			last = this;
 		}
-		puts("\r");
 	}
 	sentinel_cell = this;
 }
@@ -208,7 +206,14 @@ void ui_flush(void)
 static void move_cursor(int line, int col)
 {
 	if (ui_buffer_in_bounds(line, col))
-		printf(CSI "%d;%dH", line, col);
+		if (line == 1 && col == 1)
+			printf(CSI "H");
+		else if (col == 1)
+			printf(CSI "%dH", line);
+		else
+			printf(CSI "%d;%dH", line, col);
+	else
+		fprintf(stderr, "move_cursor: %d,%d are not in bounds [0:%d,%d)", line, col, ui_lines, ui_cols);
 }
 
 struct ui_event ui_poll_event(void)
