@@ -24,6 +24,8 @@ static void move_cursor(int line, int col);
 int ui_lines;
 int ui_cols;
 
+static struct ui_cell sentinel_cell;
+
 struct ui_cell **ui_buffer;
 
 TermKey *termkey_instance;
@@ -35,9 +37,10 @@ void ui_init(void)
 
 	ui_buffer_realloc();
 
-	termkey_instance = termkey_new(STDIN_FILENO, TERMKEY_FLAG_UTF8);
-
+	printf("\e[38;2;0;0;0;48;2;0;0;0m");
 	printf(CSI ALTERNATE_SCREEN);
+
+	termkey_instance = termkey_new(STDIN_FILENO, TERMKEY_FLAG_UTF8);
 }
 
 static void get_terminal_size()
@@ -125,25 +128,63 @@ static bool ui_buffer_in_bounds(int line, int col)
 
 void ui_flush(void)
 {
-	/* Move cursor to top left. */
-	move_cursor(0, 0);
+	static char sgr_buf[100]; // look mum it's a SGR string
+	struct ui_cell this, last = sentinel_cell;
 
-	struct ui_cell last = ui_buffer[0][0];
+	printf("\e[H");
+
 	for (int line = 0; line < ui_lines; ++line) {
 		for (int col = 0; col < ui_cols; ++col) {
-			printf("\e[38;2;%03d;%03d;%03d;48;2;%03d;%03d;%03dm%s",
-			       ui_buffer[line][col].fg.r,
-			       ui_buffer[line][col].fg.g,
-			       ui_buffer[line][col].fg.b,
-			       ui_buffer[line][col].bg.r,
-			       ui_buffer[line][col].bg.g,
-			       ui_buffer[line][col].bg.b,
-			       ui_buffer[line][col].codepoint);
-			last = ui_buffer[line][col];
+			this = ui_buffer[line][col];
+
+			int nparams = 0, sgr_params[5]; // rgb foreground only
+			int sgrlen = 0;
+
+			if(this.fg.r != last.fg.r || this.fg.g != last.fg.g || this.fg.b != last.fg.b) {
+				sgr_params[nparams++] = 38;
+				sgrlen += 3;
+				sgr_params[nparams++] = 2;
+				sgrlen += 2;
+				sgr_params[nparams++] = this.fg.r;
+				sgrlen += snprintf(NULL, 0, "%d;", this.fg.r);
+				sgr_params[nparams++] = this.fg.g;
+				sgrlen += snprintf(NULL, 0, "%d;", this.fg.g);
+				sgr_params[nparams++] = this.fg.b;
+				sgrlen += snprintf(NULL, 0, "%d;", this.fg.b);
+			}
+
+			if(this.bg.r != last.bg.r || this.bg.g != last.bg.g || this.bg.b != last.bg.b) {
+				sgr_params[nparams++] = 48;
+				sgrlen += 3;
+				sgr_params[nparams++] = 2;
+				sgrlen += 2;
+				sgr_params[nparams++] = this.bg.r;
+				sgrlen += snprintf(NULL, 0, "%d;", this.bg.r);
+				sgr_params[nparams++] = this.bg.g;
+				sgrlen += snprintf(NULL, 0, "%d;", this.bg.g);
+				sgr_params[nparams++] = this.bg.b;
+				sgrlen += snprintf(NULL, 0, "%d;", this.bg.b);
+			}
+
+			if(sgrlen) {
+				char *iter = sgr_buf;
+
+				iter += sprintf(iter, "\e[");
+				for(int i = 0; i < nparams-1; i++)
+					iter += sprintf(iter, "%d;", sgr_params[i]);
+				if(nparams > 0) // no semicolon for last parameter
+					iter += sprintf(iter, "%d", sgr_params[nparams-1]);
+				sprintf(iter, "m");
+			} else
+				sgr_buf[0] = '\0';
+
+			printf("%s%s", sgr_buf, this.codepoint);
+
+			last = this;
 		}
-		if (line != ui_lines - 1)
-			putchar('\n');
+		puts("\r");
 	}
+	sentinel_cell = this;
 }
 
 static void move_cursor(int line, int col)

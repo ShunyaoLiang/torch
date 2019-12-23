@@ -1,6 +1,6 @@
 CC = clang
 CFLAGS = -Wall -I lib/ -I lib/termkey -I src/ -D HAVE_UNIBILIUM
-LDFLAGS = -ltickit -lm -lunibilium
+LDFLAGS = -lm -lunibilium
 
 objects = $(addprefix src/, torch.o entity.o player.o floor.o draw.o main_win.o demo.o $(addprefix ui/, term.o sdl.o)) $(addprefix lib/termkey/, driver-csi.o driver-ti.o termkey.o)
 
