@@ -62,6 +62,9 @@ static void ui_buffer_realloc(void)
 	if (!old_lines) {
 		ui_buffer = malloc(sizeof(struct ui_cell *) * ui_lines);
 	} else if (ui_lines != old_lines) {
+		for (int line = old_lines - 1; line >= ui_lines; --line) {
+			free(ui_buffer[line]);
+		}
 		ui_buffer = realloc(ui_buffer, sizeof(struct ui_cell *) * ui_lines);
 		if (!ui_buffer)
 			goto fail;
