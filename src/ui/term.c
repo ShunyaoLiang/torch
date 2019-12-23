@@ -1,5 +1,6 @@
 #include "ui.h"
 #include "termkey.h"
+#include "torch.h"
 
 #include <sys/ioctl.h>
 #include <unistd.h>
@@ -17,6 +18,7 @@ static void get_terminal_size();
 static void handle_resize(int signal);
 
 static void ui_buffer_realloc(void);
+static void __ui_buffer_realloc(int lines, int cols);
 static bool ui_buffer_in_bounds(int line, int col);
 
 static void move_cursor(int line, int col);
@@ -59,38 +61,53 @@ static void handle_resize(int signal)
 
 static void ui_buffer_realloc(void)
 {
+	__ui_buffer_realloc(ui_lines, ui_cols);
+}
+
+static void __ui_buffer_realloc(int lines, int cols)
+{
+	/* Keep track of the previous buffer size. */
 	static int old_lines = 0, old_cols = 0;
 
-	/* Allocate memory the first time. */
+	/* Initial allocation. Should only be ran once. */
 	if (!old_lines) {
-		ui_buffer = malloc(sizeof(struct ui_cell *) * ui_lines);
-	} else if (ui_lines != old_lines) {
+		ui_buffer = malloc(sizeof(struct ui_cell *) * lines);
+		if (!ui_buffer)
+			goto fail;
+
+		for (int line = 0; line < lines; ++line) {
+			ui_buffer[line] = malloc(sizeof(struct ui_cell) * cols);
+			if (!ui_buffer[line])
+				goto fail;
+		}
+	} else {
+		/* Free all uneeded lines. */
 		for (int line = old_lines - 1; line >= ui_lines; --line) {
 			free(ui_buffer[line]);
 		}
-		ui_buffer = realloc(ui_buffer, sizeof(struct ui_cell *) * ui_lines);
+
+		/* Resize the top array of pointers. */
+		ui_buffer = realloc(ui_buffer, sizeof(struct ui_cell *) * lines);
 		if (!ui_buffer)
 			goto fail;
-		for (int line = old_lines; line < ui_lines; ++line) {
-			ui_buffer[line] = malloc(sizeof(struct ui_cell) * ui_cols);
+
+		/* Resize existing lines. */
+		for (int line = 0; line < min(old_lines, lines); ++line) {
+			ui_buffer[line] = realloc(ui_buffer[line], sizeof(struct ui_cell) * cols);
+			if (!ui_buffer[line])
+				goto fail;
+		}
+
+		/* Allocate all new lines. */
+		for (int line = old_lines; line < lines; ++line) {
+			ui_buffer[line] = malloc(sizeof(struct ui_cell) * cols);
 			if (!ui_buffer[line])
 				goto fail;
 		}
 	}
 
-	if (ui_cols != old_cols) {
-		for (int line = 0; line < ui_lines; ++line) {
-			if (line < old_lines)
-				ui_buffer[line] = realloc(ui_buffer[line], sizeof(struct ui_cell) * ui_cols);
-			else
-				ui_buffer[line] = malloc(sizeof(struct ui_cell) * ui_cols);
-			if (!ui_buffer[line])
-				goto fail;
-		}
-	}
-
-	old_lines = ui_lines;
-	old_cols = ui_cols;
+	old_lines = lines;
+	old_cols = cols;
 
 	return;
 
@@ -137,7 +154,7 @@ void ui_flush(void)
 		for (int col = 0; col < ui_cols; ++col) {
 			this = ui_buffer[line][col];
 
-			int nparams = 0, sgr_params[5]; // rgb foreground only
+			int nparams = 0, sgr_params[10]; // rgb foreground only
 			int sgrlen = 0;
 
 			if(this.fg.r != last.fg.r || this.fg.g != last.fg.g || this.fg.b != last.fg.b) {
