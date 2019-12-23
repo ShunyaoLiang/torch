@@ -1,9 +1,7 @@
 #include "torch.h"
+#include "ui.h"
 
-#include <tickit.h>
 #include <string.h>
-
-static void intern_pen_set_colour(TickitRenderBuffer *rb, TickitPen *pen, uint8_t r, uint8_t g, uint8_t b);
 
 static int visibility[MAP_LINES][MAP_COLS] = { 0 };
 
@@ -12,7 +10,7 @@ static def_raycast_fn(set_visible)
 	visibility[y][x] = 1;
 }
 
-static void __draw_map(TickitRenderBuffer *rb, TickitPen *pen, tile_map *map)
+void draw_map(void)
 {
 	const int viewy = clamp(player.posy - VIEW_LINES / 2, 0, MAP_LINES - VIEW_LINES);
 	const int viewx = clamp(player.posx - VIEW_COLS / 2, 0, MAP_COLS - VIEW_COLS);
@@ -27,11 +25,25 @@ static void __draw_map(TickitRenderBuffer *rb, TickitPen *pen, tile_map *map)
 			uint8_t b = min(tile.b * tile.light + tile.db, 255);
 
 			if (visibility[viewy + line][viewx + col]) {
-				intern_pen_set_colour(rb, pen, r, g, b);
-				tickit_renderbuffer_char_at(rb, line, col, tile.token);
+				ui_draw_at(line, col, (struct ui_cell){
+					.codepoint = { [0] = tile.token },
+					.fg = {
+						.r = r, .g = g, .b = b,
+					},
+					.bg = {
+						.r = 0, .g = 0, .b = 0,
+					},
+				});
 			} else {
-				intern_pen_set_colour(rb, pen, 0, 0, 0);
-				tickit_renderbuffer_char_at(rb, line, col, ' ');
+				ui_draw_at(line, col, (struct ui_cell) {
+					.codepoint = " ",
+					.fg = {
+						.r = 0, .g = 0, .b = 0,
+					},
+					.bg = {
+						.r = 0, .g = 0, .b = 0,
+					},
+				});
 			}
 		}
 	}
@@ -39,17 +51,12 @@ static void __draw_map(TickitRenderBuffer *rb, TickitPen *pen, tile_map *map)
 	memset(visibility, 0, (sizeof(visibility[MAP_LINES][MAP_COLS]) * MAP_LINES * MAP_COLS));
 }
 
-void draw_map(TickitRenderBuffer *rb, TickitPen *pen)
-{
-	__draw_map(rb, pen, &cur_floor->map);
-}
-
-static void __draw_entities(TickitRenderBuffer *rb, TickitPen *pen, entity_list *entities)
+void draw_entities(void)
 {
 	raycast_at(cur_floor->map, player.posy, player.posx, 100, &set_visible, NULL);
 
 	struct entity *pos;
-	list_for_each_entry(pos, entities, list) {
+	list_for_each_entry(pos, &cur_floor->entities, list) {
 		int line = pos->posy - clamp((player.posy - VIEW_LINES / 2), 0, MAP_LINES - VIEW_LINES);
 		int col = pos->posx - clamp((player.posx - VIEW_COLS / 2), 0, MAP_COLS - VIEW_COLS);
 		if (line >= VIEW_LINES || col >= VIEW_COLS)
@@ -60,26 +67,27 @@ static void __draw_entities(TickitRenderBuffer *rb, TickitPen *pen, entity_list 
 		uint8_t b = min(pos->b * tile.light + tile.db, 255);
 
 		if (visibility[pos->posy][pos->posx]) {
-			intern_pen_set_colour(rb, pen, r, g, b);
-			tickit_renderbuffer_char_at(rb, line, col, pos->token);
+			ui_draw_at(line, col, (struct ui_cell) {
+				.codepoint = { [0] = pos->token },
+				.fg = {
+					.r = r, .g = g, .b = b,
+				},
+				.bg = {
+					.r = 0, .g = 0, .b = 0,
+				},
+			});
 		} else {
-			intern_pen_set_colour(rb, pen, 0, 0, 0);
-			tickit_renderbuffer_char_at(rb, line, col, ' ');
+			ui_draw_at(line, col, (struct ui_cell) {
+				.codepoint = " ",
+				.fg = {
+					.r = 0, .g = 0, .b = 0,
+				},
+				.bg = {
+					.r = 0, .g = 0, .b = 0,
+				},
+			});
 		}
 	}
 
 	memset(visibility, 0, (sizeof(visibility[MAP_LINES][MAP_COLS]) * MAP_LINES * MAP_COLS));
-}
-
-void draw_entities(TickitRenderBuffer *rb, TickitPen *pen)
-{
-	__draw_entities(rb, pen, &cur_floor->entities);
-}
-
-static void intern_pen_set_colour(TickitRenderBuffer *rb, TickitPen *pen, uint8_t r, uint8_t g, uint8_t b)
-{
-	tickit_pen_set_colour_attr(pen, TICKIT_PEN_FG, 1);
-	TickitPenRGB8 rgb = { .r = r, .g = g, .b = b };
-	tickit_pen_set_colour_attr_rgb8(pen, TICKIT_PEN_FG, rgb);
-	tickit_renderbuffer_setpen(rb, pen);
 }

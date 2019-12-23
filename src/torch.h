@@ -3,7 +3,6 @@
 
 #include "list.h"
 
-#include <tickit.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
@@ -99,13 +98,12 @@ void floor_update_entities(struct floor *floor);
 #define VIEW_LINES 23
 #define VIEW_COLS  79
 
-void draw_map(TickitRenderBuffer *rb, TickitPen *pen);
-void draw_entities(TickitRenderBuffer *rb, TickitPen *pen);
+void draw_map(void);
+void draw_entities(void);
 
 /* Main Window */
-TickitWindowEventFn main_win_on_key;
-TickitWindowEventFn main_win_draw;
-TickitWindowEventFn main_win_resize;
+
+extern main_win_key_fn *main_win_keymap[];
 
 /* Demo */
 void demo_floor_load_map(const char *filename);

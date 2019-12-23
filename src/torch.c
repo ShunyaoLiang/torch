@@ -1,6 +1,6 @@
 #include "torch.h"
+#include "ui.h"
 
-#include <tickit.h>
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
@@ -19,19 +19,24 @@ int main(void)
 
 	demo_add_entities();
 
-	Tickit *tickit_instance = tickit_new_stdio();
-	
-	TickitWindow *main_win = tickit_get_rootwin(tickit_instance);
-	tickit_window_bind_event(main_win, TICKIT_WINDOW_ON_KEY, 0, main_win_on_key, NULL);
-	tickit_window_bind_event(main_win, TICKIT_WINDOW_ON_EXPOSE, 0, main_win_draw, NULL);
-	tickit_window_bind_event(main_win, TICKIT_WINDOW_ON_GEOMCHANGE, 0, main_win_resize, NULL);
+	ui_init();
 
-	tickit_term_setctl_int(tickit_get_term(tickit_instance), TICKIT_TERMCTL_COLORS, (1<<24));
-	tickit_run(tickit_instance);
+	struct ui_event event;
+	ui_flush();
+	while (event = ui_poll_event(), event.key != 'Q') {
+		if (main_win_keymap[event.key])
+			main_win_keymap[event.key]();
 
-	tickit_window_close(main_win);
+		floor_map_clear_lights();
+		floor_update_entities(cur_floor);
 
-	tickit_unref(tickit_instance);
+		draw_map();
+		draw_entities();
+
+		ui_flush();
+	}
+
+	ui_quit();
 
 	return EXIT_SUCCESS;
 }
