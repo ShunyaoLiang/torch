@@ -12,13 +12,16 @@ static def_raycast_fn(set_visible)
 
 void draw_map(void)
 {
-	const int viewy = clamp(player.posy - VIEW_LINES / 2, 0, MAP_LINES - VIEW_LINES);
-	const int viewx = clamp(player.posx - VIEW_COLS / 2, 0, MAP_COLS - VIEW_COLS);
+	int view_lines, view_cols;
+	ui_dimensions(&view_lines, &view_cols);
+
+	const int viewy = clamp(player.posy - view_lines / 2, 0, MAP_LINES - view_lines);
+	const int viewx = clamp(player.posx - view_cols / 2, 0, MAP_COLS - view_cols);
 
 	raycast_at(cur_floor->map, player.posy, player.posx, 100, &set_visible, NULL);
 
-	for (int line = 0; line < VIEW_LINES; ++line) {
-		for (int col = 0; col < VIEW_COLS; ++col) {
+	for (int line = 0; line < view_lines; ++line) {
+		for (int col = 0; col < view_cols; ++col) {
 			struct tile tile = floor_map_at(cur_floor, viewy + line, viewx + col);
 			uint8_t r = min(tile.r * tile.light + tile.dr, 255);
 			uint8_t g = min(tile.g * tile.light + tile.dg, 255);
@@ -53,13 +56,16 @@ void draw_map(void)
 
 void draw_entities(void)
 {
+	int view_lines, view_cols;
+	ui_dimensions(&view_lines, &view_cols);
+
 	raycast_at(cur_floor->map, player.posy, player.posx, 100, &set_visible, NULL);
 
 	struct entity *pos;
 	list_for_each_entry(pos, &cur_floor->entities, list) {
-		int line = pos->posy - clamp((player.posy - VIEW_LINES / 2), 0, MAP_LINES - VIEW_LINES);
-		int col = pos->posx - clamp((player.posx - VIEW_COLS / 2), 0, MAP_COLS - VIEW_COLS);
-		if (line >= VIEW_LINES || col >= VIEW_COLS)
+		int line = pos->posy - clamp((player.posy - view_lines / 2), 0, MAP_LINES - view_lines);
+		int col = pos->posx - clamp((player.posx - view_cols / 2), 0, MAP_COLS - view_cols);
+		if (line >= view_lines || col >= view_cols)
 			continue;
 		struct tile tile = floor_map_at(cur_floor, pos->posy, pos->posx);
 		uint8_t r = min(pos->r * tile.light + tile.dr, 255);
