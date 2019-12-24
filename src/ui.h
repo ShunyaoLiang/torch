@@ -10,17 +10,13 @@ void ui_dimensions(int *lines, int *cols);
 
 struct ui_cell {
 	char codepoint[5];
-	struct {
-		uint8_t r, g, b;
-	} fg, bg;
-#if 0
-	unsigned int bold          : 1,
-	             underline     : 1,
-	             italic        : 1,
-	             reverse_video : 1,
-	             blink         : 1,
-	             strikethrough : 1;
-#endif
+	struct { uint8_t r, g, b; } fg, bg;
+	unsigned int bold        : 1,
+	             italic      : 1,
+	             under_      : 1,
+	             blink       : 1,
+	             reverse_vid : 1,
+	             strikethru  : 1;
 };
 
 void ui_draw_at(int line, int col, struct ui_cell cell);

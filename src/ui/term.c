@@ -41,7 +41,7 @@ void ui_init(void)
 
 	ui_buffer_realloc();
 
-	printf(CSI ALTERNATE_SCREEN CSI "38;2;0;0;0;48;2;0;0;0m" CSI HIDE_CURSOR CSI "H" CSI "J");
+	printf(CSI ALTERNATE_SCREEN CSI "38;2;0;0;0;48;2;0;0;0;22;23;24;25;27;29m" CSI HIDE_CURSOR CSI "H" CSI "J");
 
 	termkey_instance = termkey_new(STDIN_FILENO, TERMKEY_FLAG_UTF8);
 }
@@ -154,7 +154,7 @@ void ui_flush(void)
 		for (int col = 0; col < ui_cols; ++col) {
 			this = ui_buffer[line][col];
 
-			int nparams = 0, sgr_params[10]; // rgb foreground only
+			int nparams = 0, sgr_params[16];
 			int sgrlen = 0;
 
 			if (this.fg.r != last.fg.r || this.fg.g != last.fg.g || this.fg.b != last.fg.b) {
@@ -181,6 +181,36 @@ void ui_flush(void)
 				sgrlen += snprintf(NULL, 0, "%d;", this.bg.g);
 				sgr_params[nparams++] = this.bg.b;
 				sgrlen += snprintf(NULL, 0, "%d;", this.bg.b);
+			}
+
+			if (this.bold != last.bold) {
+				sgr_params[nparams++] = this.bold ? 1 : 22;
+				sgrlen += this.bold ? 1 : 2;
+			}
+
+			if (this.italic != last.italic) {
+				sgr_params[nparams++] = this.italic ? 3 : 23;
+				sgrlen += this.italic ? 1 : 2;
+			}
+
+			if (this.under_ != last.under_) {
+				sgr_params[nparams++] = this.under_ ? 4 : 24;
+				sgrlen += this.under_ ? 1 : 2;
+			}
+
+			if (this.blink != last.blink) {
+				sgr_params[nparams++] = this.blink ? 5 : 25;
+				sgrlen += this.blink ? 1 : 2;
+			}
+
+			if (this.reverse_vid != last.reverse_vid) {
+				sgr_params[nparams++] = this.reverse_vid ? 7 : 27;
+				sgrlen += this.reverse_vid ? 1 : 2;
+			}
+
+			if (this.strikethru != last.strikethru) {
+				sgr_params[nparams++] = this.strikethru? 9 : 29;
+				sgrlen += this.strikethru ? 1 : 2;
 			}
 
 			if (sgrlen) {
