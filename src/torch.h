@@ -16,8 +16,11 @@ typedef unsigned int uint;
 
 extern FILE *debug_log;
 
-#define def_main_win_key_fn(name) void name(void)
-typedef def_main_win_key_fn(main_win_key_fn);
+/* Input */
+#define def_input_key_fn(name) int name(void)
+typedef def_input_key_fn(input_key_fn);
+
+extern input_key_fn *input_keymap[];
 
 /* Entity */
 struct entity;
@@ -36,8 +39,8 @@ struct entity {
 	uint blocks_light : 1;
 };
 
-void entity_move_pos(struct entity *e, int y, int x);
-void entity_move_pos_rel(struct entity *e, int y, int x);
+int entity_move_pos(struct entity *e, int y, int x);
+int entity_move_pos_rel(struct entity *e, int y, int x);
 
 /* Player */
 extern struct entity player;
@@ -45,15 +48,15 @@ extern bool player_lantern_on;
 extern int player_fuel;
 extern int player_torches;
 
-def_main_win_key_fn(player_move_left);
-def_main_win_key_fn(player_move_down);
-def_main_win_key_fn(player_move_up);
-def_main_win_key_fn(player_move_right);
-def_main_win_key_fn(player_move_upleft);
-def_main_win_key_fn(player_move_upright);
-def_main_win_key_fn(player_move_downleft);
-def_main_win_key_fn(player_move_downright);
-def_main_win_key_fn(player_toggle_lantern);
+def_input_key_fn(player_move_left);
+def_input_key_fn(player_move_down);
+def_input_key_fn(player_move_up);
+def_input_key_fn(player_move_right);
+def_input_key_fn(player_move_upleft);
+def_input_key_fn(player_move_upright);
+def_input_key_fn(player_move_downleft);
+def_input_key_fn(player_move_downright);
+def_input_key_fn(player_toggle_lantern);
 
 /* Floor */
 struct tile {
@@ -87,8 +90,7 @@ int         floor_map_in_bounds(int y, int x);
 void        floor_map_clear_lights(void);
 void        floor_map_generate(struct floor *floor, enum floor_type type);
 
-void floor_add_entity(struct floor *floor, struct entity *entity);
-
+int  floor_add_entity(struct floor *floor, struct entity *entity);
 void floor_update_entities(struct floor *floor);
 
 #define floor_for_each_tile(pos, floor) \
@@ -101,10 +103,6 @@ void floor_update_entities(struct floor *floor);
 void draw_map(void);
 void draw_entities(void);
 
-/* Main Window */
-
-extern main_win_key_fn *main_win_keymap[];
-
 /* Demo */
 void demo_floor_load_map(const char *filename);
 
@@ -113,8 +111,8 @@ def_entity_fn(demo_player_update);
 
 void demo_add_entities(void);
 
-def_main_win_key_fn(place_torch);
-def_main_win_key_fn(demo_get_fuel);
+def_input_key_fn(place_torch);
+def_input_key_fn(demo_get_fuel);
 
 extern struct floor demo_floor;
 

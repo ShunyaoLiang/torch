@@ -143,13 +143,14 @@ void floor_map_clear_lights(void)
 	}
 }
 
-void floor_add_entity(struct floor *floor, struct entity *entity)
+int floor_add_entity(struct floor *floor, struct entity *entity)
 {
 	if (floor->map[entity->posy][entity->posx].entity)
-		return;
+		return -1;
 	list_add(&entity->list, &floor->entities);
 	entity->floor = floor;
 	floor->map[entity->posy][entity->posx].entity = entity;
+	return 0;
 }
 
 void floor_update_entities(struct floor *floor)

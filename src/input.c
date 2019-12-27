@@ -1,6 +1,6 @@
 #include "torch.h"
 
-main_win_key_fn *main_win_keymap[] = {
+input_key_fn *input_keymap[] = {
 	['h'] = player_move_left,
 	['j'] = player_move_down,
 	['k'] = player_move_up,

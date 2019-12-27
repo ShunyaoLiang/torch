@@ -198,7 +198,7 @@ struct entity demo_new_torch(int y, int x)
 	return torch;
 }
 
-def_main_win_key_fn(place_torch)
+def_input_key_fn(place_torch)
 {
 	int y = player.posy;
 	int x = player.posx;
@@ -212,7 +212,7 @@ def_main_win_key_fn(place_torch)
 	struct entity torch = demo_new_torch(y, x);
 	struct entity *t = malloc(sizeof(torch));
 	memcpy(t, &torch, sizeof(torch));
-	floor_add_entity(cur_floor, t);
+	return floor_add_entity(cur_floor, t);
 }
 
 void demo_place_snake(int y, int x)
@@ -308,6 +308,7 @@ static void raycast_octant_at(tile_map map, int y, int x, int radius, int row,
 				(say < 0 && abs(say) > y)) {
 				continue;
 			}
+
 			int ax = x + sax;
 			int ay = y + say;
 			if (!floor_map_in_bounds(ay, ax)) {
@@ -431,7 +432,8 @@ static void cast_octant(tile_map map, int y, int x, int radius, float bright,
 	}
 }
 
-def_main_win_key_fn(demo_get_fuel)
+def_input_key_fn(demo_get_fuel)
 {
 	player_fuel += 10;
+	return 0;
 }

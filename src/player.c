@@ -17,47 +17,48 @@ bool player_lantern_on = false;
 int player_fuel = 100;
 int player_torches = 0;
 
-def_main_win_key_fn(player_move_left)
+def_input_key_fn(player_move_left)
 {
-	entity_move_pos_rel(&player, 0, -1);
+	return entity_move_pos_rel(&player, 0, -1);
 }
 
-def_main_win_key_fn(player_move_down)
+def_input_key_fn(player_move_down)
 {
-	entity_move_pos_rel(&player, 1, 0);
+	return entity_move_pos_rel(&player, 1, 0);
 }
 
-def_main_win_key_fn(player_move_up)
+def_input_key_fn(player_move_up)
 {
-	entity_move_pos_rel(&player, -1, 0);
+	return entity_move_pos_rel(&player, -1, 0);
 }
 
-def_main_win_key_fn(player_move_right)
+def_input_key_fn(player_move_right)
 {
-	entity_move_pos_rel(&player, 0, 1);
+	return entity_move_pos_rel(&player, 0, 1);
 }
 
-def_main_win_key_fn(player_move_upleft)
+def_input_key_fn(player_move_upleft)
 {
-	entity_move_pos_rel(&player, -1, -1);
+	return entity_move_pos_rel(&player, -1, -1);
 }
 
-def_main_win_key_fn(player_move_upright)
+def_input_key_fn(player_move_upright)
 {
-	entity_move_pos_rel(&player, -1, 1);
+	return entity_move_pos_rel(&player, -1, 1);
 }
 
-def_main_win_key_fn(player_move_downleft)
+def_input_key_fn(player_move_downleft)
 {
-	entity_move_pos_rel(&player, 1, -1);
+	return entity_move_pos_rel(&player, 1, -1);
 }
 
-def_main_win_key_fn(player_move_downright)
+def_input_key_fn(player_move_downright)
 {
-	entity_move_pos_rel(&player, 1, 1);
+	return entity_move_pos_rel(&player, 1, 1);
 }
 
-def_main_win_key_fn(player_toggle_lantern)
+def_input_key_fn(player_toggle_lantern)
 {
 	player_lantern_on = !player_lantern_on;
+	return 0;
 }
