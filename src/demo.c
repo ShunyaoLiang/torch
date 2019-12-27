@@ -1,4 +1,5 @@
 #include "torch.h"
+#include "ui.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -199,7 +200,16 @@ struct entity demo_new_torch(int y, int x)
 
 def_main_win_key_fn(place_torch)
 {
-	struct entity torch = demo_new_torch(player.posy, player.posx);
+	int y = player.posy;
+	int x = player.posx;
+	struct ui_event event = ui_poll_event();
+	switch (event.key) {
+	case 'h': x--; break;
+	case 'j': y++; break;
+	case 'k': y--; break;
+	case 'l': x++; break;
+	}
+	struct entity torch = demo_new_torch(y, x);
 	struct entity *t = malloc(sizeof(torch));
 	memcpy(t, &torch, sizeof(torch));
 	floor_add_entity(cur_floor, t);
