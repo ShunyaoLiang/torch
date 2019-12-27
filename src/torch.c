@@ -6,12 +6,16 @@
 #include <time.h>
 #include <stdlib.h>
 
+#ifdef DEBUG
 FILE *debug_log;
+#endif
 
 int main(void)
 {
 	srand(time(NULL));
+#ifdef DEBUG
 	debug_log = fopen("debug_log", "w");
+#endif
 
 	INIT_LIST_HEAD(&demo_floor.entities);
 	demo_floor_load_map("map");
