@@ -137,7 +137,7 @@ void draw_shit(void)
 {
 	int view_lines, view_cols;
 	ui_dimensions(&view_lines, &view_cols);
-	raycast_at(cur_floor->map, player.posy, player.posx, 100, &draw_thing, &(struct draw_info) {
+	raycast_at(cur_floor->map, player.posy, player.posx, max(view_lines, view_cols) / 2, &draw_thing, &(struct draw_info) {
 		view_lines, view_cols
 	});
 }
