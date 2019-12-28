@@ -5,16 +5,11 @@
 #include <string.h>
 #include <math.h>
 #include <stdbool.h>
+#include <stdint.h>
+#include <stdlib.h>
 
 struct floor demo_floor;
 struct floor *cur_floor = &demo_floor;
-
-/* Deprecated */
-static void cast_light(tile_map map, int y, int x, int radius, float bright,
-	int r, int g, int b);
-static void cast_octant(tile_map map, int y, int x, int radius, float bright,
-	int r, int g, int b, int row, float start_slope, float end_slope,
-	int xx, int xy, int yx, int yy);
 
 static void raycast_octant_at(tile_map map, int y, int x, int radius, int row,
 	float start_slope, float end_slope, int octant, raycast_fn *callback,
@@ -174,18 +169,10 @@ void demo_add_entities(void)
 #endif
 }
 
-#include <stdint.h>
-#include <stdlib.h>
-
 struct entity demo_new_torch(int y, int x)
 {
-	uint8_t r = rand() % 256;
-	uint8_t g = rand() % 256;
-	uint8_t b = rand() % 256;
-
 	struct entity torch = {
 		.r = 0xe2, .g = 0x58, .b = 0x22,
-		//.r = r, .g = g, .b = b,
 		.token = 't',
 		.posy = y, .posx = x,
 		.update = demo_torch_update,
@@ -213,6 +200,12 @@ def_input_key_fn(place_torch)
 	struct entity *t = malloc(sizeof(torch));
 	memcpy(t, &torch, sizeof(torch));
 	return floor_add_entity(cur_floor, t);
+}
+
+def_input_key_fn(demo_get_fuel)
+{
+	player_fuel += 10;
+	return 0;
 }
 
 void demo_place_snake(int y, int x)
@@ -341,99 +334,4 @@ static void raycast_octant_at(tile_map map, int y, int x, int radius, int row,
 			break;
 		}
 	}
-}
-
-static void cast_light(tile_map map, int y, int x, int radius, float bright,
-	int r, int g, int b)
-{
-	cast_octant(map, y, x, radius, bright, r, g, b, 1, 1.0, 0.0, 1, 0, 0, 1);
-	cast_octant(map, y, x, radius, bright, r, g, b, 1, 1.0, 0.0, 0, 1, 1, 0);
-	cast_octant(map, y, x, radius, bright, r, g, b, 1, 1.0, 0.0, 0, -1, 1, 0);
-	cast_octant(map, y, x, radius, bright, r, g, b, 1, 1.0, 0.0, -1, 0, 0, 1);
-	cast_octant(map, y, x, radius, bright, r, g, b, 1, 1.0, 0.0, -1, 0, 0, -1);
-	cast_octant(map, y, x, radius, bright, r, g, b, 1, 1.0, 0.0, 0, -1, -1, 0);
-	cast_octant(map, y, x, radius, bright, r, g, b, 1, 1.0, 0.0, 0, 1, -1, 0);
-	cast_octant(map, y, x, radius, bright, r, g, b, 1, 1.0, 0.0, 1, 0, 0, -1);
-
-	map[y][x].light += bright;
-	/*
-	map[y][x].dr = min(r * bright + tile.dr, 255);
-	map[y][x].dg = min(g * bright + tile.dg, 255);
-	map[y][x].db = min(b * bright + tile.db, 255);
-	*/
-
-	memset(drawn_to, 0, (sizeof(drawn_to[0][0]) * MAP_LINES * MAP_COLS));
-}
-
-static void cast_octant(tile_map map, int y, int x, int radius, float bright,
-	int r, int g, int b, int row, float start_slope, float end_slope,
-	int xx, int xy, int yx, int yy)
-{
-	if (start_slope < end_slope) {
-		return;
-	}
-
-	float next_start_slope = start_slope;
-	for (int i = row; i <= radius; ++i) {
-		int blocked = 0;
-		for (int dx = -i, dy = -i; dx <= 0; dx++) {
-			float bl_slope = (dx - 0.5) / (dy + 0.5);
-			float tr_slope = (dx + 0.5) / (dy - 0.5);
-			if (start_slope < tr_slope) {
-				continue;
-			} else if (end_slope > bl_slope) {
-				break;
-			}
-
-			int sax = dx * xx + dy * xy;
-			int say = dx * yx + dy * yy;
-			if ((sax < 0 && abs(sax) > x) ||
-				(say < 0 && abs(say) > y)) {
-				continue;
-			}
-			uint ax = x + sax;
-			uint ay = y + say;
-			if (!floor_map_in_bounds(ay, ax)) {
-				continue;
-			}
-
-			uint radius2 = radius * radius;
-			if ((uint)(dx * dx + dy * dy) < radius2 && !drawn_to[ay][ax]) {
-				drawn_to[ay][ax] = 1;
-				int distance = sqrt(dx * dx + dy * dy);
-				const float dlight = bright / (distance + 1) / (distance + 1);
-				struct tile tile = map[ay][ax];
-				map[ay][ax].light = floor(dlight + tile.light);
-				map[ay][ax].dr = min(r * dlight + tile.dr, 255);
-				map[ay][ax].dg = min(g * dlight + tile.dg, 255);
-				map[ay][ax].db = min(b * dlight + tile.db, 255);
-			}
-
-			struct tile tile = map[ay][ax];
-			if (blocked) {
-				if (!tile.walk || tile.entity) {
-					next_start_slope = tr_slope;
-					continue;
-				} else {
-					blocked = 0;
-					start_slope = next_start_slope;
-				}
-			} else if (!tile.walk || tile.entity) {
-				blocked = 1;
-				next_start_slope = tr_slope;
-				cast_octant(map, y, x, radius, bright, r, g, b,
-					i + 1, start_slope, bl_slope, xx, xy,
-					yx, yy);
-			}
-		}
-		if (blocked) {
-			break;
-		}
-	}
-}
-
-def_input_key_fn(demo_get_fuel)
-{
-	player_fuel += 10;
-	return 0;
 }
