@@ -20,6 +20,7 @@ struct ui_cell {
 };
 
 void ui_draw_at(int line, int col, struct ui_cell cell);
+void ui_clear(void);
 void ui_flush(void);
 
 enum ui_event_type {

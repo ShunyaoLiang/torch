@@ -144,6 +144,17 @@ static bool ui_buffer_in_bounds(int line, int col)
 	return line >= 0 && line < ui_lines && col >= 0 && col < ui_cols;
 }
 
+void ui_clear(void)
+{
+	for (int line = 0; line < ui_lines; ++line) {
+		memset(ui_buffer[line], 0, sizeof(struct ui_cell) * ui_cols);
+		for (int col = 0; col < ui_cols; ++col) {
+			ui_buffer[line][col].codepoint[0] = ' ';
+			ui_buffer[line][col].codepoint[1] = '\0';
+		}
+	}
+}
+
 void ui_flush(void)
 {
 	static char sgr_buf[100]; // look mum it's a SGR string

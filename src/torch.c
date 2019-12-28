@@ -37,7 +37,7 @@ int main(void)
 		draw_map();
 		draw_entities();
 #endif
-
+		ui_clear();
 		draw_shit();
 
 		ui_flush();
