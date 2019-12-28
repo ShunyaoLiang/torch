@@ -33,9 +33,12 @@ int main(void)
 
 		floor_map_clear_lights();
 		floor_update_entities(cur_floor);
-
+#if 0
 		draw_map();
 		draw_entities();
+#endif
+
+		draw_shit();
 
 		ui_flush();
 	} while (event = ui_poll_event(), event.key != 'Q');

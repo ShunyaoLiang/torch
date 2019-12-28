@@ -3,6 +3,7 @@
 
 #include <string.h>
 
+#if 0
 static int visibility[MAP_LINES][MAP_COLS] = { 0 };
 
 static def_raycast_fn(set_visible)
@@ -96,4 +97,47 @@ void draw_entities(void)
 	}
 
 	memset(visibility, 0, (sizeof(visibility[MAP_LINES][MAP_COLS]) * MAP_LINES * MAP_COLS));
+}
+#endif
+
+struct draw_info {
+	int view_lines, view_cols;
+};
+
+def_raycast_fn(draw_thing)
+{
+	struct draw_info *info = context;
+	struct tile tile = floor_map_at(cur_floor, y, x);
+	int line = y - clamp(player.posy - info->view_lines / 2, 0, MAP_LINES - info->view_lines);
+	int col = x - clamp(player.posx - info->view_cols / 2, 0, MAP_COLS - info->view_cols);
+	if (tile.entity) {
+		ui_draw_at(line, col, (struct ui_cell){
+			.codepoint = { [0] = tile.entity->token },
+			.fg = {
+				.r = min(tile.entity->r * tile.light + tile.dr, 255),
+				.g = min(tile.entity->g * tile.light + tile.dg, 255),
+				.b = min(tile.entity->b * tile.light + tile.db, 255),
+			},
+			.bg = { 0, 0, 0 },
+		});
+	} else {
+		ui_draw_at(line, col, (struct ui_cell){
+			.codepoint = { [0] = tile.token },
+			.fg = {
+				.r = min(tile.r * tile.light + tile.dr, 255),
+				.g = min(tile.g * tile.light + tile.dg, 255),
+				.b = min(tile.b * tile.light + tile.db, 255),
+			},
+			.bg = { 0, 0, 0 },
+		});
+	}
+}
+
+void draw_shit(void)
+{
+	int view_lines, view_cols;
+	ui_dimensions(&view_lines, &view_cols);
+	raycast_at(cur_floor->map, player.posy, player.posx, 100, &draw_thing, &(struct draw_info) {
+		view_lines, view_cols
+	});
 }

@@ -100,8 +100,11 @@ void floor_update_entities(struct floor *floor);
 #define VIEW_LINES 23
 #define VIEW_COLS  79
 
+#if 0
 void draw_map(void);
 void draw_entities(void);
+#endif
+void draw_shit(void);
 
 /* Demo */
 void demo_floor_load_map(const char *filename);
