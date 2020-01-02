@@ -113,21 +113,15 @@ def_raycast_fn(draw_thing)
 	if (tile.entity) {
 		ui_draw_at(line, col, (struct ui_cell){
 			.codepoint = { [0] = tile.entity->token },
-			.fg = {
-				.r = min(tile.entity->r * tile.light + tile.dr, 255),
-				.g = min(tile.entity->g * tile.light + tile.dg, 255),
-				.b = min(tile.entity->b * tile.light + tile.db, 255),
-			},
+			/*  = tile.entity->color * tile.light + tile.dcolor */
+			.fg = color_add(color_multiply_by(tile.entity->color, tile.light), tile.dcolor),
 			.bg = { 0, 0, 0 },
 		});
 	} else {
 		ui_draw_at(line, col, (struct ui_cell){
 			.codepoint = { [0] = tile.token },
-			.fg = {
-				.r = min(tile.r * tile.light + tile.dr, 255),
-				.g = min(tile.g * tile.light + tile.dg, 255),
-				.b = min(tile.b * tile.light + tile.db, 255),
-			},
+			/*  = tile.color * tile.light + tile.dcolor */
+			.fg = color_add(color_multiply_by(tile.color, tile.light), tile.dcolor),
 			.bg = { 0, 0, 0 },
 		});
 	}

@@ -1,6 +1,8 @@
 #ifndef TORCH_UI
 #define TORCH_UI
 
+#include "torch.h"
+
 #include <stdint.h>
 #include <stdbool.h>
 
@@ -10,7 +12,7 @@ void ui_dimensions(int *lines, int *cols);
 
 struct ui_cell {
 	char codepoint[5];
-	struct { uint8_t r, g, b; } fg, bg;
+	struct color fg, bg;
 	unsigned int bold        : 1,
 	             italic      : 1,
 	             under_      : 1,

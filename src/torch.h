@@ -22,6 +22,16 @@ typedef def_input_key_fn(input_key_fn);
 
 extern input_key_fn *input_keymap[];
 
+/* Color */
+struct color {
+	uint8_t r, g, b;
+};
+
+struct color color_add(struct color c, struct color a);
+struct color color_multiply_by(struct color c, float m);
+
+int color_approximate_256(struct color c);
+
 /* Entity */
 struct entity;
 
@@ -29,7 +39,7 @@ struct entity;
 typedef def_entity_fn(entity_fn);
 
 struct entity {
-	uint8_t r, g, b;
+	struct color color;
 	char token;
 	int posy, posx;
 	entity_fn *update;
@@ -60,10 +70,10 @@ def_input_key_fn(player_toggle_lantern);
 
 /* Floor */
 struct tile {
-	uint8_t r, g, b;
+	struct color color;
 	char token;
 	float light;
-	int dr, dg, db;
+	struct color dcolor;
 	struct entity *entity;
 	uint walk : 1;
 };

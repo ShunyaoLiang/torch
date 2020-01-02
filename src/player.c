@@ -4,7 +4,9 @@
 #include <stdbool.h>
 
 struct entity player = {
-	.r = 151, .g = 151, .b = 151,
+	.color = {
+		.r = 151, .g = 151, .b = 151,
+	},
 	.token = '@',
 	.posy = 13, .posx = 14,
 	.update = demo_player_update,

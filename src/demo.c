@@ -28,14 +28,14 @@ void demo_floor_load_map(const char *filename)
 		for (size_t col = 0; col < MAP_COLS; ++col) {
 //			fscanf(mapfp, "%c", &demo_floor.map[line][col].token);
 			demo_floor.map[line][col].light = 0;
-			demo_floor.map[line][col].r = 51;
-			demo_floor.map[line][col].g = 51;
-			demo_floor.map[line][col].b = 51;
+			demo_floor.map[line][col].color = (struct color){ 51, 51, 51 };
 
+#if 0
 			if (demo_floor.map[line][col].token != '.') {
 				demo_floor.map[line][col].g = 51;
 				demo_floor.map[line][col].b = 51;
 			}
+#endif
 		}
 //		(void)fgetc(mapfp);
 	}
@@ -55,7 +55,7 @@ struct light_info {
 	tile_map *map;
 	float bright;
 	int y, x;
-	int r, g, b;
+	struct color color;
 };
 
 #include <assert.h>
@@ -74,9 +74,8 @@ def_raycast_fn(cast_light_at)
 	} else {
 		(*info->map)[y][x].light += dlight;
 //		assert((*info->map)[y][x].light > 0);
-		(*info->map)[y][x].dr = min(info->r * dlight + tile.dr, 255);
-		(*info->map)[y][x].dg = min(info->g * dlight + tile.dg, 255);
-		(*info->map)[y][x].db = min(info->b * dlight + tile.db, 255);
+		/*                        = info->r * dlight + tile.dcolor */
+		(*info->map)[y][x].dcolor = color_add(color_multiply_by(info->color, dlight), tile.dcolor);
 	}
 }
 
@@ -98,7 +97,7 @@ def_entity_fn(demo_player_update)
 		&(struct light_info) {
 			.map = &this->floor->map,
 			.bright = bright, .y = y, .x = x,
-			.r = this->r, .g = this->g, .b = this->b,
+			.color = this->color,
 		});
 	memset(drawn_to, 0, (sizeof(drawn_to[0][0]) * MAP_LINES * MAP_COLS));
 }
@@ -118,7 +117,7 @@ def_entity_fn(demo_torch_update)
 		&(struct light_info) {
 			.map = &this->floor->map,
 			.bright = 1.f, .y = y, .x = x, 
-			.r = this->r, .g = this->g, .b = this->b,
+			.color = this->color,
 		});
 	memset(drawn_to, 0, (sizeof(drawn_to[0][0]) * MAP_LINES * MAP_COLS));
 }
@@ -174,7 +173,9 @@ void demo_add_entities(void)
 struct entity demo_new_torch(int y, int x)
 {
 	struct entity torch = {
-		.r = 0xe2, .g = 0x58, .b = 0x22,
+		.color = {
+			.r = 0xe2, .g = 0x58, .b = 0x22,
+		},
 		.token = 't',
 		.posy = y, .posx = x,
 		.update = demo_torch_update,
@@ -240,7 +241,9 @@ def_entity_fn(demo_snake_update)
 struct entity demo_new_snake(int y, int x)
 {
 	struct entity snake = {
-		.r = 0xa, .g = 0xCA, .b = 0xa,
+		.color = {
+			.r = 0xa, .g = 0xCA, .b = 0xa,
+		},
 		.token = 's',
 		.posy = y, .posx = x,
 		.update = demo_snake_update,
