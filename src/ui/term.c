@@ -92,9 +92,8 @@ static void __ui_buffer_realloc(int lines, int cols)
 		if (!tmp) {
 			free(ui_buffer);
 			goto fail;
-		} else {
-			ui_buffer = tmp;
 		}
+		ui_buffer = tmp;
 
 		/* Resize existing lines. */
 		for (int line = 0; line < min(old_lines, lines); ++line) {
@@ -102,9 +101,8 @@ static void __ui_buffer_realloc(int lines, int cols)
 			if (!tmp) {
 				free(ui_buffer[line]);
 				goto fail;
-			} else {
-				ui_buffer[line] = tmp;
 			}
+			ui_buffer[line] = tmp;
 		}
 
 		/* Allocate all new lines. */
