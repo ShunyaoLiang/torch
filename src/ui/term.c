@@ -88,15 +88,23 @@ static void __ui_buffer_realloc(int lines, int cols)
 		}
 
 		/* Resize the top array of pointers. */
-		ui_buffer = realloc(ui_buffer, sizeof(struct ui_cell *) * lines);
-		if (!ui_buffer)
+		struct ui_cell **tmp = realloc(ui_buffer, sizeof(struct ui_cell *) * lines);
+		if (!tmp) {
+			free(ui_buffer);
 			goto fail;
+		} else {
+			ui_buffer = tmp;
+		}
 
 		/* Resize existing lines. */
 		for (int line = 0; line < min(old_lines, lines); ++line) {
-			ui_buffer[line] = realloc(ui_buffer[line], sizeof(struct ui_cell) * cols);
-			if (!ui_buffer[line])
+			struct ui_cell *tmp = realloc(ui_buffer[line], sizeof(struct ui_cell) * cols);
+			if (!tmp) {
+				free(ui_buffer[line]);
 				goto fail;
+			} else {
+				ui_buffer[line] = tmp;
+			}
 		}
 
 		/* Allocate all new lines. */
