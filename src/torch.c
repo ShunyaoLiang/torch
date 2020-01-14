@@ -17,7 +17,7 @@ int main(void)
 	debug_log = fopen("debug_log", "w");
 #endif
 
-	INIT_LIST_HEAD(&demo_floor.entities);
+	INIT_LIST_HEAD(&floors[0].entities);
 	demo_floor_load_map("map");
 	floor_add_entity(cur_floor, &player);
 

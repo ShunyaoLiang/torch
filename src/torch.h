@@ -89,6 +89,8 @@ struct floor {
 	entity_list entities;
 };
 
+extern struct floor floors[];
+
 extern struct floor *cur_floor;
 
 enum floor_type {

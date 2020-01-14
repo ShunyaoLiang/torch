@@ -137,9 +137,9 @@ void floor_map_clear_lights(void)
 	struct tile *pos;
 	floor_for_each_tile(pos, cur_floor) {
 		pos->light = 0;
-		pos->dr = 0;
-		pos->dg = 0;
-		pos->db = 0;
+		pos->dcolor.r = 0;
+		pos->dcolor.g = 0;
+		pos->dcolor.b = 0;
 	}
 }
 

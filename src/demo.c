@@ -8,8 +8,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-struct floor demo_floor;
-struct floor *cur_floor = &demo_floor;
+struct floor *cur_floor = &floors[0];
 
 static void raycast_octant_at(tile_map map, int y, int x, int radius, int row,
 	float start_slope, float end_slope, int octant, raycast_fn *callback,
@@ -21,14 +20,14 @@ void demo_place_snake(int y, int x);
 void demo_floor_load_map(const char *filename)
 {
 //	FILE *mapfp = fopen(filename, "r");
-	floor_map_generate(&demo_floor, CAVE);
+	floor_map_generate(&floors[0], CAVE);
 
 	/* Make this not shit please. */
 	for (size_t line = 0; line < MAP_LINES; ++line) {
 		for (size_t col = 0; col < MAP_COLS; ++col) {
 //			fscanf(mapfp, "%c", &demo_floor.map[line][col].token);
-			demo_floor.map[line][col].light = 0;
-			demo_floor.map[line][col].color = (struct color){ 51, 51, 51 };
+			floors[0].map[line][col].light = 0;
+			floors[0].map[line][col].color = (struct color){ 51, 51, 51 };
 
 #if 0
 			if (demo_floor.map[line][col].token != '.') {
@@ -176,7 +175,7 @@ struct entity demo_new_torch(int y, int x)
 		.color = {
 			.r = 0xe2, .g = 0x58, .b = 0x22,
 		},
-		.token = 't',
+		.token = '!',
 		.posy = y, .posx = x,
 		.update = demo_torch_update,
 		.destroy = demo_torch_destroy,
@@ -216,7 +215,7 @@ void demo_place_snake(int y, int x)
 	struct entity snake = demo_new_snake(y, x);
 	struct entity *s = malloc(sizeof(snake));
 	memcpy(s, &snake, sizeof(snake));
-	floor_add_entity(&demo_floor, s);
+	floor_add_entity(&floors[0], s);
 }
 
 def_entity_fn(demo_snake_update)
@@ -249,7 +248,7 @@ struct entity demo_new_snake(int y, int x)
 		.update = demo_snake_update,
 		.destroy = NULL,
 		.list = LIST_HEAD_INIT(snake.list),
-		.floor = &demo_floor,
+		.floor = &floors[0],
 		.blocks_light = 0,
 	};
 
@@ -340,3 +339,7 @@ static void raycast_octant_at(tile_map map, int y, int x, int radius, int row,
 		}
 	}
 }
+
+struct floor floors[] = {
+	[0] = {0},
+};
