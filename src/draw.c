@@ -134,4 +134,7 @@ void draw_shit(void)
 	raycast_at(cur_floor->map, player.posy, player.posx, max(view_lines, view_cols) / 2, &draw_thing, &(struct draw_info) {
 		view_lines, view_cols
 	});
+
+	ui_draw_at(2, 0, (struct ui_cell){ .codepoint = { [0] = player_fuel }, .fg = { 77, 26, 128 }, });
+	ui_draw_at(2, 2, (struct ui_cell){ .codepoint = { [0] = player_torches }, .fg = { 77, 26, 128 }, });
 }

@@ -17,7 +17,7 @@ struct entity player = {
 
 bool player_lantern_on = false;
 int player_fuel = 100;
-int player_torches = 0;
+int player_torches = 'z';
 
 def_input_key_fn(player_move_left)
 {

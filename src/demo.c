@@ -189,6 +189,9 @@ struct entity demo_new_torch(int y, int x)
 
 def_input_key_fn(place_torch)
 {
+	if (!player_torches)
+		return 0;
+	player_torches--;
 	int y = player.posy;
 	int x = player.posx;
 	struct ui_event event = ui_poll_event();
@@ -235,6 +238,13 @@ def_entity_fn(demo_snake_update)
 
 	if (floor_map_at(this->floor, this->posy, this->posx).light > 0.2)
 		entity_move_pos_rel(this, -y, -x);
+	if (abs(this->posy - player.posy) == 1 && abs(this->posx - player.posx) == 1) {
+		ui_clear();
+		ui_flush();
+		ui_quit();
+		puts("lol you fucking died nerd");
+		exit(0);
+	}
 }
 
 struct entity demo_new_snake(int y, int x)
