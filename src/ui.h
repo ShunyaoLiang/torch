@@ -25,6 +25,9 @@ void ui_draw_at(int line, int col, struct ui_cell cell);
 void ui_clear(void);
 void ui_flush(void);
 
+/* Hacky garbage. */
+void ui_draw_str_at(int line, int col, const char *str, struct ui_cell attr);
+
 enum ui_event_type {
 	UI_EVENT_KEY,
 };

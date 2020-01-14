@@ -89,19 +89,15 @@ static void __ui_buffer_realloc(int lines, int cols)
 
 		/* Resize the top array of pointers. */
 		struct ui_cell **tmp = realloc(ui_buffer, sizeof(struct ui_cell *) * lines);
-		if (!tmp) {
-			free(ui_buffer);
+		if (!tmp)
 			goto fail;
-		}
 		ui_buffer = tmp;
 
 		/* Resize existing lines. */
 		for (int line = 0; line < min(old_lines, lines); ++line) {
 			struct ui_cell *tmp = realloc(ui_buffer[line], sizeof(struct ui_cell) * cols);
-			if (!tmp) {
-				free(ui_buffer[line]);
+			if (!tmp)
 				goto fail;
-			}
 			ui_buffer[line] = tmp;
 		}
 
@@ -119,6 +115,7 @@ static void __ui_buffer_realloc(int lines, int cols)
 	return;
 
 fail:
+	free(ui_buffer);
 	perror(__func__);
 	abort();
 }
@@ -263,6 +260,14 @@ static void move_cursor(int line, int col)
 		fprintf(stderr, "move_cursor: %d,%d are not in bounds [0:%d,%d)", line, col, ui_lines, ui_cols);
 }
 
+void ui_draw_str_at(int line, int col, const char *str, struct ui_cell attr)
+{
+	while (*str) {
+		attr.codepoint[0] = *str++;
+		ui_draw_at(line, col++, attr);
+	}
+}
+
 struct ui_event ui_poll_event(void)
 {
 	bool cont =  true;
@@ -295,6 +300,8 @@ int main(void)
 	int lines;
 	ui_dimensions(&lines, NULL);
 
+	ui_clear();
+
 	ui_draw_at(lines - 1, 0, (struct ui_cell){
 		.codepoint = "L",
 		.fg = {
@@ -302,6 +309,8 @@ int main(void)
 		},
 	});
 	assert(strcmp(ui_buffer[lines - 1][0].codepoint, "L") == 0);
+
+	ui_draw_str_at(3, 3, "Test", (struct ui_cell){.fg = {19, 103, 76}});
 
 	ui_flush();
 	struct ui_event event = ui_poll_event();

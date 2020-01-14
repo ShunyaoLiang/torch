@@ -135,6 +135,10 @@ void draw_shit(void)
 		view_lines, view_cols
 	});
 
-	ui_draw_at(2, 0, (struct ui_cell){ .codepoint = { [0] = player_fuel }, .fg = { 77, 26, 128 }, });
-	ui_draw_at(2, 2, (struct ui_cell){ .codepoint = { [0] = player_torches }, .fg = { 77, 26, 128 }, });
+	size_t needed = snprintf(NULL, 0, "%3d %3d", player_fuel, player_torches) + 1;
+	char *buf = malloc(needed);
+	sprintf(buf, "%3d %3d", player_fuel, player_torches);
+	ui_draw_str_at(1, 0, buf, (struct ui_cell){ .fg = { 0xe2, 0x58, 0x22 } });
+//	ui_draw_at(2, 0, (struct ui_cell){ .codepoint = { [0] = player_fuel }, .fg = { 77, 26, 128 }, });
+//	ui_draw_at(2, 2, (struct ui_cell){ .codepoint = { [0] = player_torches }, .fg = { 77, 26, 128 }, });
 }
