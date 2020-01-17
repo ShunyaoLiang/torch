@@ -75,8 +75,6 @@ void cast_light_at(struct tile *tile, int y, int x, void *context)
 
 def_entity_fn(demo_player_update)
 {
-	int y = this->posy;
-	int x = this->posx;
 	float bright = player_lantern_on && player_fuel > 0 ? 0.5f : 0.1f;
 	if (player_lantern_on) {
 		if (player_fuel > 0) {
@@ -85,14 +83,22 @@ def_entity_fn(demo_player_update)
 			player_lantern_on = false;
 		}
 	}
+
 	//cast_light(this->floor->map, y, x, 6, 0.3f, this->r, this->g, this->b);
-	int radius = sqrt(1.f / (1.f / 255));
-	raycast_at(this->floor->map, y, x, radius, &cast_light_at,
-		&(struct light_info) {
-			.map = &this->floor->map,
+
+	raycast_at(*(struct raycast_params) {
+		.callback = &cast_light_at,
+		.context = &(struct light_info) {
+		.map = &this->floor->map,
 			.bright = bright, .y = y, .x = x,
 			.color = this->color,
-		});
+		}
+		.floor = this->floor->map,
+		.y = this->posy,
+		.x = this->posx,
+		.radius = sqrt(1.f / (1.f / 255)),
+	});
+
 	memset(drawn_to, 0, (sizeof(drawn_to[0][0]) * MAP_LINES * MAP_COLS));
 }
 

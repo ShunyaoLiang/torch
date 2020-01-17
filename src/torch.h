@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <stdlib.h>
 
 #define back(arr) (arr[sizeof(arr)/sizeof(*arr)])
 #define min(a, b) (a < b ? a : b)
@@ -134,9 +135,19 @@ def_input_key_fn(demo_get_fuel);
 extern struct floor demo_floor;
 
 /* Raycast */
+
 typedef void raycast_callback_fn(struct tile *tile, int y, int x, void *context);
 
-void raycast_at(struct floor *floor, int y, int x, int radius,
-	raycast_callback_fn callback, void *context);
+struct raycast_params
+{
+    struct floor * floor;
+    int x;
+    int y;
+    int radius;
+    raycast_callback_fn * callback;
+    void * context;
+};
+
+void raycast_at(const struct raycast_params * params);
 
 #endif

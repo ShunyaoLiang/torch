@@ -3,30 +3,25 @@
 #include <stdbool.h>
 #include <math.h>
 
-static void raycast_octant_at(struct floor *floor, int y, int x, int radius,
-	int row, float start_slope, float end_slope, int octant,
-	raycast_callback_fn callback, void *context);
+static void raycast_octant_at(const struct raycast_params * params, int row, float start_slope, float end_slope, int octant);
 
 static void transform_point_by_octant(int y, int x, int dy, int dx, int octant, 
 	int *ay, int *ax);
 
 /* Hides hard-coded initial values for raycast_octant_at() */
-#define RAYCAST_OCTANT_AT(map, y, x, radius, octant, callback, context) do { \
-		raycast_octant_at(map, y, x, radius, 1, 1.0, 0.0, octant, \
-			callback, context); \
-	} while (0);
+#define RAYCAST_OCTANT_AT(params, octant) (raycast_octant_at(params, 1, 1.0, 0.0, octant))
 
 /* Uses Björn Bergström's Recursive Shadowcasting Algorithm, which 
    divides the map into eight congruent triangular octants, and calculates each
    octant individually. */
-void raycast_at(struct floor *floor, int y, int x, int radius,
-	raycast_callback_fn callback, void *context)
+void raycast_at(const struct raycast_params * params)
 {
 	/* raycast_octant_at() does not cast on the origin (y, x). */
-	callback(&floor->map[y][x], y, x, context);
+	params->callback(&params->floor->map[params->y][params->x], params->y, params->x, params->context);
 
-	for (int octant = 0; octant < 8; ++octant)
-		RAYCAST_OCTANT_AT(floor, y, x, radius, octant, callback, context);
+	for (int octant = 0; octant < 8; ++octant) {
+		RAYCAST_OCTANT_AT(params, octant);
+	}
 }
 
 /* Iterates through each tile, left to right, of each row of a given octant,
@@ -45,9 +40,12 @@ void raycast_at(struct floor *floor, int y, int x, int radius,
    calculating them as dx / dy rather than dy / dx. Consequently, as a line
    approaches the bottom left, its slope approaches infinity, and as a line
    approaches the top right, its slope approaches zero. */
-static void raycast_octant_at(struct floor *floor, int y, int x, int radius,
-	int row, float start_slope, float end_slope, int octant,
-	raycast_callback_fn callback, void *context)
+static void raycast_octant_at(
+	const struct raycast_params * params,
+	int row,
+	float start_slope,
+	float end_slope,
+	int octant)
 {
 	if (start_slope < end_slope)
 		return;
@@ -56,7 +54,7 @@ static void raycast_octant_at(struct floor *floor, int y, int x, int radius,
 	   except for the last one. next_start_slope contains the slope of the
 	   top right corner of the rightmost blocking tile. */
 	float next_start_slope = start_slope;
-	for (; row <= radius; ++row) {
+	for (; row <= params->radius; ++row) {
 		/* Doesn't do anything. Here for clarity. */
 		start_slope = next_start_slope;
 		/* Contains whether or not the last tile blocked light. Used
@@ -80,14 +78,14 @@ static void raycast_octant_at(struct floor *floor, int y, int x, int radius,
 
 			/* Contains the actual coordinate of the current tile. */
 			int ay, ax;
-			transform_point_by_octant(y, x, dy, dx, octant, &ay, &ax);
+			transform_point_by_octant(params->y, params->x, dy, dx, octant, &ay, &ax);
 			if (!floor_map_in_bounds(ay, ax))
 				continue;
 
-			if (dx * dx + dy * dy < radius * radius)
-				callback(&floor->map[ay][ax], ay, ax, context);
+			if (dx * dx + dy * dy < params->radius * params->radius)
+				params->callback(&params->floor->map[ay][ax], ay, ax, params->context);
 
-			struct tile tile = floor_map_at(floor, ay, ax);
+			struct tile tile = floor_map_at(params->floor, ay, ax);
 			if (blocked) {
 				if (tile_blocks_light(tile)) {
 					float tr_slope = (dx + 0.5) / (dy - 0.5);
@@ -103,9 +101,7 @@ static void raycast_octant_at(struct floor *floor, int y, int x, int radius,
 				next_start_slope = tr_slope;
 				float bl_slope = (dx - 0.5) / (dy + 0.5);
 				/* Recurse! */
-				raycast_octant_at(floor, y, x, radius, row + 1,
-					start_slope, bl_slope, octant, callback,
-					context);
+				raycast_octant_at(params, row + 1, start_slope, bl_slope, octant);
 			}
 		}
 		if (blocked) { /* If the last tile of the row blocks light. */
