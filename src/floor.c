@@ -137,17 +137,20 @@ void floor_map_clear_lights(void)
 	struct tile *pos;
 	floor_for_each_tile(pos, cur_floor) {
 		pos->light = 0;
-		pos->dr = 0;
-		pos->dg = 0;
-		pos->db = 0;
+		pos->dcolor.r = 0;
+		pos->dcolor.g = 0;
+		pos->dcolor.b = 0;
 	}
 }
 
-void floor_add_entity(struct floor *floor, struct entity *entity)
+int floor_add_entity(struct floor *floor, struct entity *entity)
 {
+	if (floor->map[entity->posy][entity->posx].entity)
+		return -1;
 	list_add(&entity->list, &floor->entities);
 	entity->floor = floor;
 	floor->map[entity->posy][entity->posx].entity = entity;
+	return 0;
 }
 
 void floor_update_entities(struct floor *floor)
@@ -157,4 +160,9 @@ void floor_update_entities(struct floor *floor)
 		if (pos->update)
 			pos->update(pos);
 	}
+}
+
+bool tile_blocks_light(struct tile tile)
+{
+	return !tile.walk || (tile.entity ? tile.entity->blocks_light : tile.entity);
 }

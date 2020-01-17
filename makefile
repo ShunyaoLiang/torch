@@ -1,14 +1,13 @@
-CC = clang
-CFLAGS = -Wall -O3
-LDFLAGS = -ltickit -lm
+CFLAGS = -Wall -I lib/ -I lib/termkey -I src/ -D HAVE_UNIBILIUM
+LDFLAGS = -lm -lunibilium
 
-objects = torch.o entity.o player.o floor.o draw.o main_win.o demo.o
+objects = $(addprefix src/, torch.o entity.o player.o floor.o draw.o input.o demo.o color.o raycast.o $(addprefix ui/, term.o sdl.o)) $(addprefix lib/termkey/, driver-csi.o driver-ti.o termkey.o)
 
 all: $(objects)
-	$(CC) $(objects) $(CFLAGS) $(LDFLAGS)
+	$(CC) $(objects) $(CFLAGS) $(LDFLAGS) -o bin/torch
 
-debug: torch.h list.h
-	$(CC) *.c -g $(CFLAGS) $(LDFLAGS)
+debug: src/torch.h lib/list.h
+	$(CC) src/*.c -g src/ui/term.c lib/termkey/*.c $(CFLAGS) $(LDFLAGS) -o bin/debug -D DEBUG
 
 clean:
-	rm $(objects)
+	rm -f $(objects)

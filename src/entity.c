@@ -1,6 +1,6 @@
 #include "torch.h"
 
-void entity_move_pos(struct entity *entity, int y, int x)
+int entity_move_pos(struct entity *entity, int y, int x)
 {
 	struct tile tile = floor_map_at(entity->floor, y, x);
 	if (floor_map_in_bounds(y, x) && !tile.entity && tile.walk) {
@@ -9,10 +9,13 @@ void entity_move_pos(struct entity *entity, int y, int x)
 		entity->floor->map[y][x].entity = entity;
 		entity->posy = y;
 		entity->posx = x;
+		return 0;
 	}
+
+	return -1;
 }
 
-void entity_move_pos_rel(struct entity *entity, int y, int x)
+int entity_move_pos_rel(struct entity *entity, int y, int x)
 {
-	entity_move_pos(entity, entity->posy + y, entity->posx + x);
+	return entity_move_pos(entity, entity->posy + y, entity->posx + x);
 }
