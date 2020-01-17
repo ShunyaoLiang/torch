@@ -1,7 +1,6 @@
 #include "torch.h"
 
 #include <stdbool.h>
-#include <math.h>
 
 static void raycast_octant_at(struct floor *floor, int y, int x, int radius,
 	int row, float start_slope, float end_slope, int octant,
@@ -90,7 +89,6 @@ static void raycast_octant_at(struct floor *floor, int y, int x, int radius,
 			struct tile tile = floor_map_at(floor, ay, ax);
 			if (blocked) {
 				if (tile_blocks_light(tile)) {
-					float tr_slope = (dx + 0.5) / (dy - 0.5);
 					next_start_slope = tr_slope;
 					continue;
 				} else { /* Still blocked. */
@@ -99,9 +97,7 @@ static void raycast_octant_at(struct floor *floor, int y, int x, int radius,
 				}
 			} else if (tile_blocks_light(tile)) {
 				blocked = true;
-				float tr_slope = (dx + 0.5) / (dy - 0.5);
 				next_start_slope = tr_slope;
-				float bl_slope = (dx - 0.5) / (dy + 0.5);
 				/* Recurse! */
 				raycast_octant_at(floor, y, x, radius, row + 1,
 					start_slope, bl_slope, octant, callback,
