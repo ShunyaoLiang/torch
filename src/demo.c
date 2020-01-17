@@ -86,14 +86,14 @@ def_entity_fn(demo_player_update)
 
 	//cast_light(this->floor->map, y, x, 6, 0.3f, this->r, this->g, this->b);
 
-	raycast_at(*(struct raycast_params) {
+	raycast_at(&(struct raycast_params) {
 		.callback = &cast_light_at,
 		.context = &(struct light_info) {
-		.map = &this->floor->map,
-			.bright = bright, .y = y, .x = x,
-			.color = this->color,
-		}
-		.floor = this->floor->map,
+			.map = &this->floor->map,
+			.bright = bright, .y = this->posy, .x = this->posx,
+			.color = this->color
+		},
+		.floor = this->floor,
 		.y = this->posy,
 		.x = this->posx,
 		.radius = sqrt(1.f / (1.f / 255)),
@@ -104,21 +104,22 @@ def_entity_fn(demo_player_update)
 
 def_entity_fn(demo_torch_update)
 {
-	int y = (rand() % 3 - 1);
-	int x = (rand() % 3 - 1);
+	//	entity_move_pos_rel(this, y, x);
 
-//	entity_move_pos_rel(this, y, x);
-
-	y = this->posy;
-	x = this->posx;
 	//cast_light(this->floor->map, y, x, 6, 1.f, this->r, this->g, this->b);
-	int radius = sqrt(1.f / (1.f / 255));
-	raycast_at(this->floor->map, y, x, radius, &cast_light_at,
-		&(struct light_info) {
+
+	raycast_at(&(struct raycast_params) {
+		.callback = &cast_light_at,
+		.context = &(struct light_info) {
 			.map = &this->floor->map,
-			.bright = 1.f, .y = y, .x = x, 
+			.bright = 1.f, .y = this->posy, .x = this->posx,
 			.color = this->color,
-		});
+		},
+		.floor = this->floor,
+		.y = this->posy,
+		.x = this->posx,
+		.radius = sqrt(1.f / (1.f / 255))
+	});
 	memset(drawn_to, 0, (sizeof(drawn_to[0][0]) * MAP_LINES * MAP_COLS));
 }
 
