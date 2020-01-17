@@ -3,15 +3,26 @@
 #include <stdbool.h>
 #include <math.h>
 
-static void raycast_octant_at(const struct raycast_params * params, int row, float start_slope, float end_slope, int octant);
+static void raycast_octant_at(
+	const struct raycast_params * params,
+	int row,
+	float start_slope,
+	float end_slope,
+	int octant);
 
-static void transform_point_by_octant(int y, int x, int dy, int dx, int octant, 
-	int *ay, int *ax);
+static void transform_point_by_octant(
+	int y,
+	int x,
+	int dy,
+	int dx,
+	int octant,
+	int *ay,
+	int *ax);
 
 /* Hides hard-coded initial values for raycast_octant_at() */
 #define RAYCAST_OCTANT_AT(params, octant) (raycast_octant_at(params, 1, 1.0, 0.0, octant))
 
-/* Uses Björn Bergström's Recursive Shadowcasting Algorithm, which 
+/* Uses Björn Bergström's Recursive Shadowcasting Algorithm, which
    divides the map into eight congruent triangular octants, and calculates each
    octant individually. */
 void raycast_at(const struct raycast_params * params)

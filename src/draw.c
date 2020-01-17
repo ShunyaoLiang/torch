@@ -2,6 +2,7 @@
 #include "ui.h"
 
 #include <string.h>
+#include <stdlib.h>
 
 #if 0
 static int visibility[MAP_LINES][MAP_COLS] = { 0 };
@@ -106,7 +107,7 @@ struct draw_info {
 	int view_lines, view_cols;
 };
 
-void draw_thing(struct tile * tile, int y, int x, void * context)
+void draw_thing(struct tile *tile, int y, int x, void *context)
 {
 	struct draw_info * info = context;
 	int line = y - clamp(player.posy - info->view_lines / 2, 0, MAP_LINES - info->view_lines);
@@ -137,10 +138,10 @@ void draw_shit(void)
 	raycast_at(
 		&(struct raycast_params) {
 		.callback = &draw_thing,
-			.context = &(struct draw_info) {
-				.view_lines = view_lines,
-				.view_cols = view_cols
-			},
+		.context = &(struct draw_info) {
+			.view_lines = view_lines,
+			.view_cols = view_cols
+		},
 		.floor = cur_floor,
 		.y = player.posy,
 		.x = player.posx,

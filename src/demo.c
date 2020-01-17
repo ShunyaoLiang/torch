@@ -288,7 +288,7 @@ static void raycast_octant_at(tile_map map, int y, int x, int radius, int row,
 	static int transforms[4][8] = {
 		{1, 0, 0, -1, -1, 0, 0, 1},
 		{0, 1, -1, 0, 0, -1, 1, 0},
-		{0, 1, 1, 0, 0, -1, -1, 0},	
+		{0, 1, 1, 0, 0, -1, -1, 0},
 		{1, 0, 0, 1, -1, 0, 0, -1},
 	};
 
@@ -355,5 +355,5 @@ static void raycast_octant_at(tile_map map, int y, int x, int radius, int row,
 #endif
 
 struct floor floors[] = {
-	[0] = {0},
+	[0] = {},
 };
