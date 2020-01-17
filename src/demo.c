@@ -87,7 +87,7 @@ def_entity_fn(demo_player_update)
 	}
 	//cast_light(this->floor->map, y, x, 6, 0.3f, this->r, this->g, this->b);
 	int radius = sqrt(1.f / (1.f / 255));
-	raycast_at(this->floor->map, y, x, radius, &cast_light_at,
+	raycast_at(this->floor, y, x, radius, &cast_light_at,
 		&(struct light_info) {
 			.map = &this->floor->map,
 			.bright = bright, .y = y, .x = x,
@@ -107,7 +107,7 @@ def_entity_fn(demo_torch_update)
 	x = this->posx;
 	//cast_light(this->floor->map, y, x, 6, 1.f, this->r, this->g, this->b);
 	int radius = sqrt(1.f / (1.f / 255));
-	raycast_at(this->floor->map, y, x, radius, &cast_light_at,
+	raycast_at(this->floor, y, x, radius, &cast_light_at,
 		&(struct light_info) {
 			.map = &this->floor->map,
 			.bright = 1.f, .y = y, .x = x, 
@@ -348,5 +348,5 @@ static void raycast_octant_at(tile_map map, int y, int x, int radius, int row,
 #endif
 
 struct floor floors[] = {
-	[0] = {0},
+	[0] = {},
 };

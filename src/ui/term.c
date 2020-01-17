@@ -15,7 +15,6 @@
 #define NORMAL_SCREEN "?1049l"
 #define HIDE_CURSOR "?25l"
 #define SHOW_CURSOR "?25h"
-
 static void get_terminal_size();
 static void handle_resize(int signal);
 
@@ -68,7 +67,7 @@ static void ui_buffer_realloc(void)
 static void __ui_buffer_realloc(int lines, int cols)
 {
 	/* Keep track of the previous buffer size. */
-	static int old_lines = 0, old_cols = 0;
+	static int old_lines = 0;
 
 	/* Initial allocation. Should only be ran once. */
 	if (!old_lines) {
@@ -110,7 +109,6 @@ static void __ui_buffer_realloc(int lines, int cols)
 	}
 
 	old_lines = lines;
-	old_cols = cols;
 
 	return;
 
@@ -281,7 +279,11 @@ struct ui_event ui_poll_event(void)
 			event.key = key.code.codepoint;
 			cont = false;
 			break;
+		default:
+			break;
 		}
+		break;
+	default:
 		break;
 	}
 
