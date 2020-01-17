@@ -1,4 +1,3 @@
-CC = clang
 CFLAGS = -Wall -I lib/ -I lib/termkey -I src/ -D HAVE_UNIBILIUM
 LDFLAGS = -lm -lunibilium
 
