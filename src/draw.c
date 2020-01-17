@@ -104,24 +104,23 @@ struct draw_info {
 	int view_lines, view_cols;
 };
 
-def_raycast_fn(draw_thing)
+int draw_thing(struct tile *tile, int y, int x, void *context)
 {
 	struct draw_info *info = context;
-	struct tile tile = floor_map_at(cur_floor, y, x);
 	int line = y - clamp(player.posy - info->view_lines / 2, 0, MAP_LINES - info->view_lines);
 	int col = x - clamp(player.posx - info->view_cols / 2, 0, MAP_COLS - info->view_cols);
-	if (tile.entity) {
+	if (tile->entity) {
 		ui_draw_at(line, col, (struct ui_cell){
-			.codepoint = { [0] = tile.entity->token },
+			.codepoint = { [0] = tile->entity->token },
 			/*  = tile.entity->color * tile.light + tile.dcolor */
-			.fg = color_add(color_multiply_by(tile.entity->color, tile.light), tile.dcolor),
+			.fg = color_add(color_multiply_by(tile->entity->color, tile->light), tile->dcolor),
 			.bg = { 0, 0, 0 },
 		});
 	} else {
 		ui_draw_at(line, col, (struct ui_cell){
-			.codepoint = { [0] = tile.token },
+			.codepoint = { [0] = tile->token },
 			/*  = tile.color * tile.light + tile.dcolor */
-			.fg = color_add(color_multiply_by(tile.color, tile.light), tile.dcolor),
+			.fg = color_add(color_multiply_by(tile->color, tile->light), tile->dcolor),
 			.bg = { 0, 0, 0 },
 		});
 	}

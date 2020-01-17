@@ -161,3 +161,8 @@ void floor_update_entities(struct floor *floor)
 			pos->update(pos);
 	}
 }
+
+bool tile_blocks_light(struct tile tile)
+{
+	return !tile.walk || (tile.entity ? tile.entity->blocks_light : tile.entity);
+}

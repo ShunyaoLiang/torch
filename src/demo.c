@@ -10,10 +10,6 @@
 
 struct floor *cur_floor = &floors[0];
 
-static void raycast_octant_at(tile_map map, int y, int x, int radius, int row,
-	float start_slope, float end_slope, int octant, raycast_fn *callback,
-	void *context);
-
 struct entity demo_new_snake(int y, int x);
 void demo_place_snake(int y, int x);
 
@@ -59,7 +55,7 @@ struct light_info {
 
 #include <assert.h>
 
-def_raycast_fn(cast_light_at)
+void cast_light_at(struct tile *tile, int y, int x, void *context)
 {
 	if (drawn_to[y][x])
 		return;
@@ -67,14 +63,13 @@ def_raycast_fn(cast_light_at)
 	drawn_to[y][x] = 1;
 	int distance = sqrt(pow(y - info->y, 2) + pow(x - info->x, 2));
 	const float dlight = info->bright / (distance + 1) / (distance + 1);
-	struct tile tile = (*info->map)[y][x];
 	if (y == info->y && x == info->x) {
 		(*info->map)[y][x].light += info->bright;
 	} else {
 		(*info->map)[y][x].light += dlight;
 //		assert((*info->map)[y][x].light > 0);
 		/*                        = info->r * dlight + tile.dcolor */
-		(*info->map)[y][x].dcolor = color_add(color_multiply_by(info->color, dlight), tile.dcolor);
+		(*info->map)[y][x].dcolor = color_add(color_multiply_by(info->color, dlight), tile->dcolor);
 	}
 }
 
@@ -265,6 +260,7 @@ struct entity demo_new_snake(int y, int x)
 	return snake;
 }
 
+#if 0
 void raycast_octant_at(tile_map map, int y, int x, int radius, int row,
 	float start_slope, float end_slope, int octant, raycast_fn *callback,
 	void *context);
@@ -349,6 +345,7 @@ static void raycast_octant_at(tile_map map, int y, int x, int radius, int row,
 		}
 	}
 }
+#endif
 
 struct floor floors[] = {
 	[0] = {0},

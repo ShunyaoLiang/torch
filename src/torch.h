@@ -78,6 +78,8 @@ struct tile {
 	uint walk : 1;
 };
 
+bool tile_blocks_light(struct tile);
+
 #define MAP_LINES 100
 #define MAP_COLS  100
 
@@ -131,10 +133,10 @@ def_input_key_fn(demo_get_fuel);
 
 extern struct floor demo_floor;
 
-#define def_raycast_fn(name) void name(int y, int x, void *context)
-typedef def_raycast_fn(raycast_fn);
+/* Raycast */
+typedef void raycast_callback_fn(struct tile *tile, int y, int x, void *context);
 
-void raycast_at(tile_map map, int y, int x, int radius, raycast_fn *callback,
-	void *context);
+void raycast_at(struct floor *floor, int y, int x, int radius,
+	raycast_callback_fn callback, void *context);
 
 #endif
