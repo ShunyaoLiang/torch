@@ -16,7 +16,8 @@
  * 	- raycast->callback is called with the corresponding tile
  * 	- the result is a pointer to that tile
  */
-static struct tile *get_tile_and_call_back(const struct raycast_params *raycast, int x, int y) {
+static struct tile *get_tile_and_call_back(const struct raycast_params *raycast, int x, int y)
+{
 	struct tile *tile = &raycast->floor->map[y][x];
 	raycast->callback(tile, y, x, raycast->context);
 	return tile;
@@ -29,13 +30,15 @@ static struct tile *get_tile_and_call_back(const struct raycast_params *raycast,
  * postconditions:
  * 	- the values of *l and *r are swapped
  */
-void swapi(int *l, int *r) {
+void swapi(int *l, int *r)
+{
 	int t = *l;
 	*l = *r;
 	*r = t;
 }
 
-struct point {
+struct point
+{
 	int x;
 	int y;
 };
@@ -57,7 +60,8 @@ struct point {
  *
  * wide contract
  */
-static struct point transform_point_to_octant(int x, int y, int dx, int dy, int octant_number) {
+static struct point transform_point_to_octant(int x, int y, int dx, int dy, int octant_number)
+{
 	if (octant_number & 1) {
 		swapi(&dx, &dy);
 	}
@@ -85,13 +89,14 @@ static struct point transform_point_to_octant(int x, int y, int dx, int dy, int 
  * 	- raycast->callback is called with the corresponding tile
  * 	- the result is a pointer to that tile
  */
-static struct tile *
-get_transformed_tile_and_call_back(const struct raycast_params *raycast, int dx, int dy, int octant) {
+static struct tile *get_transformed_tile_and_call_back(const struct raycast_params *raycast, int dx, int dy, int octant)
+{
 	struct point r = transform_point_to_octant(raycast->x, raycast->y, dx, dy, octant);
 	return get_tile_and_call_back(raycast, r.x, r.y);
 }
 
-struct index_interval {
+struct index_interval
+{
 	int begin;
 	int end;
 };
@@ -102,14 +107,16 @@ struct index_interval {
  *
  * wide contract
  */
-struct index_interval make_dy_interval(float slope_begin, float slope_end, int dx, int dy_max) {
+struct index_interval make_dy_interval(float slope_begin, float slope_end, int dx, int dy_max)
+{
 	struct index_interval dy_interval = { slope_begin * (dx - 0.5f) + 0.5f, slope_end * (dx + 0.5f) - 0.5f };
 	dy_interval.begin = min(dy_interval.begin, dy_max);
 	dy_interval.end = min(dy_interval.end, dy_max);
 	return dy_interval;
 }
 
-struct octant_params {
+struct octant_params
+{
 	int number;
 	int dx_max;
 	int dy_max;
@@ -181,7 +188,8 @@ static void raycast_octant_at(const struct raycast_params *raycast,
 	const struct octant_params *octant,
 	int dx,
 	float start_slope,
-	float end_slope) {
+	float end_slope)
+{
 	bool blocked = false;
 	for (; dx <= octant->dx_max && !blocked; ++dx) {
 		struct index_interval dy_interval = make_dy_interval(start_slope, end_slope, dx, octant->dy_max);
@@ -227,7 +235,8 @@ static void raycast_octant_at(const struct raycast_params *raycast,
  * 	- may call back for cells outside the requested radius.
  * 	- may call back multiple times for cells along axes and diagonals.
  */
-void raycast_at(const struct raycast_params *raycast) {
+void raycast_at(const struct raycast_params *raycast)
+{
 	get_tile_and_call_back(raycast, raycast->x, raycast->y);
 
 	const int dx_max[] = {

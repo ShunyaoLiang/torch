@@ -24,7 +24,8 @@ typedef def_input_key_fn(input_key_fn);
 extern input_key_fn *input_keymap[];
 
 /* Color */
-struct color {
+struct color
+{
 	uint8_t r, g, b;
 };
 
@@ -39,7 +40,8 @@ struct entity;
 #define def_entity_fn(name) void name(struct entity *this)
 typedef def_entity_fn(entity_fn);
 
-struct entity {
+struct entity
+{
 	struct color color;
 	char token;
 	int posy, posx;
@@ -70,7 +72,8 @@ def_input_key_fn(player_move_downright);
 def_input_key_fn(player_toggle_lantern);
 
 /* Floor */
-struct tile {
+struct tile
+{
 	struct color color;
 	char token;
 	float light;
@@ -87,7 +90,8 @@ bool tile_blocks_light(struct tile const *);
 typedef struct tile tile_map[MAP_LINES][MAP_COLS];
 typedef struct list_head entity_list;
 
-struct floor {
+struct floor
+{
 	tile_map map;
 	entity_list entities;
 };
@@ -96,7 +100,8 @@ extern struct floor floors[];
 
 extern struct floor *cur_floor;
 
-enum floor_type {
+enum floor_type
+{
 	CAVE,
 };
 
@@ -137,7 +142,8 @@ extern struct floor demo_floor;
 
 typedef void raycast_callback_fn(struct tile *tile, int x, int y, void *context);
 
-struct raycast_params {
+struct raycast_params
+{
 	struct floor *floor;
 	int x;
 	int y;

@@ -1,4 +1,5 @@
 #include "torch.h"
+
 #include "ui.h"
 
 #include <stdio.h>
@@ -10,7 +11,8 @@
 FILE *debug_log;
 #endif
 
-int main() {
+int main()
+{
 	srand(time(NULL));
 #ifdef DEBUG
 	debug_log = fopen("debug_log", "w");

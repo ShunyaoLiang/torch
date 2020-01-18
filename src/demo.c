@@ -13,7 +13,8 @@ struct floor *cur_floor = &floors[0];
 struct entity demo_new_snake(int y, int x);
 void demo_place_snake(int y, int x);
 
-void demo_floor_load_map(const char *filename) {
+void demo_floor_load_map(const char *filename)
+{
 	//	FILE *mapfp = fopen(filename, "r");
 	floor_map_generate(&floors[0], CAVE);
 
@@ -45,7 +46,8 @@ void demo_floor_load_map(const char *filename) {
 
 int drawn_to[MAP_LINES][MAP_COLS] = { 0 };
 
-struct light_info {
+struct light_info
+{
 	tile_map *map;
 	float bright;
 	int y, x;
@@ -54,7 +56,8 @@ struct light_info {
 
 #include <assert.h>
 
-void cast_light_at(struct tile *tile, int y, int x, void *context) {
+void cast_light_at(struct tile *tile, int y, int x, void *context)
+{
 	if (drawn_to[y][x]) return;
 	struct light_info *info = context;
 	drawn_to[y][x] = 1;
@@ -70,7 +73,8 @@ void cast_light_at(struct tile *tile, int y, int x, void *context) {
 	}
 }
 
-def_entity_fn(demo_player_update) {
+def_entity_fn(demo_player_update)
+{
 	float bright = player_lantern_on && player_fuel > 0 ? 0.5f : 0.1f;
 	if (player_lantern_on) {
 		if (player_fuel > 0) {
@@ -84,8 +88,7 @@ def_entity_fn(demo_player_update) {
 
 	raycast_at(&(struct raycast_params) {
 		.callback = &cast_light_at,
-		.context = &(struct light_info) {
-			.map = &this->floor->map,
+		.context = &(struct light_info) { .map = &this->floor->map,
 			.bright = bright,
 			.y = this->posy,
 			.x = this->posx,
@@ -99,7 +102,8 @@ def_entity_fn(demo_player_update) {
 	memset(drawn_to, 0, (sizeof(drawn_to[0][0]) * MAP_LINES * MAP_COLS));
 }
 
-def_entity_fn(demo_torch_update) {
+def_entity_fn(demo_torch_update)
+{
 	//	entity_move_pos_rel(this, y, x);
 
 	// cast_light(this->floor->map, y, x, 6, 1.f, this->r, this->g, this->b);
@@ -119,10 +123,11 @@ def_entity_fn(demo_torch_update) {
 	memset(drawn_to, 0, (sizeof(drawn_to[0][0]) * MAP_LINES * MAP_COLS));
 }
 
-def_entity_fn(demo_torch_destroy) {
-}
+def_entity_fn(demo_torch_destroy)
+{}
 
-void demo_add_entities(void) {
+void demo_add_entities(void)
+{
 #if 0
 	struct entity torch = {
 		.r = 0xe2, .g = /*0x58*/0, .b = 0x22,
@@ -164,7 +169,8 @@ void demo_add_entities(void) {
 #endif
 }
 
-struct entity demo_new_torch(int y, int x) {
+struct entity demo_new_torch(int y, int x)
+{
 	struct entity torch = {
 		.color = {
 			.r = 0xe2,
@@ -183,7 +189,8 @@ struct entity demo_new_torch(int y, int x) {
 	return torch;
 }
 
-def_input_key_fn(place_torch) {
+def_input_key_fn(place_torch)
+{
 	if (!player_torches) return 0;
 	player_torches--;
 	int y = player.posy;
@@ -201,19 +208,22 @@ def_input_key_fn(place_torch) {
 	return floor_add_entity(cur_floor, t);
 }
 
-def_input_key_fn(demo_get_fuel) {
+def_input_key_fn(demo_get_fuel)
+{
 	player_fuel += 10;
 	return 0;
 }
 
-void demo_place_snake(int y, int x) {
+void demo_place_snake(int y, int x)
+{
 	struct entity snake = demo_new_snake(y, x);
 	struct entity *s = malloc(sizeof(snake));
 	memcpy(s, &snake, sizeof(snake));
 	floor_add_entity(&floors[0], s);
 }
 
-def_entity_fn(demo_snake_update) {
+def_entity_fn(demo_snake_update)
+{
 	int y = 0;
 	int x = 0;
 	if (this->posy < player.posy) y = 1;
@@ -235,7 +245,8 @@ def_entity_fn(demo_snake_update) {
 	}
 }
 
-struct entity demo_new_snake(int y, int x) {
+struct entity demo_new_snake(int y, int x)
+{
 	struct entity snake = {
 		.color = {
 			.r = 0xa,

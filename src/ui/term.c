@@ -1,14 +1,15 @@
-#include "ui.h"
 #include "termkey.h"
 #include "torch.h"
+#include "ui.h"
 
 #include <sys/ioctl.h>
-#include <unistd.h>
+
 #include <signal.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
+#include <unistd.h>
 
 #define CSI "\e["
 #define ALTERNATE_SCREEN "?1049h"
@@ -73,13 +74,11 @@ static void __ui_buffer_realloc(int lines, int cols)
 	/* Initial allocation. Should only be ran once. */
 	if (!old_lines) {
 		ui_buffer = malloc(sizeof(struct ui_cell *) * lines);
-		if (!ui_buffer)
-			goto fail;
+		if (!ui_buffer) goto fail;
 
 		for (int line = 0; line < lines; ++line) {
 			ui_buffer[line] = malloc(sizeof(struct ui_cell) * cols);
-			if (!ui_buffer[line])
-				goto fail;
+			if (!ui_buffer[line]) goto fail;
 		}
 	} else {
 		/* Free all uneeded lines. */
@@ -89,23 +88,20 @@ static void __ui_buffer_realloc(int lines, int cols)
 
 		/* Resize the top array of pointers. */
 		struct ui_cell **tmp = realloc(ui_buffer, sizeof(struct ui_cell *) * lines);
-		if (!tmp)
-			goto fail;
+		if (!tmp) goto fail;
 		ui_buffer = tmp;
 
 		/* Resize existing lines. */
 		for (int line = 0; line < min(old_lines, lines); ++line) {
 			struct ui_cell *tmp = realloc(ui_buffer[line], sizeof(struct ui_cell) * cols);
-			if (!tmp)
-				goto fail;
+			if (!tmp) goto fail;
 			ui_buffer[line] = tmp;
 		}
 
 		/* Allocate all new lines. */
 		for (int line = old_lines; line < lines; ++line) {
 			ui_buffer[line] = malloc(sizeof(struct ui_cell) * cols);
-			if (!ui_buffer[line])
-				goto fail;
+			if (!ui_buffer[line]) goto fail;
 		}
 	}
 
@@ -128,10 +124,8 @@ void ui_quit(void)
 
 void ui_dimensions(int *lines, int *cols)
 {
-	if (lines)
-		*lines = ui_lines;
-	if (cols)
-		*cols = ui_cols;
+	if (lines) *lines = ui_lines;
+	if (cols) *cols = ui_cols;
 }
 
 void ui_draw_at(int line, int col, struct ui_cell cell)
@@ -222,7 +216,7 @@ void ui_flush(void)
 			}
 
 			if (this.strikethru != last.strikethru) {
-				sgr_params[nparams++] = this.strikethru? 9 : 29;
+				sgr_params[nparams++] = this.strikethru ? 9 : 29;
 				sgrlen += this.strikethru ? 1 : 2;
 			}
 
@@ -230,10 +224,10 @@ void ui_flush(void)
 				char *iter = sgr_buf;
 
 				iter += sprintf(iter, "\e[");
-				for (int i = 0; i < nparams-1; i++)
+				for (int i = 0; i < nparams - 1; i++)
 					iter += sprintf(iter, "%d;", sgr_params[i]);
 				if (nparams > 0) // no semicolon for last parameter
-					iter += sprintf(iter, "%d", sgr_params[nparams-1]);
+					iter += sprintf(iter, "%d", sgr_params[nparams - 1]);
 				sprintf(iter, "m");
 			} else
 				sgr_buf[0] = '\0';
@@ -249,8 +243,7 @@ void ui_flush(void)
 static void move_cursor(int line, int col)
 {
 	if (ui_buffer_in_bounds(line, col))
-		if (line == 1 && col == 1)
-			printf(CSI "H");
+		if (line == 1 && col == 1) printf(CSI "H");
 		else if (col == 1)
 			printf(CSI "%dH", line);
 		else
@@ -269,31 +262,30 @@ void ui_draw_str_at(int line, int col, const char *str, struct ui_cell attr)
 
 struct ui_event ui_poll_event(void)
 {
-	bool cont =  true;
+	bool cont = true;
 	TermKeyKey key;
 	struct ui_event event;
-	
-	while (cont) switch (termkey_waitkey(termkey_instance, &key)) {
-	case TERMKEY_RES_KEY:
-		switch (key.type) {
-		case TERMKEY_TYPE_UNICODE:
-			event.key = key.code.codepoint;
-			cont = false;
+
+	while (cont)
+		switch (termkey_waitkey(termkey_instance, &key)) {
+		case TERMKEY_RES_KEY:
+			switch (key.type) {
+			case TERMKEY_TYPE_UNICODE:
+				event.key = key.code.codepoint;
+				cont = false;
+				break;
+			default: break;
+			}
 			break;
-		default:
-			break;
+		default: break;
 		}
-		break;
-	default:
-		break;
-	}
 
 	return event;
 }
 
 #ifdef TEST
 
-#include <assert.h>
+	#include <assert.h>
 
 int main(void)
 {
@@ -313,7 +305,7 @@ int main(void)
 	});
 	assert(strcmp(ui_buffer[lines - 1][0].codepoint, "L") == 0);
 
-	ui_draw_str_at(3, 3, "Test", (struct ui_cell){.fg = {19, 103, 76}});
+	ui_draw_str_at(3, 3, "Test", (struct ui_cell) { .fg = { 19, 103, 76 } });
 
 	ui_flush();
 	struct ui_event event = ui_poll_event();
