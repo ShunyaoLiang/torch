@@ -19,7 +19,7 @@ void demo_floor_load_map(const char *filename)
 	floor_map_generate(&floors[0], CAVE);
 
 	/* Make this not shit please. */
-	for (size_t line = 0; line < MAP_LINES; ++line) {
+	for (size_t line = 0; line < MAP_ROWS; ++line) {
 		for (size_t col = 0; col < MAP_COLS; ++col) {
 //			fscanf(mapfp, "%c", &demo_floor.map[line][col].token);
 			floors[0].map[line][col].light = 0;
@@ -37,14 +37,14 @@ void demo_floor_load_map(const char *filename)
 
 //	fclose(mapfp);
 
-	for (int i = 0; i < 20; ++i) {
-		int y = rand() % MAP_LINES;
+	for (int i = 0; i < 0; ++i) {
+		int y = rand() % MAP_ROWS;
 		int x = rand() % MAP_COLS;
 		demo_place_snake(y, x);
 	}
 }
 
-int drawn_to[MAP_LINES][MAP_COLS] = { 0 };
+int drawn_to[MAP_ROWS][MAP_COLS] = { 0 };
 
 struct light_info {
 	tile_map *map;
@@ -75,7 +75,7 @@ void cast_light_at(struct tile *tile, int y, int x, void *context)
 
 def_entity_fn(demo_player_update)
 {
-	float bright = player_lantern_on && player_fuel > 0 ? 0.5f : 0.1f;
+	float bright = player_lantern_on && player_fuel > 0 ? 20.0f : 0.1f;
 	if (player_lantern_on) {
 		if (player_fuel > 0) {
 			player_fuel--;
@@ -99,7 +99,7 @@ def_entity_fn(demo_player_update)
 		.radius = sqrt(1.f / (1.f / 255)),
 	});
 
-	memset(drawn_to, 0, (sizeof(drawn_to[0][0]) * MAP_LINES * MAP_COLS));
+	memset(drawn_to, 0, (sizeof(drawn_to[0][0]) * MAP_ROWS * MAP_COLS));
 }
 
 def_entity_fn(demo_torch_update)
@@ -120,7 +120,7 @@ def_entity_fn(demo_torch_update)
 		.x = this->posx,
 		.radius = sqrt(1.f / (1.f / 255))
 	});
-	memset(drawn_to, 0, (sizeof(drawn_to[0][0]) * MAP_LINES * MAP_COLS));
+	memset(drawn_to, 0, (sizeof(drawn_to[0][0]) * MAP_ROWS * MAP_COLS));
 }
 
 def_entity_fn(demo_torch_destroy)

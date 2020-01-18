@@ -79,12 +79,12 @@ struct tile {
 	uint walk : 1;
 };
 
-bool tile_blocks_light(struct tile);
+bool tile_blocks_light(struct tile const *);
 
-#define MAP_LINES 100
+#define MAP_ROWS 100
 #define MAP_COLS  100
 
-typedef struct tile tile_map[MAP_LINES][MAP_COLS];
+typedef struct tile tile_map[MAP_ROWS][MAP_COLS];
 typedef struct list_head entity_list;
 
 struct floor {
@@ -100,10 +100,10 @@ enum floor_type {
 	CAVE,
 };
 
-struct tile floor_map_at(struct floor *floor, int y, int x);
-int         floor_map_in_bounds(int y, int x);
-void        floor_map_clear_lights(void);
-void        floor_map_generate(struct floor *floor, enum floor_type type);
+struct tile  floor_map_at(struct floor *floor, int y, int x);
+int          floor_map_in_bounds(int y, int x);
+void         floor_map_clear_lights(void);
+void         floor_map_generate(struct floor *floor, enum floor_type type);
 
 int  floor_add_entity(struct floor *floor, struct entity *entity);
 void floor_update_entities(struct floor *floor);
@@ -136,18 +136,19 @@ extern struct floor demo_floor;
 
 /* Raycast */
 
-typedef void raycast_callback_fn(struct tile *tile, int y, int x, void *context);
+typedef void raycast_callback_fn(struct tile *tile, int x, int y, void *context);
 
 struct raycast_params
 {
-    struct floor * floor;
-    int x;
-    int y;
+    struct floor *floor;
+	int x;
+	int y;
     int radius;
-    raycast_callback_fn * callback;
-    void * context;
+    raycast_callback_fn *callback;
+    void *context;
 };
 
-void raycast_at(const struct raycast_params * params);
+void raycast_at(const struct raycast_params *params);
+void raycast(const struct raycast_params *params);
 
 #endif

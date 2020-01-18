@@ -5,7 +5,7 @@
 #include <string.h>
 
 typedef int cell;
-typedef cell cell_grid[MAP_LINES][MAP_COLS];
+typedef cell cell_grid[MAP_ROWS][MAP_COLS];
 
 #define cell_grid_for_each_cell(pos, grid) \
 	for (pos = *grid; pos != back(grid); ++pos)
@@ -40,7 +40,7 @@ static void intern_populate_grid(cell_grid grid, float rate)
 			*pos = 0;
 	}
 */
-	for (int y = 0; y < MAP_LINES; ++y) {
+	for (int y = 0; y < MAP_ROWS; ++y) {
 		for (int x = 0; x < MAP_COLS; ++x) {
 			if (rand() % 100 / 100.f < rate)
 				grid[y][x] = 1;
@@ -53,7 +53,7 @@ static void intern_populate_grid(cell_grid grid, float rate)
 static void intern_iterate_grid(cell_grid grid, int birth, int survive)
 {
 	cell_grid new = { 0 };
-	for (int y = 0; y < MAP_LINES; ++y)
+	for (int y = 0; y < MAP_ROWS; ++y)
 		for (int x = 0; x < MAP_COLS; ++x) {
 			int alive = intern_cell_alive_neighbours(grid, y, x);
 			if (grid[y][x]) {
@@ -66,7 +66,7 @@ static void intern_iterate_grid(cell_grid grid, int birth, int survive)
 		}
 
 //	memcpy(new, grid, sizeof(new));
-	for (int y = 0; y < MAP_LINES; ++y)
+	for (int y = 0; y < MAP_ROWS; ++y)
 		for (int x = 0; x < MAP_COLS; ++x) {
 			grid[y][x] = new[y][x];
 		}
@@ -129,7 +129,7 @@ struct tile floor_map_at(struct floor *floor, int y, int x)
 
 int floor_map_in_bounds(int y, int x)
 {
-	return y >= 0 && y < MAP_LINES && x >= 0 && x < MAP_COLS;
+	return y >= 0 && y < MAP_ROWS && x >= 0 && x < MAP_COLS;
 }
 
 void floor_map_clear_lights(void)
@@ -162,7 +162,7 @@ void floor_update_entities(struct floor *floor)
 	}
 }
 
-bool tile_blocks_light(struct tile tile)
+bool tile_blocks_light(const struct tile * tile)
 {
-	return !tile.walk || (tile.entity ? tile.entity->blocks_light : tile.entity);
+	return !tile->walk || (tile->entity && tile->entity->blocks_light);
 }
