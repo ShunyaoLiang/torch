@@ -32,21 +32,29 @@ void draw_map(void)
 			if (visibility[viewy + line][viewx + col]) {
 				ui_draw_at(line, col, (struct ui_cell) {
 					.codepoint = { [0] = tile.token },
-						.fg = {
-							.r = r, .g = g, .b = b,
+					.fg = {
+						.r = r,
+						.g = g,
+						.b = b,
 					},
 					.bg = {
-						.r = 0, .g = 0, .b = 0,
+						.r = 0,
+						.g = 0,
+						.b = 0,
 					},
 				});
 			} else {
 				ui_draw_at(line, col, (struct ui_cell) {
 					.codepoint = " ",
-						.fg = {
-							.r = 0, .g = 0, .b = 0,
+					.fg = {
+						.r = 0,
+						.g = 0,
+						.b = 0,
 					},
 					.bg = {
-						.r = 0, .g = 0, .b = 0,
+						.r = 0,
+						.g = 0,
+						.b = 0,
 					},
 				});
 			}

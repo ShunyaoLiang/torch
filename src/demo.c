@@ -113,7 +113,7 @@ def_entity_fn(demo_torch_update)
 		.callback = &cast_light_at,
 		.context = &(struct light_info) {
 			.map = &this->floor->map,
-			.bright = 1.f,
+			.bright = 1.0f,
 			.y = this->posy,
 			.x = this->posx,
 			.color = this->color,
@@ -121,7 +121,7 @@ def_entity_fn(demo_torch_update)
 		.floor = this->floor,
 		.y = this->posy,
 		.x = this->posx,
-		.radius = 15
+		.radius = sqrt(255.0f)
 	});
 	memset(drawn_to, 0, (sizeof(drawn_to[0][0]) * MAP_LINES * MAP_COLS));
 }
