@@ -1,8 +1,8 @@
 #include "torch.h"
 #include "ui.h"
 
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
 
 #if 0
 static int visibility[MAP_LINES][MAP_COLS] = { 0 };
@@ -39,8 +39,7 @@ void draw_map(void)
 						.r = 0, .g = 0, .b = 0,
 					},
 				});
-			}
-			else {
+			} else {
 				ui_draw_at(line, col, (struct ui_cell) {
 					.codepoint = " ",
 						.fg = {
@@ -107,49 +106,45 @@ struct draw_info {
 	int view_lines, view_cols;
 };
 
-void draw_thing(struct tile *tile, int y, int x, void *context)
-{
-	struct draw_info * info = context;
+void draw_thing(struct tile *tile, int y, int x, void *context) {
+	struct draw_info *info = context;
 	int line = y - clamp(player.posy - info->view_lines / 2, 0, MAP_LINES - info->view_lines);
 	int col = x - clamp(player.posx - info->view_cols / 2, 0, MAP_COLS - info->view_cols);
 	if (tile->entity) {
-		ui_draw_at(line, col, (struct ui_cell) {
-			.codepoint = { [0] = tile->entity->token },
+		ui_draw_at(line,
+			col,
+			(struct ui_cell) {
+				.codepoint = { [0] = tile->entity->token },
 				/*  = tile.entity->color * tile.light + tile.dcolor */
 				.fg = color_add(color_multiply_by(tile->entity->color, tile->light), tile->dcolor),
 				.bg = { 0, 0, 0 },
-		});
-	}
-	else {
-		ui_draw_at(line, col, (struct ui_cell) {
-			.codepoint = { [0] = tile->token },
+			});
+	} else {
+		ui_draw_at(line,
+			col,
+			(struct ui_cell) {
+				.codepoint = { [0] = tile->token },
 				/*  = tile.color * tile.light + tile.dcolor */
 				.fg = color_add(color_multiply_by(tile->color, tile->light), tile->dcolor),
 				.bg = { 0, 0, 0 },
-		});
+			});
 	}
 }
 
-void draw_shit(void)
-{
+void draw_shit(void) {
 	int view_lines, view_cols;
 	ui_dimensions(&view_lines, &view_cols);
 
-	raycast_at(
-		&(struct raycast_params) {
+	raycast_at(&(struct raycast_params) {
 		.callback = &draw_thing,
-		.context = &(struct draw_info) {
-			.view_lines = view_lines,
-			.view_cols = view_cols
-		},
+		.context = &(struct draw_info) { .view_lines = view_lines, .view_cols = view_cols },
 		.floor = cur_floor,
 		.y = player.posy,
 		.x = player.posx,
-		.radius = max(view_lines, view_cols) / 2
-	});
+		.radius = max(view_lines, view_cols) / 2 });
 
 	size_t needed = snprintf(NULL, 0, "%3d %3d", player_fuel, player_torches) + 1;
-	char * buf = malloc(needed);
+	char *buf = malloc(needed);
 	sprintf(buf, "%3d %3d", player_fuel, player_torches);
 	ui_draw_str_at(1, 0, buf, (struct ui_cell) { .fg = { 0xe2, 0x58, 0x22 } });
 

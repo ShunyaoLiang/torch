@@ -3,12 +3,12 @@
 
 #include "list.h"
 
-#include <stdio.h>
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 
-#define back(arr) (arr[sizeof(arr)/sizeof(*arr)])
+#define back(arr) (arr[sizeof(arr) / sizeof(*arr)])
 #define min(a, b) (a < b ? a : b)
 #define max(a, b) (a > b ? a : b)
 #define clamp(v, lo, hi) ((v < lo) ? lo : (hi < v) ? hi : v)
@@ -82,7 +82,7 @@ struct tile {
 bool tile_blocks_light(struct tile const *);
 
 #define MAP_LINES 100
-#define MAP_COLS  100
+#define MAP_COLS 100
 
 typedef struct tile tile_map[MAP_LINES][MAP_COLS];
 typedef struct list_head entity_list;
@@ -100,20 +100,19 @@ enum floor_type {
 	CAVE,
 };
 
-struct tile  floor_map_at(struct floor *floor, int y, int x);
-int          floor_map_in_bounds(int y, int x);
-void         floor_map_clear_lights(void);
-void         floor_map_generate(struct floor *floor, enum floor_type type);
+struct tile floor_map_at(struct floor *floor, int y, int x);
+int floor_map_in_bounds(int y, int x);
+void floor_map_clear_lights(void);
+void floor_map_generate(struct floor *floor, enum floor_type type);
 
-int  floor_add_entity(struct floor *floor, struct entity *entity);
+int floor_add_entity(struct floor *floor, struct entity *entity);
 void floor_update_entities(struct floor *floor);
 
-#define floor_for_each_tile(pos, floor) \
-	for (pos = *floor->map; pos != back(floor->map); ++pos)
+#define floor_for_each_tile(pos, floor) for (pos = *floor->map; pos != back(floor->map); ++pos)
 
 /* Draw */
 #define VIEW_LINES 23
-#define VIEW_COLS  79
+#define VIEW_COLS 79
 
 #if 0
 void draw_map(void);
@@ -138,14 +137,13 @@ extern struct floor demo_floor;
 
 typedef void raycast_callback_fn(struct tile *tile, int x, int y, void *context);
 
-struct raycast_params
-{
-    struct floor *floor;
+struct raycast_params {
+	struct floor *floor;
 	int x;
 	int y;
-    int radius;
-    raycast_callback_fn *callback;
-    void *context;
+	int radius;
+	raycast_callback_fn *callback;
+	void *context;
 };
 
 void raycast_at(const struct raycast_params *params);

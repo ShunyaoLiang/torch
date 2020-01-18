@@ -2,16 +2,15 @@
 #include "ui.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <stdlib.h>
 
 #ifdef DEBUG
 FILE *debug_log;
 #endif
 
-int main(void)
-{
+int main() {
 	srand(time(NULL));
 #ifdef DEBUG
 	debug_log = fopen("debug_log", "w");
@@ -28,8 +27,7 @@ int main(void)
 	struct ui_event event = { .key = 'e' };
 
 	do {
-		if (!input_keymap[event.key] || input_keymap[event.key]())
-			continue;
+		if (!input_keymap[event.key] || input_keymap[event.key]()) continue;
 
 		floor_map_clear_lights();
 		floor_update_entities(cur_floor);

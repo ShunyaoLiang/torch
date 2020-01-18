@@ -15,6 +15,7 @@
 #define NORMAL_SCREEN "?1049l"
 #define HIDE_CURSOR "?25l"
 #define SHOW_CURSOR "?25h"
+
 static void get_terminal_size();
 static void handle_resize(int signal);
 
