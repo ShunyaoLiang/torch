@@ -29,7 +29,8 @@ int main()
 	struct ui_event event = { .key = 'e' };
 
 	do {
-		if (!input_keymap[event.key] || input_keymap[event.key]()) continue;
+		if (!input_keymap[event.key] || input_keymap[event.key]())
+			continue;
 
 		floor_map_clear_lights();
 		floor_update_entities(cur_floor);

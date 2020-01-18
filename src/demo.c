@@ -58,7 +58,8 @@ struct light_info
 
 void cast_light_at(struct tile *tile, int y, int x, void *context)
 {
-	if (drawn_to[y][x]) return;
+	if (drawn_to[y][x])
+		return;
 	struct light_info *info = context;
 	drawn_to[y][x] = 1;
 	int distance = sqrt(pow(y - info->y, 2) + pow(x - info->x, 2));
@@ -191,7 +192,8 @@ struct entity demo_new_torch(int y, int x)
 
 def_input_key_fn(place_torch)
 {
-	if (!player_torches) return 0;
+	if (!player_torches)
+		return 0;
 	player_torches--;
 	int y = player.posy;
 	int x = player.posx;
@@ -226,16 +228,19 @@ def_entity_fn(demo_snake_update)
 {
 	int y = 0;
 	int x = 0;
-	if (this->posy < player.posy) y = 1;
+	if (this->posy < player.posy)
+		y = 1;
 	else if (this->posy > player.posy)
 		y = -1;
-	if (this->posx < player.posx) x = 1;
+	if (this->posx < player.posx)
+		x = 1;
 	else if (this->posx > player.posx)
 		x = -1;
 
 	entity_move_pos_rel(this, y, x);
 
-	if (floor_map_at(this->floor, this->posy, this->posx).light > 0.2) entity_move_pos_rel(this, -y, -x);
+	if (floor_map_at(this->floor, this->posy, this->posx).light > 0.2)
+		entity_move_pos_rel(this, -y, -x);
 	if (abs(this->posy - player.posy) == 1 && abs(this->posx - player.posx) == 1) {
 		ui_clear();
 		ui_flush();

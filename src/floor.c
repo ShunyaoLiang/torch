@@ -41,7 +41,8 @@ static void intern_populate_grid(cell_grid grid, float rate)
 	*/
 	for (int y = 0; y < MAP_LINES; ++y) {
 		for (int x = 0; x < MAP_COLS; ++x) {
-			if (rand() % 100 / 100.f < rate) grid[y][x] = 1;
+			if (rand() % 100 / 100.f < rate)
+				grid[y][x] = 1;
 			else
 				grid[y][x] = 0;
 		};
@@ -55,9 +56,11 @@ static void intern_iterate_grid(cell_grid grid, int birth, int survive)
 		for (int x = 0; x < MAP_COLS; ++x) {
 			int alive = intern_cell_alive_neighbours(grid, y, x);
 			if (grid[y][x]) {
-				if (alive >= survive) new[y][x] = 1;
+				if (alive >= survive)
+					new[y][x] = 1;
 			} else {
-				if (alive >= birth) new[y][x] = 1;
+				if (alive >= birth)
+					new[y][x] = 1;
 			}
 		}
 
@@ -93,7 +96,8 @@ static int intern_cell_alive_neighbours(cell_grid grid, int y, int x)
 
 static int intern_cell_grid_at(cell_grid grid, int y, int x)
 {
-	if (floor_map_in_bounds(y, x)) return grid[y][x];
+	if (floor_map_in_bounds(y, x))
+		return grid[y][x];
 	else
 		return 1;
 }
@@ -117,7 +121,8 @@ static void intern_floor_write_grid(struct floor *floor, cell_grid grid)
 
 struct tile floor_map_at(struct floor *floor, int y, int x)
 {
-	if (floor_map_in_bounds(y, x)) return (floor->map)[y][x];
+	if (floor_map_in_bounds(y, x))
+		return (floor->map)[y][x];
 	else
 		return (struct tile) { .token = ' ' };
 }
@@ -141,7 +146,8 @@ void floor_map_clear_lights(void)
 
 int floor_add_entity(struct floor *floor, struct entity *entity)
 {
-	if (floor->map[entity->posy][entity->posx].entity) return -1;
+	if (floor->map[entity->posy][entity->posx].entity)
+		return -1;
 	list_add(&entity->list, &floor->entities);
 	entity->floor = floor;
 	floor->map[entity->posy][entity->posx].entity = entity;
@@ -153,7 +159,8 @@ void floor_update_entities(struct floor *floor)
 	struct entity *pos;
 	list_for_each_entry(pos, &floor->entities, list)
 	{
-		if (pos->update) pos->update(pos);
+		if (pos->update)
+			pos->update(pos);
 	}
 }
 

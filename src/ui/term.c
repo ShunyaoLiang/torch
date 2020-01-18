@@ -74,11 +74,13 @@ static void __ui_buffer_realloc(int lines, int cols)
 	/* Initial allocation. Should only be ran once. */
 	if (!old_lines) {
 		ui_buffer = malloc(sizeof(struct ui_cell *) * lines);
-		if (!ui_buffer) goto fail;
+		if (!ui_buffer)
+			goto fail;
 
 		for (int line = 0; line < lines; ++line) {
 			ui_buffer[line] = malloc(sizeof(struct ui_cell) * cols);
-			if (!ui_buffer[line]) goto fail;
+			if (!ui_buffer[line])
+				goto fail;
 		}
 	} else {
 		/* Free all uneeded lines. */
@@ -88,20 +90,23 @@ static void __ui_buffer_realloc(int lines, int cols)
 
 		/* Resize the top array of pointers. */
 		struct ui_cell **tmp = realloc(ui_buffer, sizeof(struct ui_cell *) * lines);
-		if (!tmp) goto fail;
+		if (!tmp)
+			goto fail;
 		ui_buffer = tmp;
 
 		/* Resize existing lines. */
 		for (int line = 0; line < min(old_lines, lines); ++line) {
 			struct ui_cell *tmp = realloc(ui_buffer[line], sizeof(struct ui_cell) * cols);
-			if (!tmp) goto fail;
+			if (!tmp)
+				goto fail;
 			ui_buffer[line] = tmp;
 		}
 
 		/* Allocate all new lines. */
 		for (int line = old_lines; line < lines; ++line) {
 			ui_buffer[line] = malloc(sizeof(struct ui_cell) * cols);
-			if (!ui_buffer[line]) goto fail;
+			if (!ui_buffer[line])
+				goto fail;
 		}
 	}
 
@@ -124,8 +129,10 @@ void ui_quit(void)
 
 void ui_dimensions(int *lines, int *cols)
 {
-	if (lines) *lines = ui_lines;
-	if (cols) *cols = ui_cols;
+	if (lines)
+		*lines = ui_lines;
+	if (cols)
+		*cols = ui_cols;
 }
 
 void ui_draw_at(int line, int col, struct ui_cell cell)
@@ -243,7 +250,8 @@ void ui_flush(void)
 static void move_cursor(int line, int col)
 {
 	if (ui_buffer_in_bounds(line, col))
-		if (line == 1 && col == 1) printf(CSI "H");
+		if (line == 1 && col == 1)
+			printf(CSI "H");
 		else if (col == 1)
 			printf(CSI "%dH", line);
 		else
