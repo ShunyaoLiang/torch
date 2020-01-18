@@ -6,14 +6,14 @@ static void raycast_octant_at(struct floor *floor, int y, int x, int radius,
 	int row, float start_slope, float end_slope, int octant,
 	raycast_callback_fn callback, void *context);
 
-static void transform_point_by_octant(int y, int x, int dy, int dx, int octant, 
+static void transform_point_by_octant(int y, int x, int dy, int dx, int octant,
 	int *ay, int *ax);
 
 /* Hides hard-coded initial values for raycast_octant_at() */
 #define RAYCAST_OCTANT_AT(map, y, x, radius, octant, callback, context) do { \
-		raycast_octant_at(map, y, x, radius, 1, 1.0, 0.0, octant, \
-			callback, context); \
-	} while (0);
+	raycast_octant_at(map, y, x, radius, 1, 1.0, 0.0, octant, callback, \
+		context); \
+} while (0);
 
 /* Uses Björn Bergström's Recursive Shadowcasting Algorithm, which 
    divides the map into eight congruent triangular octants, and calculates each
@@ -31,14 +31,14 @@ void raycast_at(struct floor *floor, int y, int x, int radius,
 /* Iterates through each tile, left to right, of each row of a given octant,
    recursing in each gap between blocking tiles, except for the last one.
 
-       7  --....-- - = visible tile     --....--
-       6   --...-- . = hidden tile       --...-- 
-       5    --##-- # = blocking tile      --!#-- ! = function recurses here 
-       4     -----                         -----
-       3      ----                          ----
-       2       ---                           ---
-       1        --                            --
-                 @ @ = the centre              @ 
+   	7  --....-- - = visible tile     --....--
+   	6   --...-- . = hidden tile       --...--
+   	5    --##-- # = blocking tile      --!#-- ! = function recurses here
+   	4     -----                         -----
+   	3      ----                          ----
+   	2       ---                           ---
+   	1        --                            --
+   	          @ @ = the centre              @
 
    Note: the algorithm uses an unorthodox understanding of coordinate gradients,
    calculating them as dx / dy rather than dy / dx. Consequently, as a line
@@ -110,27 +110,35 @@ static void raycast_octant_at(struct floor *floor, int y, int x, int radius,
 	}
 }
 
+#define SWAP(a, b, type) do { \
+	type temp = a; \
+	a = b; \
+	b = temp; \
+} while (0);
+
 /* raycast_octant_at() pretends its always calculating the zeroth octant.
    transform_point_by_octant() applies the transformation. */
 static void transform_point_by_octant(int y, int x, int dy, int dx, int octant,
 	int *ay, int *ax)
 {
-	/* Notice that either yy and xx are non-zero, or yx and xy are non-zero.
-	   When yy and xx are zero, yx and xy swap r and x respectively.
-	   When yx and xy are zero, y and x flip along the axis respectively. */
-	static const int transforms[8][2][2] = {
-		/* yy  yx    xx  xy */
-		{ { 1,  0}, { 1,  0} },
-		{ { 0,  1}, { 0,  1} },
-		{ { 0,  1}, { 0, -1} },
-		{ { 1,  0}, {-1,  0} },
-		{ {-1,  0}, {-1,  0} },
-		{ { 0, -1}, { 0, -1} },
-		{ { 0, -1}, { 0,  1} },
-		{ {-1,  0}, { 1,  0} },
-	};
+	/* The octants are ordered as follows:
 
-	const int (*t)[2] = transforms[octant];
-	*ay = y + dy * t[0][0] + dx * t[0][1];
-	*ax = x + dx * t[1][0] + dy * t[1][1];
+		\ 0 | 2 /
+		 \  |  /
+		1 \ | / 3
+		   \|/
+		----*----
+		   /|\
+		5 / | \ 7
+		 /  |  \
+		/ 4 | 6 \ */
+	if (octant & 1) /* 1, 3, 5, 7 */
+		SWAP(dx, dy, int);
+	if (octant & 2) /* 2, 3, 6, 7 */
+		dx = -dx;
+	if (octant & 4) /* 4, 5, 6, 7 */
+		dy = -dy;
+
+	*ax = x + dx;
+	*ay = y + dy;
 }
