@@ -206,9 +206,9 @@ def_input_key_fn(place_torch)
 	case 'k': y--; break;
 	case 'l': x++; break;
 	}
-	struct entity torch = demo_new_torch(y, x);
-	struct entity *t = malloc(sizeof(torch));
-	memcpy(t, &torch, sizeof(torch));
+
+	struct entity *t = malloc(sizeof(struct entity));
+	*t = demo_new_torch(y, x);
 	return floor_add_entity(cur_floor, t);
 }
 
@@ -220,9 +220,8 @@ def_input_key_fn(demo_get_fuel)
 
 void demo_place_snake(int y, int x)
 {
-	struct entity snake = demo_new_snake(y, x);
-	struct entity *s = malloc(sizeof(snake));
-	memcpy(s, &snake, sizeof(snake));
+	struct entity *s = malloc(sizeof(struct entity));
+	*s = demo_new_snake(y, x);
 	floor_add_entity(&floors[0], s);
 }
 

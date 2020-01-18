@@ -263,7 +263,7 @@ void raycast_at(const struct raycast_params *raycast)
 
 	for (int octant = 0; octant < 8; octant++) {
 		raycast_octant_at(raycast,
-			&(struct octant_params) { .octant = octant, .dx_max = dx_max[octant], .dy_max = dy_max[octant] },
+			&(struct octant_params) { .number = octant, .dx_max = dx_max[octant], .dy_max = dy_max[octant] },
 			1,
 			0.0f,
 			1.0f);
