@@ -4,7 +4,7 @@
 
 struct color color_add(struct color c, struct color a)
 {
-	return (struct color){
+	return (struct color) {
 		min(c.r + a.r, 255),
 		min(c.g + a.g, 255),
 		min(c.b + a.b, 255),
@@ -13,7 +13,7 @@ struct color color_add(struct color c, struct color a)
 
 struct color color_multiply_by(struct color c, float m)
 {
-	return (struct color){
+	return (struct color) {
 		min(c.r * m, 255),
 		min(c.g * m, 255),
 		min(c.b * m, 255),

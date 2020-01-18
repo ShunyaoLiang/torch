@@ -1,16 +1,17 @@
 #include "torch.h"
+
 #include "ui.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <stdlib.h>
 
 #ifdef DEBUG
 FILE *debug_log;
 #endif
 
-int main(void)
+int main()
 {
 	srand(time(NULL));
 #ifdef DEBUG

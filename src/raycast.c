@@ -1,140 +1,278 @@
 #include "torch.h"
 
-#include <stdbool.h>
 #include <math.h>
+#include <stdbool.h>
 
-static void raycast_octant_at(struct floor *floor, int y, int x, int radius,
-	int row, float start_slope, float end_slope, int octant,
-	raycast_callback_fn callback, void *context);
-
-static void transform_point_by_octant(int y, int x, int dy, int dx, int octant, 
-	int *ay, int *ax);
-
-/* Hides hard-coded initial values for raycast_octant_at() */
-#define RAYCAST_OCTANT_AT(map, y, x, radius, octant, callback, context) do { \
-		raycast_octant_at(map, y, x, radius, 1, 1.0, 0.0, octant, \
-			callback, context); \
-	} while (0);
-
-/* Uses Björn Bergström's Recursive Shadowcasting Algorithm, which 
-   divides the map into eight congruent triangular octants, and calculates each
-   octant individually. */
-void raycast_at(struct floor *floor, int y, int x, int radius,
-	raycast_callback_fn callback, void *context)
+/*
+ * Fetches the selected tile, calls back, and returns
+ * the selected tile.
+ *
+ * preconditions:
+ * 	- raycast->floor points to a valid floor
+ * 	- raycast->callback points to a valid function
+ * 	- (x, y) denotes a tile which is in the floor bounds
+ *
+ * postconditions:
+ * 	- raycast->callback is called with the corresponding tile
+ * 	- the result is a pointer to that tile
+ */
+static struct tile *get_tile(const struct raycast_params *raycast, int x, int y)
 {
-	/* raycast_octant_at() does not cast on the origin (y, x). */
-	callback(&floor->map[y][x], y, x, context);
-
-	for (int octant = 0; octant < 8; ++octant)
-		RAYCAST_OCTANT_AT(floor, y, x, radius, octant, callback, context);
+	struct tile *tile = &raycast->floor->map[y][x];
+	raycast->callback(tile, y, x, raycast->context);
+	return tile;
 }
 
-/* Iterates through each tile, left to right, of each row of a given octant,
-   recursing in each gap between blocking tiles, except for the last one.
-
-       7  --....-- - = visible tile     --....--
-       6   --...-- . = hidden tile       --...-- 
-       5    --##-- # = blocking tile      --!#-- ! = function recurses here 
-       4     -----                         -----
-       3      ----                          ----
-       2       ---                           ---
-       1        --                            --
-                 @ @ = the centre              @ 
-
-   Note: the algorithm uses an unorthodox understanding of coordinate gradients,
-   calculating them as dx / dy rather than dy / dx. Consequently, as a line
-   approaches the bottom left, its slope approaches infinity, and as a line
-   approaches the top right, its slope approaches zero. */
-static void raycast_octant_at(struct floor *floor, int y, int x, int radius,
-	int row, float start_slope, float end_slope, int octant,
-	raycast_callback_fn callback, void *context)
+/*
+ * preconditions:
+ * 	- l and r point to valid integers
+ *
+ * postconditions:
+ * 	- the values of *l and *r are swapped
+ */
+void swapi(int *l, int *r)
 {
-	if (start_slope < end_slope)
-		return;
+	int t = *l;
+	*l = *r;
+	*r = t;
+}
 
-	/* This function is called recursively on each gap in blocking tiles
-	   except for the last one. next_start_slope contains the slope of the
-	   top right corner of the rightmost blocking tile. */
-	float next_start_slope = start_slope;
-	for (; row <= radius; ++row) {
-		/* Doesn't do anything. Here for clarity. */
-		start_slope = next_start_slope;
-		/* Contains whether or not the last tile blocked light. Used
-		   to determine when to recurse. */
-		bool blocked = false;
-		/* Contains the vector of the current tile from the centre. */
-		int dx, dy;
-		/* This implementation pretends its always calculating the
-		   zeroth octant, then applies a transformation. */
-		for (dx = -row, dy = -row; dx <= 0; ++dx) {
-			/* Slope of the bottom left and top right corners
-			   of the current tile from the centre, respectively */
-			float bl_slope = (dx - 0.5) / (dy + 0.5);
-			float tr_slope = (dx + 0.5) / (dy - 0.5);
-			/* Accounts for mathematical edgecases. */
-			if (start_slope < tr_slope) {
-				continue;
-			} else if (end_slope > bl_slope) {
-				break;
-			}
+struct point
+{
+	int x;
+	int y;
+};
 
-			/* Contains the actual coordinate of the current tile. */
-			int ay, ax;
-			transform_point_by_octant(y, x, dy, dx, octant, &ay, &ax);
-			if (!floor_map_in_bounds(ay, ax))
-				continue;
+/*
+ * Transforms zeroth octant coordinates into other octants' coordinates.
+ *
+ * Diagram of octant layout:
+ *
+ * 	\ 7 | 5 /
+ * 	6 \ | / 4
+ * 	- - - - -
+ * 	2 / | \ 0
+ * 	/ 3 | 1 \
+ *
+ * If first octant bit is set, flip across the diagonal.
+ * If second octant bit is set, flip across the vertical.
+ * If third octant bit is set, flip across the horizontal.
+ *
+ * wide contract
+ */
+static struct point transform_point_to_octant(int x, int y, int dx, int dy, int octant_number)
+{
+	if (octant_number & 1) {
+		swapi(&dx, &dy);
+	}
+	if (octant_number & 2) {
+		dx = -dx;
+	}
+	if (octant_number & 4) {
+		dy = -dy;
+	}
 
-			if (dx * dx + dy * dy < radius * radius)
-				callback(&floor->map[ay][ax], ay, ax, context);
+	return (struct point) { x + dx, y + dy };
+}
 
-			struct tile tile = floor_map_at(floor, ay, ax);
-			if (blocked) {
-				if (tile_blocks_light(tile)) {
-					float tr_slope = (dx + 0.5) / (dy - 0.5);
-					next_start_slope = tr_slope;
-					continue;
-				} else { /* Still blocked. */
-					blocked = false;
-					start_slope = next_start_slope;
-				}
-			} else if (tile_blocks_light(tile)) {
+/*
+ * Transforms the coordinates according to the octant,
+ * fetches the selected tile, calls back, and returns
+ * the selected tile.
+ *
+ * preconditions:
+ * 	- raycast->floor points to a valid floor
+ * 	- raycast->callback is a valid function pointer
+ * 	- (dx, dy) denotes a tile which is in the floor bounds
+ *
+ * postconditions:
+ * 	- raycast->callback is called with the corresponding tile
+ * 	- the result is a pointer to that tile
+ */
+static struct tile *get_transformed_tile(const struct raycast_params *raycast, int dx, int dy, int octant)
+{
+	struct point r = transform_point_to_octant(raycast->x, raycast->y, dx, dy, octant);
+	return get_tile(raycast, r.x, r.y);
+}
+
+struct index_interval
+{
+	int begin;
+	int end;
+};
+
+/*
+ * Figures the range of y coordinates we need to iterate over for
+ * the given slopes. Clamps this range to fit in floor bounds.
+ *
+ * wide contract
+ */
+struct index_interval make_dy_interval(float slope_begin, float slope_end, int dx, int dy_max)
+{
+	struct index_interval dy_interval = {
+        slope_begin * (dx - 0.5f) + 0.5f,
+        slope_end * (dx + 0.5f) - 0.5f
+    };
+	dy_interval.begin = min(dy_interval.begin, dy_max);
+	dy_interval.end = min(dy_interval.end, dy_max);
+	return dy_interval;
+}
+
+struct octant_params
+{
+	int number;
+	int dx_max;
+	int dy_max;
+};
+
+/*
+ * Accepts slopes corresponding a gap between blocking tiles.
+ * Iterates through columns from left to right, then through each
+ * tile, top to bottom, of the gap, searching for deeper gaps.
+ * Recurses in each gap except those containing the last tile
+ * of the column. Iterates into gaps containing the last tile.
+ * Exits if there is no such gap.
+ *
+ * Diagram of zeroth octant:
+ *
+ * 	dx	01234567   dy
+ *
+ * 		@-------   0				`-` = visible tile
+ * 		 -------   1				`.` = hidden tile
+ * 		  ---!..   2				`#` = blocking tile
+ * 		   --#..   3				`@` = centre
+ * 			--..   4				`!` = blocking tile where function recurses
+ * 			 --.   5
+ * 			  --   6
+ * 			   -   7
+ *
+ * The algorithm always works in the coordinates of the zeroth octant,
+ * then applies a transformation to obtain the actual coordinate of the
+ * selected tile.
+ *
+ * As a column is iterated:
+ *
+ * If the previous tile blocks light, but the current tile does not, we have
+ * encountered the beginning of a gap. If the previous tile allows light, but
+ * the current tile does not, we have encountered the end of the gap, and we recurse.
+ *
+ * Each time we encounter any such bound, we calculate the slope of the associated
+ * point on the tile. Slopes for beginnings of gaps correspond to bottom left points
+ * of tiles. Slopes for ends of gaps correspond to top right points of tiles.
+ * Those slopes are used in next recursion or iteration.
+ *
+ * Diagram of begin and end slopes:
+ *
+ * 	@xxxxxx
+ * 		xxxxxxxxx      #######
+ * 		   xxx   xxxxxx####### begin
+ * 			  xxx      -------
+ * 				 xxx   -------
+ * 					xxx-------
+ * 					   xxx----
+ * 					   ---xxx- end
+ * 					   #######
+ * 					   #######
+ *
+ * preconditions:
+ * 	- raycast->floor points to a valid floor
+ * 	- raycast->callback points to a valid function
+ * 	- (raycast->x, raycast->y) denotes a tile which is in the floor bounds
+ * 	- octant->dx_min <= octant->dx_max
+ * 	- start_slope < end_slope
+ * 	- the coordinates and bounds in raycast and octant denote a set of tiles
+ * 	  which are in the floor bounds
+ *
+ * postconditions:
+ * 	- raycast->callback is called at least once for each tile in line of sight
+ * 	  within the octant and octant->dx_max
+ */
+static void raycast_octant_at(const struct raycast_params *raycast,
+	const struct octant_params *octant,
+	int dx,
+	float slope_begin,
+	float slope_end)
+{
+	bool blocked = false;
+	for (; dx <= octant->dx_max && !blocked; ++dx) {
+		struct index_interval dy_interval = make_dy_interval(slope_begin, slope_end, dx, octant->dy_max);
+
+		int dy = dy_interval.begin;
+
+		struct tile *tile = get_transformed_tile(raycast, dx, dy, octant->number);
+
+		blocked = tile_blocks_light(tile);
+
+		for (++dy; dy <= dy_interval.end; ++dy) {
+			tile = get_transformed_tile(raycast, dx, dy, octant->number);
+
+			if (blocked && !tile_blocks_light(tile)) {
+				blocked = false;
+				slope_begin = (dy - 0.5f) / (dx - 0.5f);
+			} else if (!blocked && tile_blocks_light(tile)) {
 				blocked = true;
-				float tr_slope = (dx + 0.5) / (dy - 0.5);
-				next_start_slope = tr_slope;
-				float bl_slope = (dx - 0.5) / (dy + 0.5);
-				/* Recurse! */
-				raycast_octant_at(floor, y, x, radius, row + 1,
-					start_slope, bl_slope, octant, callback,
-					context);
+				raycast_octant_at(raycast, octant, dx + 1, slope_begin, (dy - 0.5f) / (dx + 0.5f));
 			}
-		}
-		if (blocked) { /* If the last tile of the row blocks light. */
-			break;
 		}
 	}
 }
 
-/* raycast_octant_at() pretends its always calculating the zeroth octant.
-   transform_point_by_octant() applies the transformation. */
-static void transform_point_by_octant(int y, int x, int dy, int dx, int octant,
-	int *ay, int *ax)
+/* Uses a modified version ofBjörn Bergström's Recursive Shadowcasting Algorithm,
+ * which divides the map into eight congruent triangular octants, and calculates
+ * each octant individually.
+ *
+ * Casts on the origin, then kicks off the recursive functions for each octant.
+ *
+ * preconditions:
+ * 	- raycast->floor points to a valid floor
+ * 	- raycast->callback points to a valid function
+ * 	- (raycast->x, raycast->y) denotes a tile which is in the floor bounds
+ * 	- the coordinates and bounds in raycast and octant denote a set of tiles
+ * 	  which are in the floor bounds
+ *
+ * postconditions:
+ * 	- raycast->callback is called at least once for each tile in raycast->radius
+ * 	  and line of sight
+ *
+ * notes:
+ * 	- may call back for cells outside the requested radius.
+ * 	- may call back multiple times for cells along axes and diagonals.
+ */
+void raycast_at(const struct raycast_params *raycast)
 {
-	/* Notice that either yy and xx are non-zero, or yx and xy are non-zero.
-	   When yy and xx are zero, yx and xy swap r and x respectively.
-	   When yx and xy are zero, y and x flip along the axis respectively. */
-	static const int transforms[8][2][2] = {
-		/* yy  yx    xx  xy */
-		{ { 1,  0}, { 1,  0} },
-		{ { 0,  1}, { 0,  1} },
-		{ { 0,  1}, { 0, -1} },
-		{ { 1,  0}, {-1,  0} },
-		{ {-1,  0}, {-1,  0} },
-		{ { 0, -1}, { 0, -1} },
-		{ { 0, -1}, { 0,  1} },
-		{ {-1,  0}, { 1,  0} },
+	get_tile(raycast, raycast->x, raycast->y);
+
+	const int dx_max[] = {
+		min(raycast->radius, MAP_COLS  - raycast->x - 1),
+		min(raycast->radius, MAP_LINES - raycast->y - 1),
+		min(raycast->radius, raycast->x),
+		min(raycast->radius, MAP_LINES - raycast->y - 1),
+		min(raycast->radius, MAP_COLS  - raycast->x - 1),
+		min(raycast->radius, raycast->y),
+		min(raycast->radius, raycast->x),
+		min(raycast->radius, raycast->y),
 	};
 
-	const int (*t)[2] = transforms[octant];
-	*ay = y + dy * t[0][0] + dx * t[0][1];
-	*ax = x + dx * t[1][0] + dy * t[1][1];
+	const int dy_max[] = {
+		MAP_LINES - raycast->y - 1,
+		MAP_COLS  - raycast->x - 1,
+		MAP_LINES - raycast->y - 1,
+		raycast->x,
+		raycast->y,
+		MAP_COLS  - raycast->x - 1,
+		raycast->y,
+		raycast->x,
+	};
+
+	for (int octant = 0; octant < 8; octant++) {
+		raycast_octant_at(raycast,
+			&(struct octant_params) {
+                .number = octant,
+                .dx_max = dx_max[octant],
+                .dy_max = dy_max[octant]
+            },
+			1,
+			0.0f,
+			1.0f);
+	}
 }

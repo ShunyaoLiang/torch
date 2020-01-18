@@ -3,11 +3,12 @@
 
 #include "list.h"
 
-#include <stdio.h>
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
 
-#define back(arr) (arr[sizeof(arr)/sizeof(*arr)])
+#define back(arr) (arr[sizeof(arr) / sizeof(*arr)])
 #define min(a, b) (a < b ? a : b)
 #define max(a, b) (a > b ? a : b)
 #define clamp(v, lo, hi) ((v < lo) ? lo : (hi < v) ? hi : v)
@@ -23,7 +24,8 @@ typedef def_input_key_fn(input_key_fn);
 extern input_key_fn *input_keymap[];
 
 /* Color */
-struct color {
+struct color
+{
 	uint8_t r, g, b;
 };
 
@@ -38,7 +40,8 @@ struct entity;
 #define def_entity_fn(name) void name(struct entity *this)
 typedef def_entity_fn(entity_fn);
 
-struct entity {
+struct entity
+{
 	struct color color;
 	char token;
 	int posy, posx;
@@ -69,7 +72,8 @@ def_input_key_fn(player_move_downright);
 def_input_key_fn(player_toggle_lantern);
 
 /* Floor */
-struct tile {
+struct tile
+{
 	struct color color;
 	char token;
 	float light;
@@ -78,15 +82,16 @@ struct tile {
 	uint walk : 1;
 };
 
-bool tile_blocks_light(struct tile);
+bool tile_blocks_light(struct tile const *);
 
 #define MAP_LINES 100
-#define MAP_COLS  100
+#define MAP_COLS 100
 
 typedef struct tile tile_map[MAP_LINES][MAP_COLS];
 typedef struct list_head entity_list;
 
-struct floor {
+struct floor
+{
 	tile_map map;
 	entity_list entities;
 };
@@ -95,24 +100,24 @@ extern struct floor floors[];
 
 extern struct floor *cur_floor;
 
-enum floor_type {
+enum floor_type
+{
 	CAVE,
 };
 
 struct tile floor_map_at(struct floor *floor, int y, int x);
-int         floor_map_in_bounds(int y, int x);
-void        floor_map_clear_lights(void);
-void        floor_map_generate(struct floor *floor, enum floor_type type);
+int floor_map_in_bounds(int y, int x);
+void floor_map_clear_lights(void);
+void floor_map_generate(struct floor *floor, enum floor_type type);
 
-int  floor_add_entity(struct floor *floor, struct entity *entity);
+int floor_add_entity(struct floor *floor, struct entity *entity);
 void floor_update_entities(struct floor *floor);
 
-#define floor_for_each_tile(pos, floor) \
-	for (pos = *floor->map; pos != back(floor->map); ++pos)
+#define floor_for_each_tile(pos, floor) for (pos = *floor->map; pos != back(floor->map); ++pos)
 
 /* Draw */
 #define VIEW_LINES 23
-#define VIEW_COLS  79
+#define VIEW_COLS 79
 
 #if 0
 void draw_map(void);
@@ -134,9 +139,20 @@ def_input_key_fn(demo_get_fuel);
 extern struct floor demo_floor;
 
 /* Raycast */
-typedef void raycast_callback_fn(struct tile *tile, int y, int x, void *context);
 
-void raycast_at(struct floor *floor, int y, int x, int radius,
-	raycast_callback_fn callback, void *context);
+typedef void raycast_callback_fn(struct tile *tile, int x, int y, void *context);
+
+struct raycast_params
+{
+	struct floor *floor;
+	int x;
+	int y;
+	int radius;
+	raycast_callback_fn *callback;
+	void *context;
+};
+
+void raycast_at(const struct raycast_params *params);
+void raycast(const struct raycast_params *params);
 
 #endif

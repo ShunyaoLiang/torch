@@ -1,20 +1,22 @@
-#include "ui.h"
 #include "termkey.h"
 #include "torch.h"
+#include "ui.h"
 
 #include <sys/ioctl.h>
-#include <unistd.h>
+
 #include <signal.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
+#include <unistd.h>
 
 #define CSI "\e["
 #define ALTERNATE_SCREEN "?1049h"
 #define NORMAL_SCREEN "?1049l"
 #define HIDE_CURSOR "?25l"
 #define SHOW_CURSOR "?25h"
+
 static void get_terminal_size();
 static void handle_resize(int signal);
 
@@ -221,7 +223,7 @@ void ui_flush(void)
 			}
 
 			if (this.strikethru != last.strikethru) {
-				sgr_params[nparams++] = this.strikethru? 9 : 29;
+				sgr_params[nparams++] = this.strikethru ? 9 : 29;
 				sgrlen += this.strikethru ? 1 : 2;
 			}
 
@@ -229,10 +231,10 @@ void ui_flush(void)
 				char *iter = sgr_buf;
 
 				iter += sprintf(iter, "\e[");
-				for (int i = 0; i < nparams-1; i++)
+				for (int i = 0; i < nparams - 1; i++)
 					iter += sprintf(iter, "%d;", sgr_params[i]);
 				if (nparams > 0) // no semicolon for last parameter
-					iter += sprintf(iter, "%d", sgr_params[nparams-1]);
+					iter += sprintf(iter, "%d", sgr_params[nparams - 1]);
 				sprintf(iter, "m");
 			} else
 				sgr_buf[0] = '\0';
@@ -268,31 +270,30 @@ void ui_draw_str_at(int line, int col, const char *str, struct ui_cell attr)
 
 struct ui_event ui_poll_event(void)
 {
-	bool cont =  true;
+	bool cont = true;
 	TermKeyKey key;
 	struct ui_event event;
-	
-	while (cont) switch (termkey_waitkey(termkey_instance, &key)) {
-	case TERMKEY_RES_KEY:
-		switch (key.type) {
-		case TERMKEY_TYPE_UNICODE:
-			event.key = key.code.codepoint;
-			cont = false;
+
+	while (cont)
+		switch (termkey_waitkey(termkey_instance, &key)) {
+		case TERMKEY_RES_KEY:
+			switch (key.type) {
+			case TERMKEY_TYPE_UNICODE:
+				event.key = key.code.codepoint;
+				cont = false;
+				break;
+			default: break;
+			}
 			break;
-		default:
-			break;
+		default: break;
 		}
-		break;
-	default:
-		break;
-	}
 
 	return event;
 }
 
 #ifdef TEST
 
-#include <assert.h>
+	#include <assert.h>
 
 int main(void)
 {
@@ -312,7 +313,7 @@ int main(void)
 	});
 	assert(strcmp(ui_buffer[lines - 1][0].codepoint, "L") == 0);
 
-	ui_draw_str_at(3, 3, "Test", (struct ui_cell){.fg = {19, 103, 76}});
+	ui_draw_str_at(3, 3, "Test", (struct ui_cell) { .fg = { 19, 103, 76 } });
 
 	ui_flush();
 	struct ui_event event = ui_poll_event();

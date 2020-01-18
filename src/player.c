@@ -1,14 +1,17 @@
-#include "torch.h"
 #include "list.h"
+#include "torch.h"
 
 #include <stdbool.h>
 
 struct entity player = {
 	.color = {
-		.r = 151, .g = 151, .b = 151,
+		.r = 151,
+		.g = 151,
+		.b = 151,
 	},
 	.token = '@',
-	.posy = 13, .posx = 14,
+	.posy = 13,
+	.posx = 14,
 	.update = demo_player_update,
 	.destroy = NULL,
 	.list = LIST_HEAD_INIT(player.list),

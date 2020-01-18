@@ -1,12 +1,12 @@
 #include "torch.h"
 #include "ui.h"
 
-#include <stdio.h>
-#include <string.h>
 #include <math.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 struct floor *cur_floor = &floors[0];
 
@@ -15,15 +15,15 @@ void demo_place_snake(int y, int x);
 
 void demo_floor_load_map(const char *filename)
 {
-//	FILE *mapfp = fopen(filename, "r");
+	//	FILE *mapfp = fopen(filename, "r");
 	floor_map_generate(&floors[0], CAVE);
 
 	/* Make this not shit please. */
 	for (size_t line = 0; line < MAP_LINES; ++line) {
 		for (size_t col = 0; col < MAP_COLS; ++col) {
-//			fscanf(mapfp, "%c", &demo_floor.map[line][col].token);
+			//			fscanf(mapfp, "%c", &demo_floor.map[line][col].token);
 			floors[0].map[line][col].light = 0;
-			floors[0].map[line][col].color = (struct color){ 51, 51, 51 };
+			floors[0].map[line][col].color = (struct color) { 51, 51, 51 };
 
 #if 0
 			if (demo_floor.map[line][col].token != '.') {
@@ -32,10 +32,10 @@ void demo_floor_load_map(const char *filename)
 			}
 #endif
 		}
-//		(void)fgetc(mapfp);
+		//		(void)fgetc(mapfp);
 	}
 
-//	fclose(mapfp);
+	//	fclose(mapfp);
 
 	for (int i = 0; i < 20; ++i) {
 		int y = rand() % MAP_LINES;
@@ -46,7 +46,8 @@ void demo_floor_load_map(const char *filename)
 
 int drawn_to[MAP_LINES][MAP_COLS] = { 0 };
 
-struct light_info {
+struct light_info
+{
 	tile_map *map;
 	float bright;
 	int y, x;
@@ -67,7 +68,7 @@ void cast_light_at(struct tile *tile, int y, int x, void *context)
 		(*info->map)[y][x].light += info->bright;
 	} else {
 		(*info->map)[y][x].light += dlight;
-//		assert((*info->map)[y][x].light > 0);
+		//		assert((*info->map)[y][x].light > 0);
 		/*                        = info->r * dlight + tile.dcolor */
 		(*info->map)[y][x].dcolor = color_add(color_multiply_by(info->color, dlight), tile->dcolor);
 	}
@@ -75,8 +76,6 @@ void cast_light_at(struct tile *tile, int y, int x, void *context)
 
 def_entity_fn(demo_player_update)
 {
-	int y = this->posy;
-	int x = this->posx;
 	float bright = player_lantern_on && player_fuel > 0 ? 0.5f : 0.1f;
 	if (player_lantern_on) {
 		if (player_fuel > 0) {
@@ -85,41 +84,50 @@ def_entity_fn(demo_player_update)
 			player_lantern_on = false;
 		}
 	}
-	//cast_light(this->floor->map, y, x, 6, 0.3f, this->r, this->g, this->b);
-	int radius = sqrt(1.f / (1.f / 255));
-	raycast_at(this->floor, y, x, radius, &cast_light_at,
-		&(struct light_info) {
-			.map = &this->floor->map,
-			.bright = bright, .y = y, .x = x,
-			.color = this->color,
-		});
+
+	// cast_light(this->floor->map, y, x, 6, 0.3f, this->r, this->g, this->b);
+
+	raycast_at(&(struct raycast_params) {
+		.callback = &cast_light_at,
+		.context = &(struct light_info) { .map = &this->floor->map,
+			.bright = bright,
+			.y = this->posy,
+			.x = this->posx,
+			.color = this->color },
+		.floor = this->floor,
+		.y = this->posy,
+		.x = this->posx,
+		.radius = sqrt(255.0f),
+	});
+
 	memset(drawn_to, 0, (sizeof(drawn_to[0][0]) * MAP_LINES * MAP_COLS));
 }
 
 def_entity_fn(demo_torch_update)
 {
-	int y = (rand() % 3 - 1);
-	int x = (rand() % 3 - 1);
+	//	entity_move_pos_rel(this, y, x);
 
-//	entity_move_pos_rel(this, y, x);
+	// cast_light(this->floor->map, y, x, 6, 1.f, this->r, this->g, this->b);
 
-	y = this->posy;
-	x = this->posx;
-	//cast_light(this->floor->map, y, x, 6, 1.f, this->r, this->g, this->b);
-	int radius = sqrt(1.f / (1.f / 255));
-	raycast_at(this->floor, y, x, radius, &cast_light_at,
-		&(struct light_info) {
+	raycast_at(&(struct raycast_params) {
+		.callback = &cast_light_at,
+		.context = &(struct light_info) {
 			.map = &this->floor->map,
-			.bright = 1.f, .y = y, .x = x, 
+			.bright = 1.0f,
+			.y = this->posy,
+			.x = this->posx,
 			.color = this->color,
-		});
+		},
+		.floor = this->floor,
+		.y = this->posy,
+		.x = this->posx,
+		.radius = sqrt(255.0f)
+	});
 	memset(drawn_to, 0, (sizeof(drawn_to[0][0]) * MAP_LINES * MAP_COLS));
 }
 
 def_entity_fn(demo_torch_destroy)
-{
-
-}
+{}
 
 void demo_add_entities(void)
 {
@@ -168,7 +176,9 @@ struct entity demo_new_torch(int y, int x)
 {
 	struct entity torch = {
 		.color = {
-			.r = 0xe2, .g = 0x58, .b = 0x22,
+			.r = 0xe2,
+			.g = 0x58,
+			.b = 0x22,
 		},
 		.token = '!',
 		.posy = y, .posx = x,
@@ -196,9 +206,9 @@ def_input_key_fn(place_torch)
 	case 'k': y--; break;
 	case 'l': x++; break;
 	}
-	struct entity torch = demo_new_torch(y, x);
-	struct entity *t = malloc(sizeof(torch));
-	memcpy(t, &torch, sizeof(torch));
+
+	struct entity *t = malloc(sizeof(struct entity));
+	*t = demo_new_torch(y, x);
 	return floor_add_entity(cur_floor, t);
 }
 
@@ -210,9 +220,8 @@ def_input_key_fn(demo_get_fuel)
 
 void demo_place_snake(int y, int x)
 {
-	struct entity snake = demo_new_snake(y, x);
-	struct entity *s = malloc(sizeof(snake));
-	memcpy(s, &snake, sizeof(snake));
+	struct entity *s = malloc(sizeof(struct entity));
+	*s = demo_new_snake(y, x);
 	floor_add_entity(&floors[0], s);
 }
 
@@ -246,7 +255,9 @@ struct entity demo_new_snake(int y, int x)
 {
 	struct entity snake = {
 		.color = {
-			.r = 0xa, .g = 0xCA, .b = 0xa,
+			.r = 0xa,
+			.g = 0xCA,
+			.b = 0xa,
 		},
 		.token = 's',
 		.posy = y, .posx = x,
@@ -281,7 +292,7 @@ static void raycast_octant_at(tile_map map, int y, int x, int radius, int row,
 	static int transforms[4][8] = {
 		{1, 0, 0, -1, -1, 0, 0, 1},
 		{0, 1, -1, 0, 0, -1, 1, 0},
-		{0, 1, 1, 0, 0, -1, -1, 0},	
+		{0, 1, 1, 0, 0, -1, -1, 0},
 		{1, 0, 0, 1, -1, 0, 0, -1},
 	};
 
