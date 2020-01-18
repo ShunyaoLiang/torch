@@ -3,12 +3,6 @@
 #include <stdbool.h>
 #include <math.h>
 
-struct index_interval
-{
-	int begin;
-	int end;
-};
-
 /*
 Fetches the selected tile, calls back, and returns
 the selected tile.
@@ -108,12 +102,22 @@ static struct tile * get_transformed_tile_and_call_back(
 	return get_tile_and_call_back(rparams, r.x, r.y);
 }
 
+struct index_interval
+{
+	int begin;
+	int end;
+};
+
 /*
+Figures the range of y coordinates we need to iterate over for
+the given slopes. Clamps this range to fit in floor bounds.
+
 preconditions:
 	- oparams->dx_min <= oparams->dx_max
 
 postconditions:
-	- result.begin and result.end denote an in-bounds tile sequence corresponding to the requested slope interval
+	- result.begin and result.end denote an in-bounds tile
+	  sequence corresponding to the requested slope interval
 */
 struct index_interval make_dy_interval(
 	float slope_begin,
@@ -122,8 +126,8 @@ struct index_interval make_dy_interval(
 	int dy_max)
 {
 	struct index_interval dy_interval = {
-		slope_begin * (dx - 0.5f) - 0.5f,
-		slope_end * (dx + 0.5f) + 0.5f
+		slope_begin * (dx - 0.5f) + 0.5f,
+		slope_end * (dx + 0.5f) - 0.5f
 	};
 	dy_interval.begin = min(dy_interval.begin, dy_max);
 	dy_interval.end = min(dy_interval.end, dy_max);

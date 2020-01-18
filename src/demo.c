@@ -75,7 +75,7 @@ void cast_light_at(struct tile *tile, int y, int x, void *context)
 
 def_entity_fn(demo_player_update)
 {
-	float bright = player_lantern_on && player_fuel > 0 ? 20.0f : 0.1f;
+	float bright = player_lantern_on && player_fuel > 0 ? 0.5f : 0.1f;
 	if (player_lantern_on) {
 		if (player_fuel > 0) {
 			player_fuel--;
