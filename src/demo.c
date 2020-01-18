@@ -113,7 +113,9 @@ def_entity_fn(demo_torch_update)
 		.callback = &cast_light_at,
 		.context = &(struct light_info) {
 			.map = &this->floor->map,
-			.bright = 1.f, .y = this->posy, .x = this->posx,
+			.bright = 1.f,
+			.y = this->posy,
+			.x = this->posx,
 			.color = this->color,
 		},
 		.floor = this->floor,

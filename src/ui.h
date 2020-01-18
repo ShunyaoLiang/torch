@@ -15,12 +15,12 @@ struct ui_cell
 	char codepoint[5];
 	struct color fg;
 	struct color bg;
-	unsigned int bold : 1;
-	unsigned int italic : 1;
-	unsigned int under_ : 1;
-	unsigned int blink : 1;
+	unsigned int bold        : 1;
+	unsigned int italic      : 1;
+	unsigned int under_      : 1;
+	unsigned int blink       : 1;
 	unsigned int reverse_vid : 1;
-	unsigned int strikethru : 1;
+	unsigned int strikethru  : 1;
 };
 
 void ui_draw_at(int line, int col, struct ui_cell cell);

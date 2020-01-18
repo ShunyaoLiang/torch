@@ -63,7 +63,7 @@ void draw_entities(void)
 
 	raycast_at(cur_floor->map, player.posy, player.posx, 100, &set_visible, NULL);
 
-	struct entity * pos;
+	struct entity *pos;
 	list_for_each_entry(pos, &cur_floor->entities, list) {
 		int line = pos->posy - clamp((player.posy - view_lines / 2), 0, MAP_LINES - view_lines);
 		int col = pos->posx - clamp((player.posx - view_cols / 2), 0, MAP_COLS - view_cols);
@@ -138,8 +138,12 @@ void draw_shit(void)
 	int view_lines, view_cols;
 	ui_dimensions(&view_lines, &view_cols);
 
-	raycast_at(&(struct raycast_params) { .callback = &draw_thing,
-		.context = &(struct draw_info) { .view_lines = view_lines, .view_cols = view_cols },
+	raycast_at(&(struct raycast_params) {
+		.callback = &draw_thing,
+		.context = &(struct draw_info) {
+			.view_lines = view_lines,
+			.view_cols = view_cols
+		},
 		.floor = cur_floor,
 		.y = player.posy,
 		.x = player.posx,
