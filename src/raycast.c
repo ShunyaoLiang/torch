@@ -122,7 +122,7 @@ struct index_interval make_dy_interval(
 	int dy_max)
 {
 	struct index_interval dy_interval = {
-		slope_begin * (dx - 0.5f) + 0.5f,
+		slope_begin * (dx - 0.5f) - 0.5f,
 		slope_end * (dx + 0.5f) + 0.5f
 	};
 	dy_interval.begin = min(dy_interval.begin, dy_max);
@@ -231,7 +231,7 @@ static void raycast_octant_at(
 
 			if (blocked && !tile_blocks_light(tile)) {
 				blocked = false;
-				start_slope = (dy + 0.5f) / (dx - 0.5f);
+				start_slope = (dy - 0.5f) / (dx - 0.5f);
 			} else if (!blocked && tile_blocks_light(tile)) {
 				blocked = true;
 				raycast_octant_at(
@@ -297,12 +297,12 @@ void raycast_at(const struct raycast_params * rparams)
 		raycast_octant_at(
 			rparams,
 			&(struct octant_params) {
-				octant,
-				dx_max[octant],
-				dy_max[octant]
+				.octant = octant,
+				.dx_max = dx_max[octant],
+				.dy_max = dy_max[octant]
 			},
 			1,
-			0.0,
-			1.0);
+			0.0f,
+			1.0f);
 	}
 }
