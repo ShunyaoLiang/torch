@@ -110,7 +110,7 @@ struct draw_info {
 void draw_thing(struct tile *tile, int y, int x, void *context)
 {
 	struct draw_info * info = context;
-	int line = y - clamp(player.posy - info->view_lines / 2, 0, MAP_ROWS - info->view_lines);
+	int line = y - clamp(player.posy - info->view_lines / 2, 0, MAP_LINES - info->view_lines);
 	int col = x - clamp(player.posx - info->view_cols / 2, 0, MAP_COLS - info->view_cols);
 	if (tile->entity) {
 		ui_draw_at(line, col, (struct ui_cell) {

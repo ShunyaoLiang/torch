@@ -81,10 +81,10 @@ struct tile {
 
 bool tile_blocks_light(struct tile const *);
 
-#define MAP_ROWS 100
+#define MAP_LINES 100
 #define MAP_COLS  100
 
-typedef struct tile tile_map[MAP_ROWS][MAP_COLS];
+typedef struct tile tile_map[MAP_LINES][MAP_COLS];
 typedef struct list_head entity_list;
 
 struct floor {
