@@ -85,6 +85,7 @@ def_entity_fn(demo_player_update)
 			player_lantern_on = false;
 		}
 	}
+
 	//cast_light(this->floor->map, y, x, 6, 0.3f, this->r, this->g, this->b);
 	int radius = sqrt(1.f / (1.f / 255));
 	raycast_at(this->floor, y, x, radius, &cast_light_at,
@@ -103,6 +104,8 @@ def_entity_fn(demo_torch_update)
 
 //	entity_move_pos_rel(this, y, x);
 
+	int flicker = (rand() % 3 - 1);
+
 	y = this->posy;
 	x = this->posx;
 	//cast_light(this->floor->map, y, x, 6, 1.f, this->r, this->g, this->b);
@@ -110,7 +113,7 @@ def_entity_fn(demo_torch_update)
 	raycast_at(this->floor, y, x, radius, &cast_light_at,
 		&(struct light_info) {
 			.map = &this->floor->map,
-			.bright = 1.f, .y = y, .x = x, 
+			.bright = 1.f + flicker * 0.2f, .y = y, .x = x, 
 			.color = this->color,
 		});
 	memset(drawn_to, 0, (sizeof(drawn_to[0][0]) * MAP_LINES * MAP_COLS));
@@ -119,6 +122,23 @@ def_entity_fn(demo_torch_update)
 def_entity_fn(demo_torch_destroy)
 {
 
+}
+
+void torch_flicker(int signal)
+{
+	if (!ui_blocking)
+		return;
+
+	floor_map_clear_lights();
+	struct entity *pos;
+	list_for_each_entry(pos, &cur_floor->entities, list) {
+		if (pos->token == '!' || pos->token == '@')
+			pos->update(pos);
+	}
+	
+	ui_clear();
+	draw_shit();
+	ui_flush();
 }
 
 void demo_add_entities(void)

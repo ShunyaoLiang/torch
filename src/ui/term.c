@@ -266,12 +266,15 @@ void ui_draw_str_at(int line, int col, const char *str, struct ui_cell attr)
 	}
 }
 
+bool ui_blocking = false;
+
 struct ui_event ui_poll_event(void)
 {
 	bool cont =  true;
 	TermKeyKey key;
 	struct ui_event event;
 	
+	ui_blocking = true;
 	while (cont) switch (termkey_waitkey(termkey_instance, &key)) {
 	case TERMKEY_RES_KEY:
 		switch (key.type) {
@@ -286,6 +289,7 @@ struct ui_event ui_poll_event(void)
 	default:
 		break;
 	}
+	ui_blocking = false;
 
 	return event;
 }

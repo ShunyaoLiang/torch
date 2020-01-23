@@ -3,12 +3,15 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <signal.h>
 #include <time.h>
 #include <stdlib.h>
 
 #ifdef DEBUG
 FILE *debug_log;
 #endif
+
+void torch_flicker(int signal);
 
 int main(void)
 {
@@ -24,6 +27,14 @@ int main(void)
 	demo_add_entities();
 
 	ui_init();
+
+	timer_t timer_id;
+	timer_create(CLOCK_REALTIME, NULL, &timer_id);
+	timer_settime(timer_id, 0, &(struct itimerspec) {
+		.it_interval = { 0, 100000000 },
+		.it_value = { 0, 100000000 },
+	}, NULL);
+	signal(SIGALRM, &torch_flicker);
 
 	struct ui_event event = { .key = 'e' };
 

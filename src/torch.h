@@ -139,4 +139,7 @@ typedef void raycast_callback_fn(struct tile *tile, int y, int x, void *context)
 void raycast_at(struct floor *floor, int y, int x, int radius,
 	raycast_callback_fn callback, void *context);
 
+/* Random */
+int rand(void);
+
 #endif

@@ -46,4 +46,6 @@ struct ui_event {
 
 struct ui_event ui_poll_event(void);
 
+extern bool ui_blocking;
+
 #endif
