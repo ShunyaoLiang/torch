@@ -1,11 +1,15 @@
 #include "torch.h"
 #include "list.h"
+#include "ui.h"
 
 #include <stdbool.h>
 
 struct entity player = {
 	.color = {
 		.r = 151, .g = 151, .b = 151,
+	},
+	.combat = {
+		.hp = 5, .hp_max = 5,
 	},
 	.token = '@',
 	.posy = 13, .posx = 14,
@@ -57,6 +61,26 @@ def_input_key_fn(player_move_downleft)
 def_input_key_fn(player_move_downright)
 {
 	return entity_move_pos_rel(&player, 1, 1);
+}
+
+def_input_key_fn(player_attack)
+{
+	int y = player.posy;
+	int x = player.posx;
+	struct ui_event event = ui_poll_event();
+	switch (event.key) {
+	case 'h': x--; break;
+	case 'j': y++; break;
+	case 'k': y--; break;
+	case 'l': x++; break;
+	}
+
+	struct entity *target = floor_map_at(cur_floor, y, x).entity;
+	if (target) {
+		return combat_do(&player.combat, &target->combat);
+	}
+
+	return 1;
 }
 
 def_input_key_fn(player_toggle_lantern)

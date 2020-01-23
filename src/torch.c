@@ -44,6 +44,14 @@ int main(void)
 
 		floor_map_clear_lights();
 		floor_update_entities(cur_floor);
+
+		if (player.combat.hp <= 0) {
+			ui_clear();
+			ui_flush();
+			ui_quit();
+			puts("lol you fucking died nerd");
+			abort();
+		}
 #if 0
 		draw_map();
 		draw_entities();

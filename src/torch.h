@@ -32,6 +32,13 @@ struct color color_multiply_by(struct color c, float m);
 
 int color_approximate_256(struct color c);
 
+/* Combat */
+struct combat {
+	int hp, hp_max;
+};
+
+int combat_do(struct combat *c, struct combat *target);
+
 /* Entity */
 struct entity;
 
@@ -40,6 +47,7 @@ typedef def_entity_fn(entity_fn);
 
 struct entity {
 	struct color color;
+	struct combat combat;
 	char token;
 	int posy, posx;
 	entity_fn *update;
@@ -66,6 +74,7 @@ def_input_key_fn(player_move_upleft);
 def_input_key_fn(player_move_upright);
 def_input_key_fn(player_move_downleft);
 def_input_key_fn(player_move_downright);
+def_input_key_fn(player_attack);
 def_input_key_fn(player_toggle_lantern);
 
 /* Floor */

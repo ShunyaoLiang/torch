@@ -1,4 +1,5 @@
 #include "torch.h"
+#include "list.h"
 #include "ui.h"
 
 #include <stdio.h>
@@ -238,6 +239,15 @@ void demo_place_snake(int y, int x)
 
 def_entity_fn(demo_snake_update)
 {
+	if (this->combat.hp <= 0) {
+#if 0
+		list_del(&this->list);
+		free(this);
+#endif
+		this->token = 'd';
+		return;
+	}
+
 	int y = 0;
 	int x = 0;
 	if (this->posy < player.posy)
@@ -254,11 +264,7 @@ def_entity_fn(demo_snake_update)
 	if (floor_map_at(this->floor, this->posy, this->posx).light > 0.2)
 		entity_move_pos_rel(this, -y, -x);
 	if (abs(this->posy - player.posy) == 1 && abs(this->posx - player.posx) == 1) {
-		ui_clear();
-		ui_flush();
-		ui_quit();
-		puts("lol you fucking died nerd");
-		exit(0);
+		combat_do(&this->combat, &player.combat);
 	}
 }
 
@@ -267,6 +273,9 @@ struct entity demo_new_snake(int y, int x)
 	struct entity snake = {
 		.color = {
 			.r = 0xa, .g = 0xCA, .b = 0xa,
+		},
+		.combat = {
+			.hp = 1, .hp_max = 1,
 		},
 		.token = 's',
 		.posy = y, .posx = x,

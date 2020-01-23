@@ -9,6 +9,7 @@ input_key_fn *input_keymap[] = {
 	['u'] = player_move_upright,
 	['b'] = player_move_downleft,
 	['n'] = player_move_downright,
+	['f'] = player_attack,
 	['t'] = place_torch,
 	['e'] = player_toggle_lantern,
 	['E'] = demo_get_fuel,
