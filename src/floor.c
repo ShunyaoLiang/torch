@@ -110,10 +110,10 @@ static void intern_floor_write_grid(struct floor *floor, cell_grid grid)
 	floor_for_each_tile(t, floor) {
 		if (*c) {
 			t->token = '#';
-			t->walk = 0;
+			t->blocks = 0;
 		} else {
 			t->token = '.';
-			t->walk = 1;
+			t->blocks = 1;
 		}
 		c++;
 	}
@@ -164,5 +164,5 @@ void floor_update_entities(struct floor *floor)
 
 bool tile_blocks_light(struct tile tile)
 {
-	return !tile.walk || (tile.entity ? tile.entity->blocks_light : tile.entity);
+	return !tile.blocks || (tile.entity ? tile.entity->blocks_light : tile.entity);
 }

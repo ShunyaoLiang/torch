@@ -56,7 +56,7 @@ struct light_info {
 
 #include <assert.h>
 
-void cast_light_at(struct tile *tile, int y, int x, void *context)
+void cast_light_at(struct tile *tile, int x, int y, void *context)
 {
 	if (drawn_to[y][x])
 		return;
@@ -89,7 +89,7 @@ def_entity_fn(demo_player_update)
 
 	//cast_light(this->floor->map, y, x, 6, 0.3f, this->r, this->g, this->b);
 	int radius = sqrt(1.f / (1.f / 255));
-	raycast_at(this->floor, y, x, radius, &cast_light_at,
+	raycast_at(this->floor, x, y, radius, &cast_light_at,
 		&(struct light_info) {
 			.map = &this->floor->map,
 			.bright = bright, .y = y, .x = x,
@@ -111,7 +111,7 @@ def_entity_fn(demo_torch_update)
 	x = this->posx;
 	//cast_light(this->floor->map, y, x, 6, 1.f, this->r, this->g, this->b);
 	int radius = sqrt(1.f / (1.f / 255));
-	raycast_at(this->floor, y, x, radius, &cast_light_at,
+	raycast_at(this->floor, x, y, radius, &cast_light_at,
 		&(struct light_info) {
 			.map = &this->floor->map,
 			.bright = 1.f + flicker * 0.2f, .y = y, .x = x, 
@@ -197,7 +197,7 @@ struct entity demo_new_torch(int y, int x)
 		.destroy = demo_torch_destroy,
 		.list = LIST_HEAD_INIT(torch.list),
 		.floor = cur_floor,
-		.blocks_light = 0,
+		.blocks_light = false,
 	};
 
 	return torch;
@@ -283,7 +283,7 @@ struct entity demo_new_snake(int y, int x)
 		.destroy = NULL,
 		.list = LIST_HEAD_INIT(snake.list),
 		.floor = &floors[0],
-		.blocks_light = 0,
+		.blocks_light = false,
 	};
 
 	return snake;

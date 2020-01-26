@@ -45,16 +45,25 @@ struct entity;
 #define def_entity_fn(name) void name(struct entity *this)
 typedef def_entity_fn(entity_fn);
 
+enum entity_info {
+	COMBAT,
+};
+
 struct entity {
-	struct color color;
+	enum entity_info info;
 	struct combat combat;
-	char token;
+
 	int posy, posx;
+	bool blocks_light;
+
 	entity_fn *update;
 	entity_fn *destroy;
+
+	char token;
+	struct color color;
+
 	struct list_head list;
 	struct floor *floor;
-	uint blocks_light : 1;
 };
 
 int entity_move_pos(struct entity *e, int y, int x);
@@ -79,12 +88,15 @@ def_input_key_fn(player_toggle_lantern);
 
 /* Floor */
 struct tile {
-	struct color color;
+	bool blocks;
+
 	char token;
+	struct color color;
+
 	float light;
 	struct color dcolor;
+
 	struct entity *entity;
-	uint walk : 1;
 };
 
 bool tile_blocks_light(struct tile);
@@ -92,12 +104,12 @@ bool tile_blocks_light(struct tile);
 #define MAP_LINES 100
 #define MAP_COLS  100
 
-typedef struct tile tile_map[MAP_LINES][MAP_COLS];
 typedef struct list_head entity_list;
+typedef struct tile tile_map[MAP_LINES][MAP_COLS];
 
 struct floor {
-	tile_map map;
 	entity_list entities;
+	tile_map map;
 };
 
 extern struct floor floors[];
@@ -143,9 +155,9 @@ def_input_key_fn(demo_get_fuel);
 extern struct floor demo_floor;
 
 /* Raycast */
-typedef void raycast_callback_fn(struct tile *tile, int y, int x, void *context);
+typedef void raycast_callback_fn(struct tile *tile, int x, int y, void *context);
 
-void raycast_at(struct floor *floor, int y, int x, int radius,
+void raycast_at(struct floor *floor, int x, int y, int radius,
 	raycast_callback_fn callback, void *context);
 
 /* Random */
