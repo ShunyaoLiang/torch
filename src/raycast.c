@@ -80,13 +80,13 @@ static void raycast_octant_at(struct floor *floor, int x, int y, int radius,
 			/* Contains the actual coordinate of the current tile. */
 			int ax, ay;
 			transform_point_by_octant(x, y, dx, dy, octant, &ax, &ay);
-			if (!floor_map_in_bounds(ax, ay))
+			if (!floor_map_in_bounds(ay, ax))
 				continue;
 
 			if (dx * dx + dy * dy < radius * radius)
 				callback(&floor->map[ay][ax], ax, ay, context);
 
-			struct tile tile = floor_map_at(floor, ax, ay);
+			struct tile tile = floor_map_at(floor, ay, ax);
 			if (blocked) {
 				if (tile_blocks_light(tile)) {
 					next_start_slope = tr_slope;
