@@ -25,3 +25,8 @@ int color_approximate_256(struct color c)
 	/* L. */
 	return rand() % 256;
 }
+
+bool color_equal(struct color a, struct color b)
+{
+	return a.r == b.r && a.g == b.g && a.b == b.b;
+}

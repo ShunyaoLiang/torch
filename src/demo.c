@@ -127,7 +127,7 @@ def_entity_fn(demo_torch_destroy)
 
 void torch_flicker(int signal)
 {
-	if (!ui_blocking)
+	if (!ui_polling)
 		return;
 
 	floor_map_clear_lights();

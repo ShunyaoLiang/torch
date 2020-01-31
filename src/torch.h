@@ -29,6 +29,7 @@ struct color {
 
 struct color color_add(struct color c, struct color a);
 struct color color_multiply_by(struct color c, float m);
+bool color_equal(struct color a, struct color b);
 
 int color_approximate_256(struct color c);
 

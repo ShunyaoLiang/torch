@@ -1,327 +1,323 @@
 #include "ui.h"
-#include "termkey.h"
 #include "torch.h"
+#include "termkey.h"
 
+#include <unibilium.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
-#include <signal.h>
+#include <stddef.h>
 #include <stdint.h>
+#include <stdbool.h>
+#include <signal.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 
-#define CSI "\e["
-#define ALTERNATE_SCREEN "?1049h"
-#define NORMAL_SCREEN "?1049l"
-#define HIDE_CURSOR "?25l"
-#define SHOW_CURSOR "?25h"
-static void get_terminal_size();
-static void handle_resize(int signal);
+#define CSI "\x1b["
 
-static void ui_buffer_realloc(void);
-static void __ui_buffer_realloc(int lines, int cols);
+#define MIN(a, b) (a < b ? a : b)
+
+typedef uint8_t utf8[4];
+static void utf8_copy(utf8 dest, utf8 src);
+
+struct ui_cell {
+	utf8 ch;
+	struct ui_cell_attr attr;
+};
+
+#define UI_CELL_DEFAULT (struct ui_cell) { \
+	.ch = " ", \
+};
+
+struct ui_buffer {
+	size_t lines;
+	size_t cols;
+	struct ui_cell **buffer;
+};
+
+static void ui_buffer_realloc(struct ui_buffer *b);
+static struct ui_cell *ui_buffer_at(int line, int col);
 static bool ui_buffer_in_bounds(int line, int col);
 
-static void move_cursor(int line, int col);
+static struct ui_buffer ui_buffer = {0};
 
-int ui_lines;
-int ui_cols;
+static unibi_term *unibi = NULL;
+struct unibi_ext {
+	size_t set_fg_rgb;
+	size_t set_bg_rgb;
+};
+static struct unibi_ext unibi_ext;
 
-static struct ui_cell sentinel_cell;
+static void unibi_print_str(unibi_term *unibi, enum unibi_string s, unibi_var_t param[9]);
+static void unibi_print_ext_str(unibi_term *unibi, size_t i, unibi_var_t param[9]);
+static void unibi_print_fmt(const char *fmt, unibi_var_t param[9]);
 
-struct ui_cell **ui_buffer;
+static void term_resize_handler(int signal);
 
-TermKey *termkey_instance;
+struct term_dimensions {
+	size_t lines, cols;
+};
+static struct term_dimensions term_dimensions(void);
+
+static void generate_sgr(char *sgr, struct ui_cell cur, struct ui_cell last);
+
+static TermKey *termkey = NULL;
 
 void ui_init(void)
 {
-	get_terminal_size();
-	signal(SIGWINCH, &handle_resize);
+	ui_buffer_realloc(&ui_buffer);
+	/* Realloc the buffer on resize. */
+	signal(SIGWINCH, &term_resize_handler);
 
-	ui_buffer_realloc();
+	termkey = termkey_new(STDIN_FILENO, TERMKEY_FLAG_UTF8);
 
-	printf(CSI ALTERNATE_SCREEN CSI "38;2;0;0;0;48;2;0;0;0;22;23;24;25;27;29m" CSI HIDE_CURSOR CSI "H" CSI "J");
+	const char *term = getenv("TERM");
+	unibi = unibi_from_term(term);
+	unibi_ext.set_fg_rgb = unibi_add_ext_str(unibi, "ext_set_fg_rgb",
+		CSI"38;2;%p1%d;%p2%d;%p3%dm");
+	unibi_ext.set_bg_rgb = unibi_add_ext_str(unibi, "ext_set_bg_rgb",
+		CSI"48;2;%p1%d;%p2%d;%p3%dm");
 
-	termkey_instance = termkey_new(STDIN_FILENO, TERMKEY_FLAG_UTF8);
+	unibi_print_str(unibi, unibi_enter_ca_mode, NULL);
+	unibi_print_str(unibi, unibi_cursor_invisible, NULL);
+	unibi_print_str(unibi, unibi_cursor_home, NULL);
+	unibi_var_t zero = unibi_var_from_num(0);
+	unibi_print_ext_str(unibi, unibi_ext.set_fg_rgb, (unibi_var_t[9]){zero, zero, zero});
+	unibi_print_ext_str(unibi, unibi_ext.set_bg_rgb, (unibi_var_t[9]){zero, zero, zero});
 }
 
-static void get_terminal_size()
+static void ui_buffer_realloc(struct ui_buffer *b)
 {
-	struct winsize sz;
-	ioctl(0, TIOCGWINSZ, &sz);
-	ui_lines = sz.ws_row;
-	ui_cols = sz.ws_col;
-}
+	/* Get new terminal dimensions. */
+	struct term_dimensions new_dimensions = term_dimensions();	
 
-static void handle_resize(int signal)
-{
-	get_terminal_size();
-	ui_buffer_realloc();
-}
+	/* Resize top array of pointers. */
+	b->buffer = realloc(b->buffer, new_dimensions.lines * sizeof(struct ui_cell *));
 
-static void ui_buffer_realloc(void)
-{
-	__ui_buffer_realloc(ui_lines, ui_cols);
-}
-
-static void __ui_buffer_realloc(int lines, int cols)
-{
-	/* Keep track of the previous buffer size. */
-	static int old_lines = 0;
-
-	/* Initial allocation. Should only be ran once. */
-	if (!old_lines) {
-		ui_buffer = malloc(sizeof(struct ui_cell *) * lines);
-		if (!ui_buffer)
-			goto fail;
-
-		for (int line = 0; line < lines; ++line) {
-			ui_buffer[line] = malloc(sizeof(struct ui_cell) * cols);
-			if (!ui_buffer[line])
-				goto fail;
-		}
-	} else {
-		/* Free all uneeded lines. */
-		for (int line = old_lines - 1; line >= ui_lines; --line) {
-			free(ui_buffer[line]);
-		}
-
-		/* Resize the top array of pointers. */
-		struct ui_cell **tmp = realloc(ui_buffer, sizeof(struct ui_cell *) * lines);
-		if (!tmp)
-			goto fail;
-		ui_buffer = tmp;
-
-		/* Resize existing lines. */
-		for (int line = 0; line < min(old_lines, lines); ++line) {
-			struct ui_cell *tmp = realloc(ui_buffer[line], sizeof(struct ui_cell) * cols);
-			if (!tmp)
-				goto fail;
-			ui_buffer[line] = tmp;
-		}
-
-		/* Allocate all new lines. */
-		for (int line = old_lines; line < lines; ++line) {
-			ui_buffer[line] = malloc(sizeof(struct ui_cell) * cols);
-			if (!ui_buffer[line])
-				goto fail;
-		}
+	/* Resize existing lines. */
+	for (int line = 0; line < MIN(b->lines, new_dimensions.lines); ++line) {
+		b->buffer[line] = realloc(b->buffer[line], new_dimensions.cols * sizeof(struct ui_cell));
 	}
 
-	old_lines = lines;
+	/* Allocate new lines. */
+	for (int line = b->lines; line < new_dimensions.lines; ++line) {
+		b->buffer[line] = calloc(new_dimensions.cols, sizeof(struct ui_cell));
+	}
 
-	return;
+	/* Update buffer dimensions. */
+	b->lines = new_dimensions.lines;
+	b->cols = new_dimensions.cols;
+}
 
-fail:
-	free(ui_buffer);
-	perror(__func__);
-	abort();
+static struct term_dimensions term_dimensions(void)
+{
+	struct winsize winsize;
+	ioctl(STDOUT_FILENO, TIOCGWINSZ, &winsize);
+	return (struct term_dimensions) {
+		.lines = winsize.ws_row,
+		.cols = winsize.ws_col,
+	};
+}
+
+static void term_resize_handler(int signal)
+{
+	ui_buffer_realloc(&ui_buffer);
+	(void)signal;
+}
+
+static void unibi_print_str(unibi_term *unibi, enum unibi_string s, unibi_var_t param[9])
+{
+	const char *fmt = unibi_get_str(unibi, s);
+	unibi_print_fmt(fmt, param);
+}
+
+static void unibi_print_ext_str(unibi_term *unibi, size_t i, unibi_var_t param[9])
+{
+	const char *fmt = unibi_get_ext_str(unibi, i);
+	unibi_print_fmt(fmt, param);
+}
+
+static void unibi_print_fmt(const char *fmt, unibi_var_t param[9])
+{
+	size_t needed = unibi_run(fmt, param, NULL, 0) + 1;
+	char *buf = malloc(needed);
+	buf[needed - 1] = '\0';
+	unibi_run(fmt, param, buf, needed);
+	fputs(buf, stdout);
 }
 
 void ui_quit(void)
 {
-	termkey_destroy(termkey_instance);
+	puts(CSI "?25h" CSI "?1049l");
 
-	printf(CSI SHOW_CURSOR CSI NORMAL_SCREEN);
+	termkey_destroy(termkey);
+	unibi_destroy(unibi);
 }
 
 void ui_dimensions(int *lines, int *cols)
 {
 	if (lines)
-		*lines = ui_lines;
+		*lines = ui_buffer.lines;
 	if (cols)
-		*cols = ui_cols;
+		*cols = ui_buffer.cols;
 }
 
-void ui_draw_at(int line, int col, struct ui_cell cell)
+void ui_draw_at(int line, int col, utf8 ch, struct ui_cell_attr attr)
 {
-	if (ui_buffer_in_bounds(line, col)) {
-		ui_buffer[line][col] = cell;
-	}
+	if (!ui_buffer_in_bounds(line, col))
+		return;
+	struct ui_cell *cell = ui_buffer_at(line, col);
+	utf8_copy(cell->ch, ch);
+	cell->attr = attr;
+}
+
+static struct ui_cell *ui_buffer_at(int line, int col)
+{
+	if (ui_buffer_in_bounds(line, col))
+		return &ui_buffer.buffer[line][col];
+	else
+		return NULL;
 }
 
 static bool ui_buffer_in_bounds(int line, int col)
 {
-	return line >= 0 && line < ui_lines && col >= 0 && col < ui_cols;
+	return line >= 0 && line < ui_buffer.lines && col >= 0 && col < ui_buffer.cols;
+}
+
+static void utf8_copy(utf8 dest, utf8 src)
+{
+	memcpy(dest, src, sizeof(utf8));
+}
+
+void ui_draw_str_at(int line, int col, utf8 *str, size_t len, struct ui_cell_attr attr)
+{
+	for (size_t i = 0; i < len; ++i)
+		ui_draw_at(line, col, str[i], attr);
 }
 
 void ui_clear(void)
 {
-	for (int line = 0; line < ui_lines; ++line) {
-		memset(ui_buffer[line], 0, sizeof(struct ui_cell) * ui_cols);
-		for (int col = 0; col < ui_cols; ++col) {
-			ui_buffer[line][col].codepoint[0] = ' ';
-			ui_buffer[line][col].codepoint[1] = '\0';
-		}
-	}
+	for (int line = 0; line < ui_buffer.lines; ++line)
+		for (int col = 0; col < ui_buffer.cols; ++col)
+			*ui_buffer_at(line, col) = UI_CELL_DEFAULT;
 }
 
 void ui_flush(void)
 {
-	static char sgr_buf[100]; // look mum it's a SGR string
-	struct ui_cell this, last = sentinel_cell;
+	struct ui_cell last = UI_CELL_DEFAULT;
+	char sgr[55]; /* "Look Mum, it's an SGR string" -Q */
 
-	for (int line = 0; line < ui_lines; ++line) {
-		move_cursor(line, 1);
-		for (int col = 0; col < ui_cols; ++col) {
-			this = ui_buffer[line][col];
-
-			int nparams = 0, sgr_params[16];
-			int sgrlen = 0;
-
-			if (this.fg.r != last.fg.r || this.fg.g != last.fg.g || this.fg.b != last.fg.b) {
-				sgr_params[nparams++] = 38;
-				sgrlen += 3;
-				sgr_params[nparams++] = 2;
-				sgrlen += 2;
-				sgr_params[nparams++] = this.fg.r;
-				sgrlen += snprintf(NULL, 0, "%d;", this.fg.r);
-				sgr_params[nparams++] = this.fg.g;
-				sgrlen += snprintf(NULL, 0, "%d;", this.fg.g);
-				sgr_params[nparams++] = this.fg.b;
-				sgrlen += snprintf(NULL, 0, "%d;", this.fg.b);
-			}
-
-			if (this.bg.r != last.bg.r || this.bg.g != last.bg.g || this.bg.b != last.bg.b) {
-				sgr_params[nparams++] = 48;
-				sgrlen += 3;
-				sgr_params[nparams++] = 2;
-				sgrlen += 2;
-				sgr_params[nparams++] = this.bg.r;
-				sgrlen += snprintf(NULL, 0, "%d;", this.bg.r);
-				sgr_params[nparams++] = this.bg.g;
-				sgrlen += snprintf(NULL, 0, "%d;", this.bg.g);
-				sgr_params[nparams++] = this.bg.b;
-				sgrlen += snprintf(NULL, 0, "%d;", this.bg.b);
-			}
-
-			if (this.bold != last.bold) {
-				sgr_params[nparams++] = this.bold ? 1 : 22;
-				sgrlen += this.bold ? 1 : 2;
-			}
-
-			if (this.italic != last.italic) {
-				sgr_params[nparams++] = this.italic ? 3 : 23;
-				sgrlen += this.italic ? 1 : 2;
-			}
-
-			if (this.under_ != last.under_) {
-				sgr_params[nparams++] = this.under_ ? 4 : 24;
-				sgrlen += this.under_ ? 1 : 2;
-			}
-
-			if (this.blink != last.blink) {
-				sgr_params[nparams++] = this.blink ? 5 : 25;
-				sgrlen += this.blink ? 1 : 2;
-			}
-
-			if (this.reverse_vid != last.reverse_vid) {
-				sgr_params[nparams++] = this.reverse_vid ? 7 : 27;
-				sgrlen += this.reverse_vid ? 1 : 2;
-			}
-
-			if (this.strikethru != last.strikethru) {
-				sgr_params[nparams++] = this.strikethru? 9 : 29;
-				sgrlen += this.strikethru ? 1 : 2;
-			}
-
-			if (sgrlen) {
-				char *iter = sgr_buf;
-
-				iter += sprintf(iter, "\e[");
-				for (int i = 0; i < nparams-1; i++)
-					iter += sprintf(iter, "%d;", sgr_params[i]);
-				if (nparams > 0) // no semicolon for last parameter
-					iter += sprintf(iter, "%d", sgr_params[nparams-1]);
-				sprintf(iter, "m");
-			} else
-				sgr_buf[0] = '\0';
-
-			printf("%s%s", sgr_buf, this.codepoint);
-
-			last = this;
+	unibi_print_str(unibi, unibi_cursor_home, NULL);
+	for (int line = 0; line < ui_buffer.lines; ++line) {
+		for (int col = 0; col < ui_buffer.cols; ++col) {
+			struct ui_cell cur = *ui_buffer_at(line, col);
+			generate_sgr(sgr, cur, last);
+			printf("%s%.4s", sgr, cur.ch);
+			last = cur;
 		}
-	}
-	sentinel_cell = this;
-}
-
-static void move_cursor(int line, int col)
-{
-	if (ui_buffer_in_bounds(line, col))
-		if (line == 1 && col == 1)
-			printf(CSI "H");
-		else if (col == 1)
-			printf(CSI "%dH", line);
-		else
-			printf(CSI "%d;%dH", line, col);
-	else
-		fprintf(stderr, "move_cursor: %d,%d are not in bounds [0:%d,%d)", line, col, ui_lines, ui_cols);
-}
-
-void ui_draw_str_at(int line, int col, const char *str, struct ui_cell attr)
-{
-	while (*str) {
-		attr.codepoint[0] = *str++;
-		ui_draw_at(line, col++, attr);
+		putchar('\n');
 	}
 }
 
-bool ui_blocking = false;
+static void generate_sgr(char *sgr, struct ui_cell cur, struct ui_cell last)
+{
+	int params[16];
+	size_t nparams = 0;
+
+	/* Refer to the ECMA 48 standard. */
+	if (!color_equal(cur.attr.fg, last.attr.fg)) {
+		/* 38 = Set foreground color */
+		params[nparams++] = 38;
+		/* 2 = Use RGB */
+		params[nparams++] = 2;
+		/* Add each RGB channel. */
+		params[nparams++] = cur.attr.fg.r;
+		params[nparams++] = cur.attr.fg.g;
+		params[nparams++] = cur.attr.fg.b;
+	}
+
+	if (!color_equal(cur.attr.bg, last.attr.bg)) {
+		/* 48 = Set background color */
+		params[nparams++] = 48;
+		/* 2 = Use RGB */
+		params[nparams++] = 2;
+		/* Add each RGB channel. */
+		params[nparams++] = cur.attr.bg.r;
+		params[nparams++] = cur.attr.bg.g;
+		params[nparams++] = cur.attr.bg.b;
+	}
+
+	if (cur.attr.bold != last.attr.bold)
+		params[nparams++] = cur.attr.bold ? 1 : 22;
+
+	if (cur.attr.italic != last.attr.italic)
+		params[nparams++] = cur.attr.italic ? 3 : 23;
+
+	if (cur.attr.underline != last.attr.underline)
+		params[nparams++] = cur.attr.underline ? 4 : 24;
+
+	if (cur.attr.blink != last.attr.blink)
+		params[nparams++] = cur.attr.blink ? 5 : 25;
+
+	if (cur.attr.reverse_video != last.attr.reverse_video)
+		params[nparams++] = cur.attr.reverse_video ? 7 : 27;
+
+	if (cur.attr.strikethrough != last.attr.strikethrough)
+		params[nparams++] = cur.attr.strikethrough? 9 : 29;
+
+	if (!nparams) {
+		*sgr = '\0';
+		return;
+	}
+
+	/* Add CSI to beginning of SGR string. */
+	char *iter = sgr;
+	iter += sprintf(iter, CSI);
+
+	/* Write each parameter except the last one. */
+	for (int i = 0; i < nparams - 1; ++i)
+		iter += sprintf(iter, "%d;", params[i]);
+	/* No semicolon on the last parameter. */
+	iter += sprintf(iter, "%d", params[nparams - 1]);
+	/* End the sequence. */
+	sprintf(iter, "m");
+}
+
+bool ui_polling = false;
 
 struct ui_event ui_poll_event(void)
 {
-	bool cont =  true;
 	TermKeyKey key;
-	struct ui_event event;
-	
-	ui_blocking = true;
-	while (cont) switch (termkey_waitkey(termkey_instance, &key)) {
-	case TERMKEY_RES_KEY:
-		switch (key.type) {
-		case TERMKEY_TYPE_UNICODE:
-			event.key = key.code.codepoint;
-			cont = false;
-			break;
+	struct ui_event e;
+
+	ui_polling = true;
+	while (ui_polling)
+		switch (termkey_waitkey(termkey, &key)) {
+		case TERMKEY_RES_KEY:
+			e.key = key.code.codepoint;
+			ui_polling = false;
 		default:
 			break;
 		}
-		break;
-	default:
-		break;
-	}
-	ui_blocking = false;
 
-	return event;
+	return e;
 }
 
 #ifdef TEST
 
-#include <assert.h>
-
 int main(void)
 {
 	ui_init();
-	assert(ui_buffer);
-
-	int lines;
-	ui_dimensions(&lines, NULL);
 
 	ui_clear();
-
-	ui_draw_at(lines - 1, 0, (struct ui_cell){
-		.codepoint = "L",
-		.fg = {
-			.r = 85, .g = 43, .b = 200,
-		},
+	ui_draw_at(4, 4, (utf8) {'@', '\0'}, (struct ui_cell_attr) {
+		.fg = {0xe2, 0x58, 0x22}
 	});
-	assert(strcmp(ui_buffer[lines - 1][0].codepoint, "L") == 0);
-
-	ui_draw_str_at(3, 3, "Test", (struct ui_cell){.fg = {19, 103, 76}});
-
 	ui_flush();
-	struct ui_event event = ui_poll_event();
 
-	ui_quit();
+	getchar();
+
+	ui_quit();	
 }
 
 #endif
