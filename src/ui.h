@@ -17,7 +17,7 @@ struct ui_cell_attr {
 	bool bold, italics, underline, blink, reverse;
 };
 
-void ui_draw_at(int line, int col, char *str, struct ui_cell_attr attr);
+void ui_draw_at(int line, int col, const char *str, struct ui_cell_attr attr);
 
 void ui_clear(void);
 void ui_flush(void);

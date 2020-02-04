@@ -132,7 +132,7 @@ void ui_quit(void)
 	termkey_destroy(termkey);
 }
 
-void ui_dimensions(int *lines, int *cols)
+void ui_dimensions(int *restrict lines, int *restrict cols)
 {
 	if (lines)
 		*lines = ui_buffer.lines;
@@ -164,7 +164,7 @@ static struct ui_cell *ui_buffer_at(int line, int col)
 		return NULL;
 }
 
-static void utf8_copy(char *restrict dest, char *restrict src)
+static void utf8_copy(char *restrict dest, const char *restrict src)
 {
 	size_t len = utf8_codepoint_len(src);
 	memcpy(dest, src, len);
@@ -172,12 +172,12 @@ static void utf8_copy(char *restrict dest, char *restrict src)
 		dest[len] = '\0';
 }
 
-void ui_draw_at(int line, int col, char *str, struct ui_cell_attr attr)
+void ui_draw_at(int line, int col, const char *str, struct ui_cell_attr attr)
 {
 	if (!ui_buffer_in_bounds(line, col))
 		return;
 
-	for (char *ch = str; *ch; ch += utf8_codepoint_len(ch)) {
+	for (const char *ch = str; *ch; ch += utf8_codepoint_len(ch)) {
 		struct ui_cell *cell = ui_buffer_at(line, col + ch - str);
 		if (!cell)
 			return;
