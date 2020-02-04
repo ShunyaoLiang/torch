@@ -133,7 +133,7 @@ void torch_flicker(int signal)
 	floor_map_clear_lights();
 	struct entity *pos;
 	list_for_each_entry(pos, &cur_floor->entities, list) {
-		if (pos->token == '!' || pos->token == '@')
+		if (!strcmp(pos->token, "!") || !strcmp(pos->token, "@"))
 			pos->update(pos);
 	}
 	
@@ -191,7 +191,7 @@ struct entity demo_new_torch(int y, int x)
 		.color = {
 			.r = 0xe2, .g = 0x58, .b = 0x22,
 		},
-		.token = '!',
+		.token = "!",
 		.posy = y, .posx = x,
 		.update = demo_torch_update,
 		.destroy = demo_torch_destroy,
@@ -244,7 +244,7 @@ def_entity_fn(demo_snake_update)
 		list_del(&this->list);
 		free(this);
 #endif
-		this->token = 'd';
+		this->token = "d";
 		return;
 	}
 
@@ -277,7 +277,7 @@ struct entity demo_new_snake(int y, int x)
 		.combat = {
 			.hp = 1, .hp_max = 1,
 		},
-		.token = 's',
+		.token = "s",
 		.posy = y, .posx = x,
 		.update = demo_snake_update,
 		.destroy = NULL,

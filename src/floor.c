@@ -109,10 +109,10 @@ static void intern_floor_write_grid(struct floor *floor, cell_grid grid)
 	cell *c = *grid;
 	floor_for_each_tile(t, floor) {
 		if (*c) {
-			t->token = '#';
+			t->token = "#";
 			t->blocks = 0;
 		} else {
-			t->token = '.';
+			t->token = ".";
 			t->blocks = 1;
 		}
 		c++;
@@ -124,7 +124,7 @@ struct tile floor_map_at(struct floor *floor, int y, int x)
 	if (floor_map_in_bounds(y, x))
 		return (floor->map)[y][x];
 	else
-		return (struct tile){ .token = ' ' };
+		return (struct tile){ .token = " " };
 }
 
 int floor_map_in_bounds(int y, int x)

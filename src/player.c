@@ -11,7 +11,7 @@ struct entity player = {
 	.combat = {
 		.hp = 5, .hp_max = 5,
 	},
-	.token = '@',
+	.token = "@",
 	.posy = 13, .posx = 14,
 	.update = demo_player_update,
 	.destroy = NULL,

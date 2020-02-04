@@ -12,15 +12,12 @@ void ui_quit(void);
 
 void ui_dimensions(int *lines, int *cols);
 
-typedef uint8_t utf8[4];
-
 struct ui_cell_attr {
 	struct color fg, bg;
-	bool bold, italic, underline, blink, reverse_video, strikethrough;
+	bool bold, italics, underline, blink, reverse;
 };
 
-void ui_draw_at(int line, int col, utf8 ch, struct ui_cell_attr attr);
-void ui_draw_str_at(int line, int col, utf8 *str, size_t len, struct ui_cell_attr attr);
+void ui_draw_at(int line, int col, char *str, struct ui_cell_attr attr);
 
 void ui_clear(void);
 void ui_flush(void);
@@ -37,6 +34,7 @@ struct ui_event {
 };
 
 extern bool ui_polling;
+
 struct ui_event ui_poll_event(void);
 
 #endif

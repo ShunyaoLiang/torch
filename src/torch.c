@@ -28,7 +28,6 @@ int main(void)
 
 	ui_init();
 
-#if 0
 	timer_t timer_id;
 	timer_create(CLOCK_REALTIME, NULL, &timer_id);
 	timer_settime(timer_id, 0, &(struct itimerspec) {
@@ -36,7 +35,6 @@ int main(void)
 		.it_value = { 0, 100000000 },
 	}, NULL);
 	signal(SIGALRM, &torch_flicker);
-#endif
 
 	struct ui_event event = { .key = 'e' };
 
@@ -52,7 +50,7 @@ int main(void)
 			ui_flush();
 			ui_quit();
 			puts("lol you fucking died nerd");
-			abort();
+			return 0;
 		}
 #if 0
 		draw_map();

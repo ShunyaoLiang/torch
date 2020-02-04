@@ -111,11 +111,11 @@ void draw_thing(struct tile *tile, int x, int y, void *context)
 	int line = y - clamp(player.posy - info->view_lines / 2, 0, MAP_LINES - info->view_lines);
 	int col = x - clamp(player.posx - info->view_cols / 2, 0, MAP_COLS - info->view_cols);
 	if (tile->entity) {
-		ui_draw_at(line, col, (utf8){ tile->entity->token }, (struct ui_cell_attr) {
+		ui_draw_at(line, col, tile->entity->token, (struct ui_cell_attr) {
 			.fg = color_add(color_multiply_by(tile->entity->color, tile->light), tile->dcolor),
 		});
 	} else {
-		ui_draw_at(line, col, (utf8){ tile->token }, (struct ui_cell_attr) {
+		ui_draw_at(line, col, tile->token, (struct ui_cell_attr) {
 			.fg = color_add(color_multiply_by(tile->color, tile->light), tile->dcolor),
 		});
 	}
@@ -129,10 +129,10 @@ void draw_shit(void)
 		view_lines, view_cols
 	});
 
-	size_t needed = snprintf(NULL, 0, "%3d %3d", player_fuel, player_torches) + 1;
+	size_t needed = snprintf(NULL, 0, "%3d %3d %d", player_fuel, player_torches, player.combat.hp) + 1;
 	char *buf = malloc(needed);
-	sprintf(buf, "%3d %3d", player_fuel, player_torches);
-//	ui_draw_str_at(1, 0, buf, (struct ui_cell){ .fg = { 0xe2, 0x58, 0x22 } });
+	sprintf(buf, "%3d %3d %d", player_fuel, player_torches, player.combat.hp);
+	ui_draw_at(0, 0, buf, (struct ui_cell_attr){ .fg = { 0xe2, 0x58, 0x22 } });
 //	ui_draw_at(2, 0, (struct ui_cell){ .codepoint = { [0] = player_fuel }, .fg = { 77, 26, 128 }, });
 //	ui_draw_at(2, 2, (struct ui_cell){ .codepoint = { [0] = player_torches }, .fg = { 77, 26, 128 }, });
 }

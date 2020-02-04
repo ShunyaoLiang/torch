@@ -60,7 +60,7 @@ struct entity {
 	entity_fn *update;
 	entity_fn *destroy;
 
-	char token;
+	char *token;
 	struct color color;
 
 	struct list_head list;
@@ -91,7 +91,7 @@ def_input_key_fn(player_toggle_lantern);
 struct tile {
 	bool blocks;
 
-	char token;
+	char *token;
 	struct color color;
 
 	float light;
