@@ -39,8 +39,8 @@ void demo_floor_load_map(const char *filename)
 //	fclose(mapfp);
 
 	for (int i = 0; i < 20; ++i) {
-		int y = rand() % MAP_LINES;
-		int x = rand() % MAP_COLS;
+		int y = random_int() % MAP_LINES;
+		int x = random_int() % MAP_COLS;
 		demo_place_snake(y, x);
 	}
 }
@@ -63,7 +63,7 @@ void cast_light_at(struct tile *tile, int x, int y, void *context)
 	struct light_info *info = context;
 	drawn_to[y][x] = 1;
 	int distance = sqrt(pow(y - info->y, 2) + pow(x - info->x, 2));
-	const float dlight = info->bright / (distance + 1) / (distance + 1);
+	const float dlight = info->bright / distance;
 	if (y == info->y && x == info->x) {
 		(*info->map)[y][x].light += info->bright;
 	} else {
@@ -100,12 +100,12 @@ def_entity_fn(demo_player_update)
 
 def_entity_fn(demo_torch_update)
 {
-	int y = (rand() % 3 - 1);
-	int x = (rand() % 3 - 1);
+	int y = (random_int() % 3 - 1);
+	int x = (random_int() % 3 - 1);
 
 //	entity_move_pos_rel(this, y, x);
 
-	int flicker = (rand() % 3 - 1);
+	int flicker = (random_int() % 3 - 1);
 
 	y = this->posy;
 	x = this->posx;

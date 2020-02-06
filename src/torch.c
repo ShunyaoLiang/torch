@@ -21,7 +21,8 @@ int main(void)
 #endif
 
 	INIT_LIST_HEAD(&floors[0].entities);
-	demo_floor_load_map("map");
+	//demo_floor_load_map("map");
+	floor_map_generate(&floors[0], CAVE);
 	floor_add_entity(cur_floor, &player);
 
 	demo_add_entities();

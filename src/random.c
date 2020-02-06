@@ -13,7 +13,7 @@
 
 static unsigned int xorshift(unsigned int state);
 
-int rand(void)
+int random_int(void)
 {
 	static unsigned int state;
 	DO_ONCE(state = time(NULL));

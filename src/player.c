@@ -12,7 +12,7 @@ struct entity player = {
 		.hp = 5, .hp_max = 5,
 	},
 	.token = "@",
-	.posy = 13, .posx = 14,
+	.posy = 50, .posx = 50,
 	.update = demo_player_update,
 	.destroy = NULL,
 	.list = LIST_HEAD_INIT(player.list),

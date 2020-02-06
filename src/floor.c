@@ -20,7 +20,7 @@ static void intern_floor_write_grid(struct floor *floor, cell_grid grid);
 void floor_map_generate(struct floor *floor, enum floor_type type)
 {
 	cell_grid grid = { 0 };
-	intern_populate_grid(grid, 0.45f);
+	intern_populate_grid(grid, 0.50f);
 
 	for (int i = 0; i < 12; ++i) {
 		intern_iterate_grid(grid, 4, 5);
@@ -34,7 +34,7 @@ static void intern_populate_grid(cell_grid grid, float rate)
 /*
 	cell *pos;
 	cell_grid_for_each_cell(pos, grid) {
-		if (rand() % 100 / 100.f < rate)
+		if (random_int() % 100 / 100.f < rate)
 			*pos = 1;
 		else
 			*pos = 0;
@@ -42,7 +42,7 @@ static void intern_populate_grid(cell_grid grid, float rate)
 */
 	for (int y = 0; y < MAP_LINES; ++y) {
 		for (int x = 0; x < MAP_COLS; ++x) {
-			if (rand() % 100 / 100.f < rate)
+			if (random_int() % 100 / 100.f < rate)
 				grid[y][x] = 1;
 			else
 				grid[y][x] = 0;

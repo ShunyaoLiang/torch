@@ -162,6 +162,6 @@ void raycast_at(struct floor *floor, int x, int y, int radius,
 	raycast_callback_fn callback, void *context);
 
 /* Random */
-int rand(void);
+int random_int(void);
 
 #endif
