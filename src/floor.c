@@ -166,3 +166,16 @@ bool tile_blocks_light(struct tile tile)
 {
 	return tile.blocks || (tile.entity ? tile.entity->blocks_light : tile.entity);
 }
+
+void floor_init(void)
+{
+	INIT_LIST_HEAD(&floors[0].entities);
+	floor_map_generate(&floors[0], CAVE);
+	floor_add_entity(cur_floor, &player);
+}
+
+struct floor *cur_floor = &floors[0];
+
+struct floor floors[] = {
+	{}
+};

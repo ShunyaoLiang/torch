@@ -125,6 +125,7 @@ struct tile floor_map_at(struct floor *floor, int y, int x);
 int         floor_map_in_bounds(int y, int x);
 void        floor_map_clear_lights(void);
 void        floor_map_generate(struct floor *floor, enum floor_type type);
+void        floor_init(void);
 
 int  floor_add_entity(struct floor *floor, struct entity *entity);
 void floor_update_entities(struct floor *floor);
@@ -141,6 +142,7 @@ void draw_map(void);
 void draw_entities(void);
 #endif
 void draw_shit(void);
+void draw_init(void);
 
 /* Demo */
 void demo_floor_load_map(const char *filename);

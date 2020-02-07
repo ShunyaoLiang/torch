@@ -9,8 +9,6 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-struct floor *cur_floor = &floors[0];
-
 struct entity demo_new_snake(int y, int x);
 void demo_place_snake(int y, int x);
 
@@ -375,7 +373,3 @@ static void raycast_octant_at(tile_map map, int y, int x, int radius, int row,
 	}
 }
 #endif
-
-struct floor floors[] = {
-	[0] = {},
-};

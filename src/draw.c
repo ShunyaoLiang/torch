@@ -1,6 +1,8 @@
 #include "torch.h"
 #include "ui.h"
 
+#include <signal.h>
+#include <time.h>
 #include <string.h>
 #include <stdlib.h>
 
@@ -135,4 +137,17 @@ void draw_shit(void)
 	ui_draw_at(0, 0, buf, (struct ui_cell_attr){ .fg = { 0xe2, 0x58, 0x22 } });
 //	ui_draw_at(2, 0, (struct ui_cell){ .codepoint = { [0] = player_fuel }, .fg = { 77, 26, 128 }, });
 //	ui_draw_at(2, 2, (struct ui_cell){ .codepoint = { [0] = player_torches }, .fg = { 77, 26, 128 }, });
+}
+
+void torch_flicker(int signal);
+
+void draw_init(void)
+{
+	timer_t timer_id;
+	timer_create(CLOCK_REALTIME, NULL, &timer_id);
+	timer_settime(timer_id, 0, &(struct itimerspec) {
+		.it_interval = { 0, 100000000 },
+		.it_value = { 0, 100000000 },
+	}, NULL);
+	signal(SIGALRM, &torch_flicker);
 }

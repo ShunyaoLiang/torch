@@ -6,7 +6,7 @@
 
 struct entity player = {
 	.color = {
-		.r = 151, .g = 151, .b = 151,
+		.r = 0xa5, .g = 0xf2, .b = 0xf3,
 	},
 	.combat = {
 		.hp = 5, .hp_max = 5,
