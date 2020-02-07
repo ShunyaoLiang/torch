@@ -13,19 +13,45 @@ FILE *debug_log;
 
 void torch_flicker(int signal);
 
+void event_loop(int (*keymap[])(void), void (*draw)(void))
+{
+	struct ui_event event = { .key = 'e' };
+
+	do {
+		if (!keymap[event.key] || keymap[event.key]())
+			continue;
+
+		floor_map_clear_lights();
+		floor_update_entities(cur_floor);
+
+		if (player.combat.hp <= 0) {
+			ui_clear();
+			ui_flush();
+			ui_quit();
+			puts("lol you fucking died nerd");
+			exit(0);
+		}
+#if 0
+		draw_map();
+		draw_entities();
+#endif
+		ui_clear();
+		draw();
+
+		ui_flush();
+	} while (event = ui_poll_event(), event.key != 'Q');
+}
+
 int main(void)
 {
-	srand(time(NULL));
 #ifdef DEBUG
 	debug_log = fopen("debug_log", "w");
 #endif
+	srand(time(NULL));
 
 	INIT_LIST_HEAD(&floors[0].entities);
-	//demo_floor_load_map("map");
 	floor_map_generate(&floors[0], CAVE);
 	floor_add_entity(cur_floor, &player);
-
-	demo_add_entities();
 
 	ui_init();
 
@@ -37,31 +63,7 @@ int main(void)
 	}, NULL);
 	signal(SIGALRM, &torch_flicker);
 
-	struct ui_event event = { .key = 'e' };
-
-	do {
-		if (!input_keymap[event.key] || input_keymap[event.key]())
-			continue;
-
-		floor_map_clear_lights();
-		floor_update_entities(cur_floor);
-
-		if (player.combat.hp <= 0) {
-			ui_clear();
-			ui_flush();
-			ui_quit();
-			puts("lol you fucking died nerd");
-			return 0;
-		}
-#if 0
-		draw_map();
-		draw_entities();
-#endif
-		ui_clear();
-		draw_shit();
-
-		ui_flush();
-	} while (event = ui_poll_event(), event.key != 'Q');
+	event_loop(input_keymap, &draw_shit);
 
 	ui_quit();
 
