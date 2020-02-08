@@ -116,6 +116,18 @@ static inline void list_del_init(struct list_head *entry)
 }
 
 /**
+ * list_move_tail - delete from one list and add as another's tail
+ * @list: the entry to move
+ * @head: the head that will follow our entry
+ */
+static inline void list_move_tail(struct list_head *list,
+				  struct list_head *head)
+{
+	__list_del_entry(list);
+	list_add_tail(list, head);
+}
+
+/**
  * list_empty - tests whether a list is empty
  * @head: the list to test.
  */

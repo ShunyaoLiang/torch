@@ -97,7 +97,7 @@ static int intern_cell_alive_neighbours(cell_grid grid, int y, int x)
 
 static int intern_cell_grid_at(cell_grid grid, int y, int x)
 {
-	if (floor_map_in_bounds(y, x))
+	if (floor_map_in_bounds(x, y))
 		return grid[y][x];
 	else
 		return 1;
@@ -121,15 +121,15 @@ static void intern_floor_write_grid(struct floor *floor, cell_grid grid)
 
 struct tile floor_map_at(struct floor *floor, int y, int x)
 {
-	if (floor_map_in_bounds(y, x))
+	if (floor_map_in_bounds(x, y))
 		return (floor->map)[y][x];
 	else
 		return (struct tile){ .token = " " };
 }
 
-int floor_map_in_bounds(int y, int x)
+int floor_map_in_bounds(int x, int y)
 {
-	return y >= 0 && y < MAP_LINES && x >= 0 && x < MAP_COLS;
+	return x >= 0 && x < MAP_COLS && y >= 0 && y < MAP_LINES;
 }
 
 void floor_map_clear_lights(void)
@@ -174,8 +174,36 @@ void floor_init(void)
 	floor_add_entity(cur_floor, &player);
 }
 
+static struct tile *floor_map_at_unsafe(struct floor *floor, int x, int y)
+{
+	if (floor_map_in_bounds(x, y))
+		return &(floor->map)[y][x];
+	else
+		return NULL;
+}
+
+void floor_move_player(struct floor *floor, int x, int y)
+{
+	if (!floor->map) {
+		INIT_LIST_HEAD(&floor->entities);
+		floor_map_generate(floor, CAVE);
+	}
+
+	/* Update tile information. */
+	floor_map_at_unsafe(player.floor, player.posx, player.posy)->entity = NULL;
+	floor_map_at_unsafe(floor, x, y)->entity = &player;
+	/* Update player information. */
+	player.floor = floor;
+	player.posx = x;
+	player.posy = y;
+	/* Move the list entry. */
+//	list_move_tail(&player.floor->entities, &floor->entities);
+}
+
 struct floor *cur_floor = &floors[0];
 
 struct floor floors[] = {
-	{}
+	{
+		.entities = LIST_HEAD_INIT(floors[0].entities),
+	}
 };

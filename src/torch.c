@@ -18,6 +18,7 @@ void event_loop(int (*keymap[])(void), void (*draw)(void))
 			continue;
 
 		floor_map_clear_lights();
+
 		floor_update_entities(cur_floor);
 
 		if (player.combat.hp <= 0) {
@@ -44,6 +45,7 @@ int main(int argc, char *argv[])
 	debug_log = fopen("debug_log", "w");
 #endif
 	floor_init();
+	floor_move_player(cur_floor, 66, 66);
 	ui_init();
 	draw_init();
 

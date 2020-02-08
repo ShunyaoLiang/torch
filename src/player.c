@@ -17,6 +17,7 @@ struct entity player = {
 	.destroy = NULL,
 	.list = LIST_HEAD_INIT(player.list),
 	.blocks_light = true,
+	.floor = &floors[0],
 };
 
 bool player_lantern_on = false;

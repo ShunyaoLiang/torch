@@ -80,7 +80,7 @@ static void raycast_octant_at(struct floor *floor, int x, int y, int radius,
 			/* Contains the actual coordinate of the current tile. */
 			int ax, ay;
 			transform_point_by_octant(x, y, dx, dy, octant, &ax, &ay);
-			if (!floor_map_in_bounds(ay, ax))
+			if (!floor_map_in_bounds(ax, ay))
 				continue;
 
 			if (dx * dx + dy * dy < radius * radius)

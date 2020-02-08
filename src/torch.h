@@ -54,7 +54,7 @@ struct entity {
 	enum entity_info info;
 	struct combat combat;
 
-	int posy, posx;
+	int posx, posy;
 	bool blocks_light;
 
 	entity_fn *update;
@@ -122,10 +122,11 @@ enum floor_type {
 };
 
 struct tile floor_map_at(struct floor *floor, int y, int x);
-int         floor_map_in_bounds(int y, int x);
+int         floor_map_in_bounds(int x, int y);
 void        floor_map_clear_lights(void);
 void        floor_map_generate(struct floor *floor, enum floor_type type);
 void        floor_init(void);
+void        floor_move_player(struct floor *floor, int x, int y);
 
 int  floor_add_entity(struct floor *floor, struct entity *entity);
 void floor_update_entities(struct floor *floor);
