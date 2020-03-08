@@ -21,7 +21,7 @@ static void transform_point_by_octant(int x, int y, int dx, int dy, int octant,
 void raycast_at(struct floor *floor, int x, int y, int radius,
 	raycast_callback_fn callback, void *context)
 {
-	/* raycast_octant_at() does not cast on the origin (y, x). */
+	/* raycast_octant_at() does not cast on the origin (x, y). */
 	callback(&floor->map[y][x], x, y, context);
 
 	for (int octant = 0; octant < 8; ++octant)
@@ -109,12 +109,6 @@ static void raycast_octant_at(struct floor *floor, int x, int y, int radius,
 		}
 	}
 }
-
-#define SWAP(a, b, type) do { \
-	type temp = a; \
-	a = b; \
-	b = temp; \
-} while (0);
 
 /* raycast_octant_at() pretends its always calculating the zeroth octant.
    transform_point_by_octant() applies the transformation. */

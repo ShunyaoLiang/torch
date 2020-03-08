@@ -20,10 +20,10 @@ static void intern_floor_write_grid(struct floor *floor, cell_grid grid);
 void floor_map_generate(struct floor *floor, enum floor_type type)
 {
 	cell_grid grid = { 0 };
-	intern_populate_grid(grid, 0.50f);
+	intern_populate_grid(grid, 0.45f);
 
 	for (int i = 0; i < 12; ++i) {
-		intern_iterate_grid(grid, 4, 5);
+		intern_iterate_grid(grid, 5, 4);
 	}
 
 	intern_floor_write_grid(floor, grid);	

@@ -12,6 +12,12 @@
 #define max(a, b) (a > b ? a : b)
 #define clamp(v, lo, hi) ((v < lo) ? lo : (hi < v) ? hi : v)
 
+#define SWAP(a, b, type) do { \
+	type temp = a; \
+	a = b; \
+	b = temp; \
+} while (0);
+
 typedef unsigned int uint;
 
 extern FILE *debug_log;
@@ -146,12 +152,8 @@ void draw_shit(void);
 void draw_init(void);
 
 /* Demo */
-void demo_floor_load_map(const char *filename);
-
 def_entity_fn(demo_player_destroy);
 def_entity_fn(demo_player_update);
-
-void demo_add_entities(void);
 
 def_input_key_fn(place_torch);
 def_input_key_fn(demo_get_fuel);

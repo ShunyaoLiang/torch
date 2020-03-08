@@ -12,37 +12,6 @@
 struct entity demo_new_snake(int y, int x);
 void demo_place_snake(int y, int x);
 
-void demo_floor_load_map(const char *filename)
-{
-//	FILE *mapfp = fopen(filename, "r");
-	floor_map_generate(&floors[0], CAVE);
-
-	/* Make this not shit please. */
-	for (size_t line = 0; line < MAP_LINES; ++line) {
-		for (size_t col = 0; col < MAP_COLS; ++col) {
-//			fscanf(mapfp, "%c", &demo_floor.map[line][col].token);
-			floors[0].map[line][col].light = 0;
-			floors[0].map[line][col].color = (struct color){ 51, 51, 51 };
-
-#if 0
-			if (demo_floor.map[line][col].token != '.') {
-				demo_floor.map[line][col].g = 51;
-				demo_floor.map[line][col].b = 51;
-			}
-#endif
-		}
-//		(void)fgetc(mapfp);
-	}
-
-//	fclose(mapfp);
-
-	for (int i = 0; i < 20; ++i) {
-		int y = random_int() % MAP_LINES;
-		int x = random_int() % MAP_COLS;
-		demo_place_snake(y, x);
-	}
-}
-
 int drawn_to[MAP_LINES][MAP_COLS] = { 0 };
 
 struct light_info {
@@ -61,7 +30,7 @@ void cast_light_at(struct tile *tile, int x, int y, void *context)
 	struct light_info *info = context;
 	drawn_to[y][x] = 1;
 	int distance = sqrt(pow(y - info->y, 2) + pow(x - info->x, 2));
-	const float dlight = info->bright / distance;
+	const float dlight = info->bright / (distance + 1) / (distance + 1);
 	if (y == info->y && x == info->x) {
 		(*info->map)[y][x].light += info->bright;
 	} else {
@@ -138,49 +107,6 @@ void torch_flicker(int signal)
 	ui_clear();
 	draw_shit();
 	ui_flush();
-}
-
-void demo_add_entities(void)
-{
-#if 0
-	struct entity torch = {
-		.r = 0xe2, .g = /*0x58*/0, .b = 0x22,
-		.token = 't',
-		.posy = 12, .posx = 7,
-		.update = demo_torch_update,
-		.destroy = demo_torch_destroy,
-		.list = LIST_HEAD_INIT(torch.list),
-		.floor = cur_floor,
-	};
-
-	struct entity *t1 = malloc(sizeof(torch));
-	struct entity *t2 = malloc(sizeof(torch));
-
-	memcpy(t1, &torch, sizeof(torch));
-	torch.r = 0x5e;
-	torch.g = /*0xba*/0;
-	torch.b = 0xc9;
-	torch.posy = 12;
-	torch.posx = 8;
-	memcpy(t2, &torch, sizeof(torch));
-
-	floor_add_entity(cur_floor, t1);
-	floor_add_entity(cur_floor, t2);
-
-	struct entity rock = {
-		.r = 170, .g = 170, .b = 170,
-		.token = '?',
-		.posy = 13, 13,
-		.update = NULL,
-		.destroy = NULL,
-		.list = LIST_HEAD_INIT(torch.list),
-		.floor = cur_floor,
-	};
-
-	struct entity *r = malloc(sizeof(rock));
-	memcpy(r, &rock, sizeof(rock));
-	floor_add_entity(cur_floor, r);
-#endif
 }
 
 struct entity demo_new_torch(int y, int x)
@@ -286,90 +212,3 @@ struct entity demo_new_snake(int y, int x)
 
 	return snake;
 }
-
-#if 0
-void raycast_octant_at(tile_map map, int y, int x, int radius, int row,
-	float start_slope, float end_slope, int octant, raycast_fn *callback,
-	void *context);
-
-void raycast_at(tile_map map, int y, int x, int radius, raycast_fn *callback,
-	void *context)
-{
-	callback(y, x, context);
-	for (int octant = 0; octant < 8; ++octant)
-		raycast_octant_at(map, y, x, radius, 1, 1.0, 0.0, octant,
-			callback, context);
-}
-
-static void raycast_octant_at(tile_map map, int y, int x, int radius, int row,
-	float start_slope, float end_slope, int octant, raycast_fn *callback,
-	void *context)
-{
-	static int transforms[4][8] = {
-		{1, 0, 0, -1, -1, 0, 0, 1},
-		{0, 1, -1, 0, 0, -1, 1, 0},
-		{0, 1, 1, 0, 0, -1, -1, 0},	
-		{1, 0, 0, 1, -1, 0, 0, -1},
-	};
-
-	if (start_slope < end_slope) {
-		return;
-	}
-
-	float next_start_slope = start_slope;
-	for (; row <= radius; ++row) {
-		bool blocked = false;
-		for (int dx = -row, dy = -row; dx <= 0; dx++) {
-			float bl_slope = (dx - 0.5) / (dy + 0.5);
-			float tr_slope = (dx + 0.5) / (dy - 0.5);
-			if (start_slope < tr_slope) {
-				continue;
-			} else if (end_slope > bl_slope) {
-				break;
-			}
-
-			int xx = transforms[0][octant];
-			int xy = transforms[1][octant];
-			int yx = transforms[2][octant];
-			int yy = transforms[3][octant];
-			int sax = dx * xx + dy * xy;
-			int say = dx * yx + dy * yy;
-			if ((sax < 0 && abs(sax) > x) ||
-				(say < 0 && abs(say) > y)) {
-				continue;
-			}
-
-			int ax = x + sax;
-			int ay = y + say;
-			if (!floor_map_in_bounds(ay, ax)) {
-				continue;
-			}
-
-			uint radius2 = radius * radius;
-			if ((uint)(dx * dx + dy * dy) < radius2) {
-				callback(ay, ax, context);
-			}
-
-			struct tile tile = map[ay][ax];
-			if (blocked) {
-				if (!tile.walk || (tile.entity ? tile.entity->blocks_light : tile.entity)) {
-					next_start_slope = tr_slope;
-					continue;
-				} else {
-					blocked = false;
-					start_slope = next_start_slope;
-				}
-			} else if (!tile.walk || (tile.entity ? tile.entity->blocks_light : tile.entity)) {
-				blocked = true;
-				next_start_slope = tr_slope;
-				raycast_octant_at(map, y, x, radius, row + 1,
-					start_slope, bl_slope, octant,
-					callback, context);
-			}
-		}
-		if (blocked) {
-			break;
-		}
-	}
-}
-#endif
