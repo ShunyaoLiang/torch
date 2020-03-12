@@ -114,7 +114,13 @@ bool tile_blocks_light(struct tile);
 typedef struct list_head entity_list;
 typedef struct tile tile_map[MAP_LINES][MAP_COLS];
 
+enum floor_type {
+	CAVE,
+	DEV,
+};
+
 struct floor {
+	enum floor_type type;
 	entity_list entities;
 	tile_map map;
 };
@@ -123,14 +129,10 @@ extern struct floor floors[];
 
 extern struct floor *cur_floor;
 
-enum floor_type {
-	CAVE,
-};
-
 struct tile floor_map_at(struct floor *floor, int y, int x);
 int         floor_map_in_bounds(int x, int y);
 void        floor_map_clear_lights(void);
-void        floor_map_generate(struct floor *floor, enum floor_type type);
+void        floor_map_generate(struct floor *floor);
 void        floor_init(void);
 void        floor_move_player(struct floor *floor, int x, int y);
 

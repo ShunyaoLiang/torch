@@ -4,118 +4,30 @@
 #include <stdlib.h>
 #include <string.h>
 
+struct floor *cur_floor = &floors[0];
+
 typedef int cell;
 typedef cell cell_grid[MAP_LINES][MAP_COLS];
 
-#define cell_grid_for_each_cell(pos, grid) \
-	for (pos = *grid; pos != back(grid); ++pos)
+static void cave_populate_grid(cell_grid grid, float rate);
+static void cave_iterate_grid(cell_grid grid, int birth, int survive);
+static int  cave_cell_alive_neighbours(cell_grid grid, int y, int x);
+static int  cave_cell_grid_at(cell_grid grid, int y, int x);
+static void cave_floor_write_grid(struct floor *floor, cell_grid grid);
 
-static void intern_populate_grid(cell_grid grid, float rate);
-static void intern_iterate_grid(cell_grid grid, int birth, int survive);
-static int intern_cell_alive_neighbours(cell_grid grid, int y, int x);
-static int intern_cell_grid_at(cell_grid grid, int y, int x);
-
-static void intern_floor_write_grid(struct floor *floor, cell_grid grid);
-
-void floor_map_generate(struct floor *floor, enum floor_type type)
+void floor_map_generate(struct floor *floor)
 {
-	cell_grid grid = { 0 };
-	intern_populate_grid(grid, 0.45f);
+	if (floor->type == CAVE) {
+		cell_grid grid = { 0 };
+		cave_populate_grid(grid, 0.45f);
 
-	for (int i = 0; i < 12; ++i) {
-		intern_iterate_grid(grid, 5, 4);
-	}
-
-	intern_floor_write_grid(floor, grid);	
-}
-
-static void intern_populate_grid(cell_grid grid, float rate)
-{
-/*
-	cell *pos;
-	cell_grid_for_each_cell(pos, grid) {
-		if (random_int() % 100 / 100.f < rate)
-			*pos = 1;
-		else
-			*pos = 0;
-	}
-*/
-	for (int y = 0; y < MAP_LINES; ++y) {
-		for (int x = 0; x < MAP_COLS; ++x) {
-			if (random_int() % 100 / 100.f < rate)
-				grid[y][x] = 1;
-			else
-				grid[y][x] = 0;
-		};
-	}
-}
-
-static void intern_iterate_grid(cell_grid grid, int birth, int survive)
-{
-	cell_grid new = { 0 };
-	for (int y = 0; y < MAP_LINES; ++y)
-		for (int x = 0; x < MAP_COLS; ++x) {
-			int alive = intern_cell_alive_neighbours(grid, y, x);
-			if (grid[y][x]) {
-				if (alive >= survive)
-					new[y][x] = 1;
-			} else {
-				if (alive >= birth)
-					new[y][x] = 1;
-			}
+		for (int i = 0; i < 12; ++i) {
+			cave_iterate_grid(grid, 5, 4);
 		}
 
-//	memcpy(new, grid, sizeof(new));
-	for (int y = 0; y < MAP_LINES; ++y)
-		for (int x = 0; x < MAP_COLS; ++x) {
-			grid[y][x] = new[y][x];
-		}
-}
+		cave_floor_write_grid(floor, grid);	
 
-static int intern_cell_alive_neighbours(cell_grid grid, int y, int x)
-{
-	int alive = 0;
-/*
-	for (int i = -1; i < 2; ++i)
-		for (int j = -1; j < 2; ++j) {
-			if (i != 0 && j != 0 && grid[y + i][x + j])
-				alive++;
-		}
-*/
-
-	intern_cell_grid_at(grid, y - 1, x - 1) ? alive++ : 0;
-	intern_cell_grid_at(grid, y - 1, x) ? alive++ : 0;
-	intern_cell_grid_at(grid, y - 1, x + 1) ? alive++ : 0;
-	intern_cell_grid_at(grid, y, x - 1) ? alive++ : 0;
-	intern_cell_grid_at(grid, y, x + 1) ? alive++ : 0;
-	intern_cell_grid_at(grid, y + 1, x - 1) ? alive++ : 0;
-	intern_cell_grid_at(grid, y + 1, x) ? alive++ : 0;
-	intern_cell_grid_at(grid, y + 1, x + 1) ? alive++ : 0;
-	
-	return alive;
-}
-
-static int intern_cell_grid_at(cell_grid grid, int y, int x)
-{
-	if (floor_map_in_bounds(x, y))
-		return grid[y][x];
-	else
-		return 1;
-}
-
-static void intern_floor_write_grid(struct floor *floor, cell_grid grid)
-{
-	struct tile *t;
-	cell *c = *grid;
-	floor_for_each_tile(t, floor) {
-		if (*c) {
-			t->token = "#";
-			t->blocks = true;
-		} else {
-			t->token = ".";
-			t->blocks = false;
-		}
-		c++;
+		demo_place_snake(60, 60);
 	}
 }
 
@@ -170,13 +82,14 @@ bool tile_blocks_light(struct tile tile)
 void floor_init(void)
 {
 	INIT_LIST_HEAD(&floors[0].entities);
-	floor_map_generate(&floors[0], CAVE);
+	floor_map_generate(&floors[0]);
 	floor_add_entity(cur_floor, &player);
 
 	//XXX
 	INIT_LIST_HEAD(&floors[1].entities);
-	floor_map_generate(&floors[1], CAVE);
-	floor_add_entity(cur_floor, &player);
+	floor_map_generate(&floors[1]);
+
+	floor_move_player(cur_floor, 66, 66);
 }
 
 static struct tile *floor_map_at_unsafe(struct floor *floor, int x, int y)
@@ -189,9 +102,11 @@ static struct tile *floor_map_at_unsafe(struct floor *floor, int x, int y)
 
 void floor_move_player(struct floor *floor, int x, int y)
 {
+	cur_floor = floor;
+
 	if (!floor->map) {
 		INIT_LIST_HEAD(&floor->entities);
-		floor_map_generate(floor, CAVE);
+		floor_map_generate(floor);
 	}
 
 	/* Update tile information. */
@@ -205,13 +120,84 @@ void floor_move_player(struct floor *floor, int x, int y)
 	list_move_tail(&player.list, &floor->entities);
 }
 
-struct floor *cur_floor = &floors[0];
+#define cell_grid_for_each_cell(pos, grid) \
+	for (pos = *grid; pos != back(grid); ++pos)
+
+static void cave_populate_grid(cell_grid grid, float rate)
+{
+	for (int y = 0; y < MAP_LINES; ++y) {
+		for (int x = 0; x < MAP_COLS; ++x) {
+			if (random_int() % 100 / 100.f < rate)
+				grid[y][x] = 1;
+			else
+				grid[y][x] = 0;
+		};
+	}
+}
+
+static void cave_iterate_grid(cell_grid grid, int birth, int survive)
+{
+	cell_grid new = { 0 };
+	for (int y = 0; y < MAP_LINES; ++y)
+		for (int x = 0; x < MAP_COLS; ++x) {
+			int alive = cave_cell_alive_neighbours(grid, y, x);
+			if (grid[y][x]) {
+				if (alive >= survive)
+					new[y][x] = 1;
+			} else {
+				if (alive >= birth)
+					new[y][x] = 1;
+			}
+		}
+
+//	memcpy(new, grid, sizeof(new));
+	for (int y = 0; y < MAP_LINES; ++y)
+		for (int x = 0; x < MAP_COLS; ++x) {
+			grid[y][x] = new[y][x];
+		}
+}
+
+static int cave_cell_alive_neighbours(cell_grid grid, int y, int x)
+{
+	int alive = 0;
+
+	cave_cell_grid_at(grid, y - 1, x - 1) ? alive++ : 0;
+	cave_cell_grid_at(grid, y - 1, x) ? alive++ : 0;
+	cave_cell_grid_at(grid, y - 1, x + 1) ? alive++ : 0;
+	cave_cell_grid_at(grid, y, x - 1) ? alive++ : 0;
+	cave_cell_grid_at(grid, y, x + 1) ? alive++ : 0;
+	cave_cell_grid_at(grid, y + 1, x - 1) ? alive++ : 0;
+	cave_cell_grid_at(grid, y + 1, x) ? alive++ : 0;
+	cave_cell_grid_at(grid, y + 1, x + 1) ? alive++ : 0;
+	
+	return alive;
+}
+
+static int cave_cell_grid_at(cell_grid grid, int y, int x)
+{
+	if (floor_map_in_bounds(x, y))
+		return grid[y][x];
+	else
+		return 1;
+}
+
+static void cave_floor_write_grid(struct floor *floor, cell_grid grid)
+{
+	struct tile *t;
+	cell *c = *grid;
+	floor_for_each_tile(t, floor) {
+		if (*c) {
+			t->token = "#";
+			t->blocks = true;
+		} else {
+			t->token = ".";
+			t->blocks = false;
+		}
+		c++;
+	}
+}
 
 struct floor floors[2] = {
-	{
-		.entities = LIST_HEAD_INIT(floors[0].entities)
-	},
-	{
-		.entities = LIST_HEAD_INIT(floors[1].entities)
-	},
+	{ .type = CAVE },
+	{ .type = CAVE },
 };

@@ -16,12 +16,10 @@ void event_loop(int (*keymap[])(void), void (*draw)(void))
 	do {
 		//XXX
 		if (event.key == 'J') {
-			cur_floor = &floors[1];
-			floor_move_player(cur_floor, player.posx, player.posy);
+			floor_move_player(&floors[1], player.posx, player.posy);
 		}
 		if (event.key == 'K') {
-			cur_floor = &floors[0];
-			floor_move_player(cur_floor, player.posx, player.posy);
+			floor_move_player(&floors[0], player.posx, player.posy);
 		}
 
 		if (!keymap[event.key] || keymap[event.key]())
@@ -54,9 +52,8 @@ int main(int argc, char *argv[])
 #ifdef DEBUG
 	debug_log = fopen("debug_log", "w");
 #endif
-	floor_init();
-	floor_move_player(cur_floor, 66, 66);
 	ui_init();
+	floor_init();
 	draw_init();
 
 	event_loop(input_keymap, &draw_shit);

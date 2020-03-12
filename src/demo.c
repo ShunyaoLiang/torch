@@ -158,7 +158,7 @@ void demo_place_snake(int y, int x)
 	struct entity snake = demo_new_snake(y, x);
 	struct entity *s = malloc(sizeof(snake));
 	memcpy(s, &snake, sizeof(snake));
-	floor_add_entity(&floors[0], s);
+	floor_add_entity(cur_floor, s);
 }
 
 def_entity_fn(demo_snake_update)
@@ -196,12 +196,12 @@ struct entity demo_new_snake(int y, int x)
 {
 	struct entity snake = {
 		.color = {
-			.r = 0xa, .g = 0xCA, .b = 0xa,
+			.r = 0x19, .g = 0x19, .b = 0x8c,
 		},
 		.combat = {
 			.hp = 1, .hp_max = 1,
 		},
-		.token = "s",
+		.token = "S",
 		.posy = y, .posx = x,
 		.update = demo_snake_update,
 		.destroy = NULL,
