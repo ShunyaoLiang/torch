@@ -16,7 +16,6 @@
 struct ui_cell {
 	char ch[4];
 	struct ui_cell_attr attr;
-	bool changed;
 };
 
 #define UI_CELL_DEFAULT (struct ui_cell) { \
@@ -180,7 +179,7 @@ void ui_draw_at(int line, int col, const char *str, struct ui_cell_attr attr)
 	for (const char *ch = str; *ch; ch += utf8_codepoint_len(ch)) {
 		struct ui_cell *cell = ui_buffer_at(line, col + ch - str);
 		if (!cell)
-			return;
+			break;
 		utf8_copy(cell->ch, ch);
 		cell->attr = attr;
 	}

@@ -14,8 +14,18 @@ void event_loop(int (*keymap[])(void), void (*draw)(void))
 	struct ui_event event = { .key = 'e' };
 
 	do {
+		//XXX
+		if (event.key == 'J') {
+			cur_floor = &floors[1];
+			floor_move_player(cur_floor, player.posx, player.posy);
+		}
+		if (event.key == 'K') {
+			cur_floor = &floors[0];
+			floor_move_player(cur_floor, player.posx, player.posy);
+		}
+
 		if (!keymap[event.key] || keymap[event.key]())
-			continue;
+			continue;	
 
 		floor_map_clear_lights();
 

@@ -30,7 +30,7 @@ void cast_light_at(struct tile *tile, int x, int y, void *context)
 	struct light_info *info = context;
 	drawn_to[y][x] = 1;
 	int distance = sqrt(pow(y - info->y, 2) + pow(x - info->x, 2));
-	const float dlight = info->bright / (distance + 1) / (distance + 1);
+	const float dlight = info->bright / (distance + 1);
 	if (y == info->y && x == info->x) {
 		(*info->map)[y][x].light += info->bright;
 	} else {
@@ -149,7 +149,7 @@ def_input_key_fn(place_torch)
 
 def_input_key_fn(demo_get_fuel)
 {
-	player_fuel += 10;
+	player_fuel += 10000;
 	return 0;
 }
 

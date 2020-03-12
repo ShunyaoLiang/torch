@@ -172,6 +172,11 @@ void floor_init(void)
 	INIT_LIST_HEAD(&floors[0].entities);
 	floor_map_generate(&floors[0], CAVE);
 	floor_add_entity(cur_floor, &player);
+
+	//XXX
+	INIT_LIST_HEAD(&floors[1].entities);
+	floor_map_generate(&floors[1], CAVE);
+	floor_add_entity(cur_floor, &player);
 }
 
 static struct tile *floor_map_at_unsafe(struct floor *floor, int x, int y)
@@ -197,13 +202,16 @@ void floor_move_player(struct floor *floor, int x, int y)
 	player.posx = x;
 	player.posy = y;
 	/* Move the list entry. */
-//	list_move_tail(&player.floor->entities, &floor->entities);
+	list_move_tail(&player.list, &floor->entities);
 }
 
 struct floor *cur_floor = &floors[0];
 
-struct floor floors[] = {
+struct floor floors[2] = {
 	{
-		.entities = LIST_HEAD_INIT(floors[0].entities),
-	}
+		.entities = LIST_HEAD_INIT(floors[0].entities)
+	},
+	{
+		.entities = LIST_HEAD_INIT(floors[1].entities)
+	},
 };
