@@ -2,5 +2,4 @@
 a.out
 debug_log
 tags
-bin/torch
-bin/debug
+bin/
