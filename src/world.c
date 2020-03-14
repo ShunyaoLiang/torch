@@ -25,9 +25,7 @@ void floor_map_generate(struct floor *floor)
 			cave_iterate_grid(grid, 5, 4);
 		}
 
-		cave_floor_write_grid(floor, grid);	
-
-		demo_place_snake(60, 60);
+		cave_floor_write_grid(floor, grid);
 	}
 }
 
@@ -55,13 +53,23 @@ void floor_map_clear_lights(void)
 	}
 }
 
+static struct tile *floor_map_at_unsafe(struct floor *floor, int x, int y)
+{
+	if (floor_map_in_bounds(x, y))
+		return &(floor->map)[y][x];
+	else
+		return NULL;
+}
+
 int floor_add_entity(struct floor *floor, struct entity *entity)
 {
 	if (floor->map[entity->posy][entity->posx].entity)
 		return -1;
+
 	list_add(&entity->list, &floor->entities);
 	entity->floor = floor;
-	floor->map[entity->posy][entity->posx].entity = entity;
+	floor_map_at_unsafe(floor, entity->posx, entity->posy)->entity = entity;
+
 	return 0;
 }
 
@@ -76,7 +84,7 @@ void floor_update_entities(struct floor *floor)
 
 bool tile_blocks_light(struct tile tile)
 {
-	return tile.blocks || (tile.entity ? tile.entity->blocks_light : tile.entity);
+	return tile.blocks || (tile.entity ? tile.entity->blocks_light : (bool)tile.entity);
 }
 
 void floor_init(void)
@@ -90,14 +98,6 @@ void floor_init(void)
 	floor_map_generate(&floors[1]);
 
 	floor_move_player(cur_floor, 66, 66);
-}
-
-static struct tile *floor_map_at_unsafe(struct floor *floor, int x, int y)
-{
-	if (floor_map_in_bounds(x, y))
-		return &(floor->map)[y][x];
-	else
-		return NULL;
 }
 
 void floor_move_player(struct floor *floor, int x, int y)
@@ -201,3 +201,23 @@ struct floor floors[2] = {
 	{ .type = CAVE },
 	{ .type = CAVE },
 };
+
+int entity_move_pos(struct entity *entity, int y, int x)
+{
+	struct tile tile = floor_map_at(entity->floor, y, x);
+	if (floor_map_in_bounds(x, y) && !tile.entity && !tile.blocks) {
+		/* Slightly dangerous raw access. */
+		entity->floor->map[entity->posy][entity->posx].entity = NULL;
+		entity->floor->map[y][x].entity = entity;
+		entity->posy = y;
+		entity->posx = x;
+		return 0;
+	}
+
+	return -1;
+}
+
+int entity_move_pos_rel(struct entity *entity, int y, int x)
+{
+	return entity_move_pos(entity, entity->posy + y, entity->posx + x);
+}

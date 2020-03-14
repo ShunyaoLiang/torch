@@ -30,7 +30,7 @@ void cast_light_at(struct tile *tile, int x, int y, void *context)
 	struct light_info *info = context;
 	drawn_to[y][x] = 1;
 	int distance = sqrt(pow(y - info->y, 2) + pow(x - info->x, 2));
-	const float dlight = info->bright / (distance + 1);
+	const float dlight = info->bright / (2 * distance + 1);
 	if (y == info->y && x == info->x) {
 		(*info->map)[y][x].light += info->bright;
 	} else {
@@ -151,6 +151,28 @@ def_input_key_fn(demo_get_fuel)
 {
 	player_fuel += 10000;
 	return 0;
+}
+
+def_input_key_fn(demo_descend_floor)
+{
+	int floor_index = player.floor - floors - 1;
+	if (floor_index >= 0 && floor_index < 2) {
+		floor_move_player(&floors[floor_index], player.posx, player.posy);
+		return 0;
+	} else {
+		return 1;
+	}
+}
+
+def_input_key_fn(demo_ascend_floor)
+{
+	int floor_index = player.floor - floors + 1;
+	if (floor_index < 2) {
+		floor_move_player(&floors[floor_index], player.posx, player.posy);
+		return 0;
+	} else {
+		return 1;
+	}
 }
 
 void demo_place_snake(int y, int x)

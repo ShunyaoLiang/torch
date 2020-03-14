@@ -14,14 +14,6 @@ void event_loop(int (*keymap[])(void), void (*draw)(void))
 	struct ui_event event = { .key = 'e' };
 
 	do {
-		//XXX
-		if (event.key == 'J') {
-			floor_move_player(&floors[1], player.posx, player.posy);
-		}
-		if (event.key == 'K') {
-			floor_move_player(&floors[0], player.posx, player.posy);
-		}
-
 		if (!keymap[event.key] || keymap[event.key]())
 			continue;	
 
@@ -62,3 +54,21 @@ int main(int argc, char *argv[])
 
 	return EXIT_SUCCESS;
 }
+
+input_key_fn *input_keymap[] = {
+	['h'] = player_move_left,
+	['j'] = player_move_down,
+	['k'] = player_move_up,
+	['l'] = player_move_right,
+	['y'] = player_move_upleft,
+	['u'] = player_move_upright,
+	['b'] = player_move_downleft,
+	['n'] = player_move_downright,
+	['f'] = player_attack,
+	['t'] = place_torch,
+	['e'] = player_toggle_lantern,
+	['J'] = demo_descend_floor,
+	['K'] = demo_ascend_floor,
+	['E'] = demo_get_fuel,
+	[255] = NULL,
+};

@@ -46,7 +46,7 @@ struct combat {
 
 int combat_do(struct combat *c, struct combat *target);
 
-/* Entity */
+/* World */
 struct entity;
 
 #define def_entity_fn(name) void name(struct entity *this)
@@ -76,24 +76,6 @@ struct entity {
 int entity_move_pos(struct entity *e, int y, int x);
 int entity_move_pos_rel(struct entity *e, int y, int x);
 
-/* Player */
-extern struct entity player;
-extern bool player_lantern_on;
-extern int player_fuel;
-extern int player_torches;
-
-def_input_key_fn(player_move_left);
-def_input_key_fn(player_move_down);
-def_input_key_fn(player_move_up);
-def_input_key_fn(player_move_right);
-def_input_key_fn(player_move_upleft);
-def_input_key_fn(player_move_upright);
-def_input_key_fn(player_move_downleft);
-def_input_key_fn(player_move_downright);
-def_input_key_fn(player_attack);
-def_input_key_fn(player_toggle_lantern);
-
-/* Floor */
 struct tile {
 	bool blocks;
 
@@ -142,14 +124,27 @@ void floor_update_entities(struct floor *floor);
 #define floor_for_each_tile(pos, floor) \
 	for (pos = *floor->map; pos != back(floor->map); ++pos)
 
+/* Player */
+extern struct entity player;
+extern bool player_lantern_on;
+extern int player_fuel;
+extern int player_torches;
+
+def_input_key_fn(player_move_left);
+def_input_key_fn(player_move_down);
+def_input_key_fn(player_move_up);
+def_input_key_fn(player_move_right);
+def_input_key_fn(player_move_upleft);
+def_input_key_fn(player_move_upright);
+def_input_key_fn(player_move_downleft);
+def_input_key_fn(player_move_downright);
+def_input_key_fn(player_attack);
+def_input_key_fn(player_toggle_lantern);
+
 /* Draw */
 #define VIEW_LINES 23
 #define VIEW_COLS  79
 
-#if 0
-void draw_map(void);
-void draw_entities(void);
-#endif
 void draw_shit(void);
 void draw_init(void);
 
@@ -159,6 +154,8 @@ def_entity_fn(demo_player_update);
 
 def_input_key_fn(place_torch);
 def_input_key_fn(demo_get_fuel);
+def_input_key_fn(demo_descend_floor);
+def_input_key_fn(demo_ascend_floor);
 
 extern struct floor demo_floor;
 
