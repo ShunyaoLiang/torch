@@ -6,6 +6,8 @@
 
 struct floor *cur_floor = &floors[0];
 
+static void entity_place(enum entity_type type, struct floor *floor, int x, int y);
+
 typedef int cell;
 typedef cell cell_grid[MAP_LINES][MAP_COLS];
 
@@ -26,6 +28,8 @@ void floor_map_generate(struct floor *floor)
 		}
 
 		cave_floor_write_grid(floor, grid);
+		for (int i = 0; i < 10; ++i)
+			entity_place(SNAKE, floor, rand() % 100, rand() % 100);
 	}
 }
 
@@ -220,4 +224,28 @@ int entity_move_pos(struct entity *entity, int y, int x)
 int entity_move_pos_rel(struct entity *entity, int y, int x)
 {
 	return entity_move_pos(entity, entity->posy + y, entity->posx + x);
+}
+
+static void entity_place(enum entity_type type, struct floor *floor, int x, int y)
+{
+	def_entity_fn(demo_snake_update);
+	struct entity *entity = malloc(sizeof(struct entity));
+	switch (type) {
+	case SNAKE:
+		*entity = (struct entity) {
+			.color = {
+				.r = 0x19, .g = 0x19, .b = 0x8c,
+			},
+			.combat = {
+				.hp = 1, .hp_max = 1,
+			},
+			.token = "S",
+			.posx = x, .posy = y, 
+			.update = demo_snake_update,
+			.destroy = NULL,
+			.floor = floor,
+			.blocks_light = false,
+		};
+	}
+	floor_add_entity(floor, entity);
 }

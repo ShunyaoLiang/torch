@@ -186,11 +186,9 @@ void demo_place_snake(int y, int x)
 def_entity_fn(demo_snake_update)
 {
 	if (this->combat.hp <= 0) {
-#if 0
-		list_del(&this->list);
+		__list_del_entry(&this->list);
+		this->floor->map[this->posy][this->posx].entity = NULL;
 		free(this);
-#endif
-		this->token = "d";
 		return;
 	}
 
@@ -213,6 +211,7 @@ def_entity_fn(demo_snake_update)
 		combat_do(&this->combat, &player.combat);
 	}
 }
+
 
 struct entity demo_new_snake(int y, int x)
 {

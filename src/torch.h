@@ -52,6 +52,10 @@ struct entity;
 #define def_entity_fn(name) void name(struct entity *this)
 typedef def_entity_fn(entity_fn);
 
+enum entity_type {
+	SNAKE,
+};
+
 enum entity_info {
 	COMBAT,
 };
