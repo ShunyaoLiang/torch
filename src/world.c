@@ -110,6 +110,7 @@ void floor_move_player(struct floor *floor, int x, int y)
 	cur_floor = floor;
 
 	if (!floor->generated) {
+		floor->generated = true;
 		INIT_LIST_HEAD(&floor->entities);
 		floor_map_generate(floor);
 	}
@@ -202,7 +203,10 @@ static void cave_floor_write_grid(struct floor *floor, cell_grid grid)
 	}
 }
 
-struct floor floors[2] = {
+struct floor floors[5] = {
+	{ .type = CAVE },
+	{ .type = CAVE },
+	{ .type = CAVE },
 	{ .type = CAVE },
 	{ .type = CAVE },
 };
@@ -249,4 +253,10 @@ static void entity_place(enum entity_type type, struct floor *floor, int x, int 
 		};
 	}
 	floor_add_entity(floor, entity);
+}
+
+int combat_do(struct combat *restrict c, struct combat *restrict target)
+{
+	target->hp--;
+	return 0;
 }

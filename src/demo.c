@@ -156,7 +156,7 @@ def_input_key_fn(demo_get_fuel)
 def_input_key_fn(demo_descend_floor)
 {
 	int floor_index = player.floor - floors - 1;
-	if (floor_index >= 0 && floor_index < 2) {
+	if (floor_index >= 0 && floor_index < 5) {
 		floor_move_player(&floors[floor_index], player.posx, player.posy);
 		return 0;
 	} else {
@@ -167,7 +167,7 @@ def_input_key_fn(demo_descend_floor)
 def_input_key_fn(demo_ascend_floor)
 {
 	int floor_index = player.floor - floors + 1;
-	if (floor_index < 2) {
+	if (floor_index < 5) {
 		floor_move_player(&floors[floor_index], player.posx, player.posy);
 		return 0;
 	} else {
