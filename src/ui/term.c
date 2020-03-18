@@ -5,6 +5,7 @@
 #include <unibilium.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
+#include <stdarg.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdbool.h>
@@ -86,6 +87,7 @@ static void unibi_print_str(unibi_term *unibi, enum unibi_string s, unibi_var_t 
 
 	unibi_run(fmt, param, buf, needed);
 	fputs(buf, stdout);
+	free(buf);
 }
 
 #define CSI "\x1b["

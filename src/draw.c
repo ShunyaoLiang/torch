@@ -34,16 +34,15 @@ void draw_shit(void)
 		view_lines, view_cols
 	});
 
-	size_t needed = snprintf(NULL, 0, "%3d %3d %d", player_fuel, player_torches, player.combat.hp) + 1;
-	char *buf = malloc(needed);
-	sprintf(buf, "%3d %3d %d", player_fuel, player_torches, player.combat.hp);
-	ui_draw_at(0, 0, buf, (struct ui_cell_attr){ .fg = { 0xe2, 0x58, 0x22 } });
+	ui_draw_format_at(0, 0, "Fuel: %d Torches: %d HP: %d Floor: %ld",
+			  (struct ui_cell_attr){ .fg = { .g = 0xaa } },
+			  player_fuel, player_torches, player.combat.hp, cur_floor - floors);
 }
-
-void torch_flicker(int signal);
 
 void draw_init(void)
 {
+	extern void torch_flicker(int signal);
+
 	timer_t timer_id;
 	timer_create(CLOCK_REALTIME, NULL, &timer_id);
 	timer_settime(timer_id, 0, &(struct itimerspec) {
