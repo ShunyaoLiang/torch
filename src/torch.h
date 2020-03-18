@@ -109,6 +109,7 @@ struct floor {
 	enum floor_type type;
 	entity_list entities;
 	tile_map map;
+	bool generated;
 };
 
 extern struct floor floors[];

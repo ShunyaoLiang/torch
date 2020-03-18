@@ -1,6 +1,7 @@
 #include "torch.h"
 #include "list.h"
 
+#include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -108,7 +109,7 @@ void floor_move_player(struct floor *floor, int x, int y)
 {
 	cur_floor = floor;
 
-	if (!floor->map) {
+	if (!floor->generated) {
 		INIT_LIST_HEAD(&floor->entities);
 		floor_map_generate(floor);
 	}
@@ -131,7 +132,7 @@ static void cave_populate_grid(cell_grid grid, float rate)
 {
 	for (int y = 0; y < MAP_LINES; ++y) {
 		for (int x = 0; x < MAP_COLS; ++x) {
-			if (random_int() % 100 / 100.f < rate)
+			if ((double)random_int() / INT_MAX < rate)
 				grid[y][x] = 1;
 			else
 				grid[y][x] = 0;
