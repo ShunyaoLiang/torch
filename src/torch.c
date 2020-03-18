@@ -45,8 +45,9 @@ int main(int argc, char *argv[])
 	debug_log = fopen("debug_log", "w");
 #endif
 	ui_init();
-	floor_init();
 	draw_init();
+//	floor_init();
+	floor_move_player(cur_floor, 50, 50);
 
 	event_loop(input_keymap, &draw_shit);
 
