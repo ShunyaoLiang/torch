@@ -1,7 +1,7 @@
 CFLAGS = -Wall -I lib/ -I lib/termkey -I src/
 LDFLAGS = -lm -lrt -lunibilium
 
-objects = $(addprefix src/, torch.o world.o player.o draw.o demo.o color.o raycast.o random.o $(addprefix ui/, term.o sdl.o)) $(addprefix lib/termkey/, driver-csi.o driver-ti.o termkey.o)
+objects = $(addprefix src/, torch.o world.o player.o draw.o demo.o raycast.o random.o $(addprefix ui/, term.o sdl.o)) $(addprefix lib/termkey/, driver-csi.o driver-ti.o termkey.o)
 
 all: $(objects)
 	$(CC) $(CFLAGS) $(LDFLAGS) -O3 -march=native -D NDEBUG $(objects) -o bin/torch

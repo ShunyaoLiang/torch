@@ -105,7 +105,7 @@ void torch_flicker(int signal)
 	}
 	
 	ui_clear();
-	draw_shit();
+	draw_game();
 	ui_flush();
 }
 

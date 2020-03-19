@@ -28,7 +28,10 @@ typedef def_input_key_fn(input_key_fn);
 
 extern input_key_fn *input_keymap[];
 
-/* Color */
+/* Draw */
+void draw_init(void);
+void draw_game(void);
+
 struct color {
 	uint8_t r, g, b;
 };
@@ -145,13 +148,6 @@ def_input_key_fn(player_move_downleft);
 def_input_key_fn(player_move_downright);
 def_input_key_fn(player_attack);
 def_input_key_fn(player_toggle_lantern);
-
-/* Draw */
-#define VIEW_LINES 23
-#define VIEW_COLS  79
-
-void draw_shit(void);
-void draw_init(void);
 
 /* Demo */
 def_entity_fn(demo_player_destroy);

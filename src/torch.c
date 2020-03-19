@@ -28,10 +28,7 @@ void event_loop(int (*keymap[])(void), void (*draw)(void))
 			puts("lol you fucking died nerd");
 			exit(0);
 		}
-#if 0
-		draw_map();
-		draw_entities();
-#endif
+
 		ui_clear();
 		draw();
 
@@ -48,7 +45,7 @@ int main(int argc, char *argv[])
 	draw_init();
 	floor_move_player(cur_floor, 50, 50);
 
-	event_loop(input_keymap, &draw_shit);
+	event_loop(input_keymap, &draw_game);
 
 	ui_quit();
 
