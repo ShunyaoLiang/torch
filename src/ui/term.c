@@ -5,6 +5,7 @@
 #include <unibilium.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
+#include <errno.h>
 #include <stdarg.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -56,14 +57,9 @@ static void ui_buffer_realloc(struct ui_buffer *b)
 	/* Resize top array of pointers. */
 	b->buffer = realloc(b->buffer, new_dimensions.lines * sizeof(struct ui_cell *));
 
-	/* Resize existing lines. */
-	for (int line = 0; line < min(b->lines, new_dimensions.lines); ++line) {
+	/* Resize lines. */
+	for (int line = 0; line < new_dimensions.lines; ++line) {
 		b->buffer[line] = realloc(b->buffer[line], new_dimensions.cols * sizeof(struct ui_cell));
-	}
-
-	/* Allocate new lines. */
-	for (int line = b->lines; line < new_dimensions.lines; ++line) {
-		b->buffer[line] = calloc(new_dimensions.cols, sizeof(struct ui_cell));
 	}
 
 	/* Update buffer dimensions. */
@@ -81,13 +77,10 @@ static void term_resize_handler(int signal)
 static void unibi_print_str(unibi_term *unibi, enum unibi_string s, unibi_var_t param[9])
 {
 	const char *fmt = unibi_get_str(unibi, s);
-	size_t needed = unibi_run(fmt, param, NULL, 0) + 1;
-	char *buf = malloc(needed);
-	buf[needed - 1] = '\0';
-
-	unibi_run(fmt, param, buf, needed);
+	char buf[unibi_run(fmt, param, NULL, 0) + 1];
+	unibi_run(fmt, param, buf, sizeof(buf));
+	buf[sizeof(buf) - 1] = '\0';
 	fputs(buf, stdout);
-	free(buf);
 }
 
 #define CSI "\x1b["

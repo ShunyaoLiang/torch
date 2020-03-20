@@ -22,11 +22,9 @@ void ui_draw_at(int line, int col, const char *str, struct ui_cell_attr attr);
 /* This has to be a macro because va_lists don't play well with interrupts, and this is used
    by a signal handler. */
 #define ui_draw_format_at(line, col, fmt, attr, ...) do { \
-	size_t needed = snprintf(NULL, 0, fmt, __VA_ARGS__) + 1; \
-	char *buf = malloc(needed); \
+	char buf[snprintf(NULL, 0, fmt, __VA_ARGS__) + 1]; \
 	sprintf(buf, fmt, __VA_ARGS__); \
 	ui_draw_at(line, col, buf, attr); \
-	free(buf); \
 } while (0);
 
 void ui_clear(void);
