@@ -1,0 +1,5 @@
+*.o
+a.out
+debug_log
+tags
+bin/
