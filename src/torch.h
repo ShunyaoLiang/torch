@@ -76,12 +76,21 @@ struct entity {
 	char *token;
 	struct color color;
 
+	struct list_head inventory;
+
 	struct list_head list;
 	struct floor *floor;
 };
 
 int entity_move_pos(struct entity *e, int y, int x);
 int entity_move_pos_rel(struct entity *e, int y, int x);
+
+struct item {
+	struct list_head list;
+	const char *name;
+	char *token;
+	struct color color;
+};
 
 struct tile {
 	bool blocks;
@@ -91,6 +100,8 @@ struct tile {
 
 	float light;
 	struct color dcolor;
+
+	struct list_head items;
 
 	struct entity *entity;
 };
@@ -123,9 +134,9 @@ struct tile floor_map_at(struct floor *floor, int y, int x);
 int         floor_map_in_bounds(int x, int y);
 void        floor_map_clear_lights(void);
 void        floor_map_generate(struct floor *floor);
-void        floor_init(void);
-void        floor_move_player(struct floor *floor, int x, int y);
 
+void floor_init(void);
+void floor_move_player(struct floor *floor, int x, int y);
 int  floor_add_entity(struct floor *floor, struct entity *entity);
 void floor_update_entities(struct floor *floor);
 
@@ -148,11 +159,11 @@ def_input_key_fn(player_move_downleft);
 def_input_key_fn(player_move_downright);
 def_input_key_fn(player_attack);
 def_input_key_fn(player_toggle_lantern);
+def_input_key_fn(player_pick_up_item);
 
 /* Demo */
 def_entity_fn(demo_player_destroy);
 def_entity_fn(demo_player_update);
-
 def_input_key_fn(place_torch);
 def_input_key_fn(demo_get_fuel);
 def_input_key_fn(demo_descend_floor);

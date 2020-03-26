@@ -19,6 +19,11 @@ void draw_thing(struct tile *tile, int x, int y, void *context)
 		ui_draw_at(line, col, tile->entity->token, (struct ui_cell_attr) {
 			.fg = color_add(color_multiply_by(tile->entity->color, tile->light), tile->dcolor),
 		});
+	} else if (!list_empty(&tile->items)) {
+		struct item *item = (struct item *)tile->items.next;
+		ui_draw_at(line, col, item->token, (struct ui_cell_attr) {
+			.fg = color_add(color_multiply_by(item->color, tile->light), tile->dcolor),
+		});
 	} else {
 		ui_draw_at(line, col, tile->token, (struct ui_cell_attr) {
 			.fg = color_add(color_multiply_by(tile->color, tile->light), tile->dcolor),

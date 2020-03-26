@@ -67,5 +67,6 @@ input_key_fn *input_keymap[] = {
 	['J'] = demo_descend_floor,
 	['K'] = demo_ascend_floor,
 	['E'] = demo_get_fuel,
+	[','] = player_pick_up_item,
 	[255] = NULL,
 };

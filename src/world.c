@@ -18,6 +18,14 @@ static int  cave_cell_alive_neighbours(cell_grid grid, int y, int x);
 static int  cave_cell_grid_at(cell_grid grid, int y, int x);
 static void cave_floor_write_grid(struct floor *floor, cell_grid grid);
 
+/*static*/ struct tile *floor_map_at_unsafe(struct floor *floor, int x, int y)
+{
+	if (floor_map_in_bounds(x, y))
+		return &(floor->map)[y][x];
+	else
+		return NULL;
+}
+
 void floor_map_generate(struct floor *floor)
 {
 	if (floor->type == CAVE) {
@@ -31,6 +39,16 @@ void floor_map_generate(struct floor *floor)
 		cave_floor_write_grid(floor, grid);
 		for (int i = 0; i < 10; ++i)
 			entity_place(SNAKE, floor, rand() % 100, rand() % 100);
+
+		struct tile *item_tile = floor_map_at_unsafe(floor, 49, 49);
+		struct item *item = malloc(sizeof(struct item));
+		*item = (struct item) {
+			.name = "Sword",
+			.token = "/",
+			.color = { 0x55, 0x66, 0x77 },
+			.list = LIST_HEAD_INIT(item->list)
+		};
+		list_add_tail(&item->list, &item_tile->items);
 	}
 }
 
@@ -56,14 +74,6 @@ void floor_map_clear_lights(void)
 		pos->dcolor.g = 0;
 		pos->dcolor.b = 0;
 	}
-}
-
-static struct tile *floor_map_at_unsafe(struct floor *floor, int x, int y)
-{
-	if (floor_map_in_bounds(x, y))
-		return &(floor->map)[y][x];
-	else
-		return NULL;
 }
 
 int floor_add_entity(struct floor *floor, struct entity *entity)
@@ -199,6 +209,7 @@ static void cave_floor_write_grid(struct floor *floor, cell_grid grid)
 			t->token = ".";
 			t->blocks = false;
 		}
+		INIT_LIST_HEAD(&t->items);
 		c++;
 	}
 }
@@ -245,9 +256,10 @@ static void entity_place(enum entity_type type, struct floor *floor, int x, int 
 				.hp = 1, .hp_max = 1,
 			},
 			.token = "S",
-			.posx = x, .posy = y, 
+			.posx = x, .posy = y,
 			.update = demo_snake_update,
 			.destroy = NULL,
+			.inventory = LIST_HEAD_INIT(entity->inventory),
 			.floor = floor,
 			.blocks_light = false,
 		};

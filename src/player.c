@@ -15,6 +15,7 @@ struct entity player = {
 	.posy = 50, .posx = 50,
 	.update = demo_player_update,
 	.destroy = NULL,
+	.inventory = LIST_HEAD_INIT(player.inventory),
 	.list = LIST_HEAD_INIT(player.list),
 	.blocks_light = true,
 	.floor = &floors[0],
@@ -87,5 +88,16 @@ def_input_key_fn(player_attack)
 def_input_key_fn(player_toggle_lantern)
 {
 	player_lantern_on = !player_lantern_on;
+	return 0;
+}
+
+def_input_key_fn(player_pick_up_item)
+{
+	extern struct tile *floor_map_at_unsafe(struct floor *, int, int);
+	struct tile *tile = floor_map_at_unsafe(player.floor, player.posx, player.posy);
+	if (list_empty(&tile->items))
+		return 1;
+
+	list_splice_tail_init(&tile->items, &player.inventory);
 	return 0;
 }
