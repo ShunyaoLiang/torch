@@ -1,6 +1,7 @@
 #include "torch.h"
 #include "ui.h"
 
+#include <math.h>
 #include <signal.h>
 #include <time.h>
 #include <string.h>
@@ -29,12 +30,33 @@ void draw_thing(struct tile *tile, int x, int y, void *context)
 			.fg = color_add(color_multiply_by(tile->color, tile->light), tile->dcolor),
 		});
 	}
+	if (sqrt((x - player.posx) * (x - player.posx) + (y - player.posy) * (y - player.posy)) < 10)
+		tile->seen = true;
 }
 
 void draw_game(void)
 {
 	int view_lines, view_cols;
 	ui_dimensions(&view_lines, &view_cols);
+
+	for (int y = 0; y < MAP_LINES; ++y)
+		for (int x = 0; x < MAP_COLS; ++x) {
+			struct tile tile = floor_map_at(cur_floor, y, x);
+			if (!tile.seen)
+				continue;
+			int line = y - clamp(player.posy - view_lines / 2, 0, MAP_LINES - view_lines);
+			int col = x - clamp(player.posx - view_cols / 2, 0, MAP_COLS - view_cols);
+
+			struct color color;
+			if (!strcmp(tile.token, "."))
+				color = (struct color) {0xa, 0xa, 0xa};
+			else
+				color = (struct color) {0x1b, 0x1b, 0x1b};
+			ui_draw_at(line, col, tile.token, (struct ui_cell_attr) {
+				.fg = color,
+			});
+		}
+
 	raycast_at(cur_floor, player.posx, player.posy, max(view_lines, view_cols) / 2, &draw_thing, &(struct draw_info) {
 		view_lines, view_cols
 	});

@@ -94,6 +94,7 @@ struct item {
 
 struct tile {
 	bool blocks;
+	bool seen;
 
 	char *token;
 	struct color color;
