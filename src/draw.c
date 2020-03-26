@@ -30,8 +30,6 @@ void draw_thing(struct tile *tile, int x, int y, void *context)
 			.fg = color_add(color_multiply_by(tile->color, tile->light), tile->dcolor),
 		});
 	}
-	if (sqrt((x - player.posx) * (x - player.posx) + (y - player.posy) * (y - player.posy)) < 10)
-		tile->seen = true;
 }
 
 void draw_game(void)

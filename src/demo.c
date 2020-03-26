@@ -39,13 +39,15 @@ void cast_light_at(struct tile *tile, int x, int y, void *context)
 		/*                        = info->r * dlight + tile.dcolor */
 		(*info->map)[y][x].dcolor = color_add(color_multiply_by(info->color, dlight), tile->dcolor);
 	}
+	if (distance < 7)
+		tile->seen = true;
 }
 
 def_entity_fn(demo_player_update)
 {
 	int y = this->posy;
 	int x = this->posx;
-	float bright = player_lantern_on && player_fuel > 0 ? 0.5f : 0.1f;
+	float bright = 0.5f;
 	if (player_lantern_on) {
 		if (player_fuel > 0) {
 			player_fuel--;
