@@ -40,7 +40,9 @@ void floor_map_generate(struct floor *floor)
 		for (int i = 0; i < 10; ++i)
 			entity_place(SNAKE, floor, rand() % 100, rand() % 100);
 
-		struct tile *item_tile = floor_map_at_unsafe(floor, 49, 49);
+		int x, y;
+		while (floor_map_at(floor, (x = rand() % 100), (y = rand() % 100)).blocks);
+		struct tile *item_tile = floor_map_at_unsafe(floor, x, y);
 		struct item *item = malloc(sizeof(struct item));
 		*item = (struct item) {
 			.name = "Sword",

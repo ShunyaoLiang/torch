@@ -1,7 +1,6 @@
 #include "torch.h"
 #include "list.h"
-#include "ui.h"
-
+#include "ui.h" 
 #include <stdbool.h>
 
 struct entity player = {
@@ -97,6 +96,16 @@ def_input_key_fn(player_pick_up_item)
 	struct tile *tile = floor_map_at_unsafe(player.floor, player.posx, player.posy);
 	if (list_empty(&tile->items))
 		return 1;
+
+	int strcmp(const char *, const char *);
+	void exit(int);
+	if (!strcmp(((struct item *)tile->items.next)->name, "Sword")) {
+		ui_clear();
+		ui_flush();
+		ui_quit();
+		puts("a pretty message, you found the sword!");
+		exit(0);
+	}
 
 	list_splice_tail_init(&tile->items, &player.inventory);
 	return 0;
