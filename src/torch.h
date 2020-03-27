@@ -60,7 +60,9 @@ enum entity_type {
 };
 
 enum entity_info {
+	PLAYER,
 	COMBAT,
+	LIGHT_SOURCE,
 };
 
 struct entity {

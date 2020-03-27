@@ -38,10 +38,10 @@ void floor_map_generate(struct floor *floor)
 
 		cave_floor_write_grid(floor, grid);
 		for (int i = 0; i < 10; ++i)
-			entity_place(SNAKE, floor, rand() % 100, rand() % 100);
+			entity_place(SNAKE, floor, random_int() % 100, random_int() % 100);
 
 		int x, y;
-		while (floor_map_at(floor, (x = rand() % 100), (y = rand() % 100)).blocks);
+		while (floor_map_at(floor, (x = random_int() % 100), (y = random_int() % 100)).blocks);
 		struct tile *item_tile = floor_map_at_unsafe(floor, x, y);
 		struct item *item = malloc(sizeof(struct item));
 		*item = (struct item) {
@@ -251,6 +251,7 @@ static void entity_place(enum entity_type type, struct floor *floor, int x, int 
 	switch (type) {
 	case SNAKE:
 		*entity = (struct entity) {
+			.info = COMBAT,
 			.color = {
 				.r = 0x19, .g = 0x19, .b = 0x8c,
 			},

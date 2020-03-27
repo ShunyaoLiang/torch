@@ -102,7 +102,7 @@ void torch_flicker(int signal)
 	floor_map_clear_lights();
 	struct entity *pos;
 	list_for_each_entry(pos, &cur_floor->entities, list) {
-		if (!strcmp(pos->token, "!") || !strcmp(pos->token, "@"))
+		if ((pos->info & LIGHT_SOURCE) == LIGHT_SOURCE)
 			pos->update(pos);
 	}
 	
@@ -114,6 +114,7 @@ void torch_flicker(int signal)
 struct entity demo_new_torch(int y, int x)
 {
 	struct entity torch = {
+		.info = LIGHT_SOURCE,
 		.color = {
 			.r = 0xe2, .g = 0x58, .b = 0x22,
 		},

@@ -4,6 +4,7 @@
 #include <stdbool.h>
 
 struct entity player = {
+	.info = PLAYER | COMBAT | LIGHT_SOURCE,
 	.color = {
 		.r = 0xa5, .g = 0xa5, .b = 0xa5,
 	},
