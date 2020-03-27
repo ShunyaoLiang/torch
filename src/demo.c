@@ -144,6 +144,8 @@ def_input_key_fn(place_torch)
 	case 'k': y--; break;
 	case 'l': x++; break;
 	}
+	if (!floor_map_in_bounds(x, y))
+		return -1;
 	struct entity torch = demo_new_torch(y, x);
 	struct entity *t = malloc(sizeof(torch));
 	memcpy(t, &torch, sizeof(torch));

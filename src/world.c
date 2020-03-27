@@ -82,6 +82,8 @@ int floor_add_entity(struct floor *floor, struct entity *entity)
 {
 	if (floor->map[entity->posy][entity->posx].entity)
 		return -1;
+	if (!floor_map_in_bounds(entity->posx, entity->posy))
+		return -1;
 
 	list_add(&entity->list, &floor->entities);
 	entity->floor = floor;
@@ -226,8 +228,11 @@ struct floor floors[5] = {
 
 int entity_move_pos(struct entity *entity, int y, int x)
 {
+	if (!floor_map_in_bounds(x, y))
+		return -1;
+
 	struct tile tile = floor_map_at(entity->floor, y, x);
-	if (floor_map_in_bounds(x, y) && !tile.entity && !tile.blocks) {
+	if (!tile.entity && !tile.blocks) {
 		/* Slightly dangerous raw access. */
 		entity->floor->map[entity->posy][entity->posx].entity = NULL;
 		entity->floor->map[y][x].entity = entity;
