@@ -16,19 +16,30 @@ void draw_thing(struct tile *tile, int x, int y, void *context)
 	struct draw_info *info = context;
 	int line = y - clamp(player.posy - info->view_lines / 2, 0, MAP_LINES - info->view_lines);
 	int col = x - clamp(player.posx - info->view_cols / 2, 0, MAP_COLS - info->view_cols);
+	const char *token = " ";
+	struct color color = {0};
 	if (tile->entity) {
-		ui_draw_at(line, col, tile->entity->token, (struct ui_cell_attr) {
-			.fg = color_add(color_multiply_by(tile->entity->color, tile->light), tile->dcolor),
-		});
+		token = tile->entity->token;
+		color = color_add(color_multiply_by(tile->entity->color, tile->light), tile->lighting);
 	} else if (!list_empty(&tile->items)) {
 		struct item *item = (struct item *)tile->items.next;
-		ui_draw_at(line, col, item->token, (struct ui_cell_attr) {
-			.fg = color_add(color_multiply_by(item->color, tile->light), tile->dcolor),
-		});
+		token = item->token;
+		color = color_add(color_multiply_by(item->color, tile->light), tile->lighting);
 	} else {
-		ui_draw_at(line, col, tile->token, (struct ui_cell_attr) {
-			.fg = color_add(color_multiply_by(tile->color, tile->light), tile->dcolor),
-		});
+		token = tile->token;
+		color = color_add(color_multiply_by(tile->color, tile->light), tile->lighting);
+	}
+	ui_draw_at(line, col, token, (struct ui_cell_attr) {
+		.fg = color,
+	});	
+
+	tile->seen_as.color = color;
+	tile->seen_as.token = token;
+	/* If it is a wall tile and we have seen it in a better light... */
+	if (!strcmp(tile->token, "#") && tile->light > tile->seen_as.light) {
+		/* ... remember the color of the wall. */
+		tile->seen_as.color = color;
+		tile->seen_as.light = tile->light;
 	}
 }
 
@@ -45,13 +56,8 @@ void draw_game(void)
 			int line = y - clamp(player.posy - view_lines / 2, 0, MAP_LINES - view_lines);
 			int col = x - clamp(player.posx - view_cols / 2, 0, MAP_COLS - view_cols);
 
-			struct color color;
-			if (!strcmp(tile.token, "."))
-				color = (struct color) {0xa, 0xa, 0xa};
-			else
-				color = (struct color) {0x1b, 0x1b, 0x1b};
-			ui_draw_at(line, col, tile.token, (struct ui_cell_attr) {
-				.fg = color,
+			ui_draw_at(line, col, tile.seen_as.token, (struct ui_cell_attr) {
+				.fg = color_as_grayscale(tile.seen_as.color),
 			});
 		}
 
@@ -92,6 +98,15 @@ struct color color_multiply_by(struct color c, float m)
 		min(c.r * m, 255),
 		min(c.g * m, 255),
 		min(c.b * m, 255),
+	};
+}
+
+struct color color_as_grayscale(struct color c)
+{
+	return (struct color){
+		(c.r + c.g + c.b) / 3.f,
+		(c.r + c.g + c.b) / 3.f,
+		(c.r + c.g + c.b) / 3.f,
 	};
 }
 

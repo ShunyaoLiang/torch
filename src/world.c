@@ -72,9 +72,9 @@ void floor_map_clear_lights(void)
 	struct tile *pos;
 	floor_for_each_tile(pos, cur_floor) {
 		pos->light = 0;
-		pos->dcolor.r = 0;
-		pos->dcolor.g = 0;
-		pos->dcolor.b = 0;
+		pos->lighting.r = 0;
+		pos->lighting.g = 0;
+		pos->lighting.b = 0;
 	}
 }
 
@@ -213,7 +213,9 @@ static void cave_floor_write_grid(struct floor *floor, cell_grid grid)
 			t->token = ".";
 			t->blocks = false;
 		}
+		/* Create a floor_new() perhaps? */
 		INIT_LIST_HEAD(&t->items);
+		t->seen_as.token = " ";
 		c++;
 	}
 }

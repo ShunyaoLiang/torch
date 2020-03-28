@@ -38,6 +38,7 @@ struct color {
 
 struct color color_add(struct color c, struct color a);
 struct color color_multiply_by(struct color c, float m);
+struct color color_as_grayscale(struct color c);
 bool color_equal(struct color a, struct color b);
 
 int color_approximate_256(struct color c);
@@ -96,13 +97,19 @@ struct item {
 
 struct tile {
 	bool blocks;
-	bool seen;
 
-	char *token;
+	bool seen;
+	struct {
+		struct color color;
+		const char *token;
+		float light;
+	} seen_as;
+
+	const char *token;
 	struct color color;
 
 	float light;
-	struct color dcolor;
+	struct color lighting;
 
 	struct list_head items;
 

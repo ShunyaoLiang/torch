@@ -36,11 +36,11 @@ void cast_light_at(struct tile *tile, int x, int y, void *context)
 	} else {
 		(*info->map)[y][x].light += dlight;
 //		assert((*info->map)[y][x].light > 0);
-		/*                        = info->r * dlight + tile.dcolor */
-		(*info->map)[y][x].dcolor = color_add(color_multiply_by(info->color, dlight), tile->dcolor);
+		/*                        = info->r * dlight + tile.lighting */
+		(*info->map)[y][x].lighting = color_add(color_multiply_by(info->color, dlight), tile->lighting);
 	}
-	if (distance < 7)
-		tile->seen = true;
+	
+	tile->seen = true;
 }
 
 def_entity_fn(demo_player_update)
