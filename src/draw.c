@@ -58,9 +58,17 @@ void draw_game(void)
 			int line = y - clamp(player.posy - view_lines / 2, 0, MAP_LINES - view_lines);
 			int col = x - clamp(player.posx - view_cols / 2, 0, MAP_COLS - view_cols);
 
-			ui_draw_at(line, col, tile.seen_as.token, (struct ui_cell_attr) {
-				.fg = color_multiply_by(color_as_grayscale(tile.seen_as.color), 0.6),
-			});
+			/* If it is not a floor tile... */
+			if (strcmp(tile.seen_as.token, ".")) {
+				ui_draw_at(line, col, tile.seen_as.token, (struct ui_cell_attr) {
+					.fg = color_multiply_by(color_as_grayscale(tile.seen_as.color), 0.6),
+				});
+			} else {
+				/* Draw floor tiles at a constant color, so they're visible. */
+				ui_draw_at(line, col, tile.seen_as.token, (struct ui_cell_attr) {
+					.fg = (struct color) {0x10, 0x10, 0x10},
+				});
+			}
 		}
 
 	raycast_at(cur_floor, player.posx, player.posy, max(view_lines, view_cols) / 2, &draw_thing, &(struct draw_info) {
