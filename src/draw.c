@@ -29,16 +29,16 @@ void draw_thing(struct tile *tile, int x, int y, void *context)
 		token = tile->token;
 		color = color_add(color_multiply_by(tile->color, tile->light), tile->lighting);
 	}
-	ui_draw_at(line, col, token, (struct ui_cell_attr) {
-		.fg = color,
-	});	
+	if (tile->light > 0)
+		ui_draw_at(line, col, token, (struct ui_cell_attr) {
+			.fg = color,
+		});	
 
-	tile->seen_as.color = color;
-	tile->seen_as.token = token;
-	/* If it is a wall tile and we have seen it in a better light... */
-	if (!strcmp(tile->token, "#") && tile->light > tile->seen_as.light) {
+	/* Unless it is a wall tile and we haven't seen it in a better light... */
+	if (strcmp(tile->token, "#") || tile->light > tile->seen_as.light) {
 		/* ... remember the color of the wall. */
 		tile->seen_as.color = color;
+		tile->seen_as.token = token;
 		tile->seen_as.light = tile->light;
 	}
 }

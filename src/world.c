@@ -208,6 +208,7 @@ static void cave_floor_write_grid(struct floor *floor, cell_grid grid)
 	floor_for_each_tile(t, floor) {
 		if (*c) {
 			t->token = "#";
+			t->seen_as.token = "#";
 			t->blocks = true;
 		} else {
 			t->token = ".";
