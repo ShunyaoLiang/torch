@@ -47,7 +47,7 @@ void floor_map_generate(struct floor *floor)
 		*item = (struct item) {
 			.name = "Sword",
 			.token = "/",
-			.color = { 0x55, 0x66, 0x77 },
+			.color = { 0xff, 0xd7, 0x00 },
 			.list = LIST_HEAD_INIT(item->list)
 		};
 		list_add_tail(&item->list, &item_tile->items);

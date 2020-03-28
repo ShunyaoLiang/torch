@@ -38,8 +38,10 @@ void draw_thing(struct tile *tile, int x, int y, void *context)
 	if (strcmp(tile->token, "#") || tile->light > tile->seen_as.light) {
 		/* ... remember the color of the wall. */
 		tile->seen_as.color = color;
-		tile->seen_as.token = token;
 		tile->seen_as.light = tile->light;
+		/* Don't remember the token if it's the player's token. */
+		if (strcmp(token, "@"))
+			tile->seen_as.token = token;
 	}
 }
 
