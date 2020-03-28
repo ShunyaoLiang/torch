@@ -59,7 +59,7 @@ void draw_game(void)
 			int col = x - clamp(player.posx - view_cols / 2, 0, MAP_COLS - view_cols);
 
 			ui_draw_at(line, col, tile.seen_as.token, (struct ui_cell_attr) {
-				.fg = color_as_grayscale(tile.seen_as.color),
+				.fg = color_multiply_by(color_as_grayscale(tile.seen_as.color), 0.6),
 			});
 		}
 

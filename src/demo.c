@@ -56,8 +56,11 @@ def_entity_fn(demo_player_update)
 		}
 	}
 
+	static int radius = -1;
+	if (radius == -1) {
+		radius = (max(max(this->color.r, this->color.b), this->color.g) * bright - 5) / 10;
+	}
 	//cast_light(this->floor->map, y, x, 6, 0.3f, this->r, this->g, this->b);
-	int radius = sqrt(1.f / (1.f / 255));
 	raycast_at(this->floor, x, y, radius, &cast_light_at,
 		&(struct light_info) {
 			.map = &this->floor->map,
@@ -74,16 +77,21 @@ def_entity_fn(demo_torch_update)
 
 //	entity_move_pos_rel(this, y, x);
 
-	int flicker = (random_int() % 3 - 1);
-
 	y = this->posy;
 	x = this->posx;
+
+	int flicker = (random_int() % 3 - 1);
+	float bright = 1.f + flicker * 0.2f;
+
+	static int radius = -1;
+	if (radius == -1) {
+		radius = (max(max(this->color.r, this->color.b), this->color.g) * bright - 5) / 10;
+	}
 	//cast_light(this->floor->map, y, x, 6, 1.f, this->r, this->g, this->b);
-	int radius = sqrt(1.f / (1.f / 255));
 	raycast_at(this->floor, x, y, radius, &cast_light_at,
 		&(struct light_info) {
 			.map = &this->floor->map,
-			.bright = 1.f + flicker * 0.2f, .y = y, .x = x, 
+			.bright = bright, .y = y, .x = x, 
 			.color = this->color,
 		});
 	memset(drawn_to, 0, (sizeof(drawn_to[0][0]) * MAP_LINES * MAP_COLS));
