@@ -43,6 +43,12 @@ void cast_light_at(struct tile *tile, int x, int y, void *context)
 	tile->seen = true;
 }
 
+int max_radius(struct entity *this, float bright) 
+{
+    int max_rgb = max(max(this->color.r, this->color.b), this->color.g);
+    return (max_rgb * bright - LIGHT_SENSITIVITY) / (2 * LIGHT_SENSITIVITY);
+}
+
 def_entity_fn(demo_player_update)
 {
 	int y = this->posy;
@@ -58,7 +64,7 @@ def_entity_fn(demo_player_update)
 
 	static int radius = -1;
 	if (radius == -1) {
-		radius = (max(max(this->color.r, this->color.b), this->color.g) * bright - 5) / 10;
+		radius = max_radius(this, bright);
 	}
 	//cast_light(this->floor->map, y, x, 6, 0.3f, this->r, this->g, this->b);
 	raycast_at(this->floor, x, y, radius, &cast_light_at,
@@ -85,7 +91,7 @@ def_entity_fn(demo_torch_update)
 
 	static int radius = -1;
 	if (radius == -1) {
-		radius = (max(max(this->color.r, this->color.b), this->color.g) * bright - 5) / 10;
+		radius = max_radius(this, bright);
 	}
 	//cast_light(this->floor->map, y, x, 6, 1.f, this->r, this->g, this->b);
 	raycast_at(this->floor, x, y, radius, &cast_light_at,

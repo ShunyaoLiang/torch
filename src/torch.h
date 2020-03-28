@@ -182,6 +182,8 @@ def_input_key_fn(demo_ascend_floor);
 extern struct floor demo_floor;
 
 /* Raycast */
+#define LIGHT_SENSITIVITY 6
+
 typedef void raycast_callback_fn(struct tile *tile, int x, int y, void *context);
 
 void raycast_at(struct floor *floor, int x, int y, int radius,
