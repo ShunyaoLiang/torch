@@ -22,11 +22,13 @@ void event_loop(int (*keymap[])(void), void (*draw)(void))
 		floor_update_entities(cur_floor);
 
 		if (player.combat.hp <= 0) {
+			int lines, cols;
+			ui_dimensions(&lines, &cols);
 			ui_clear();
-			ui_draw_at(12, 28, "lol you fucking died nerd", (struct ui_cell_attr){
-				.fg = {0xff, 0xff, 0xff},
-			});
 			ui_flush();
+			ui_draw_at_incremental(lines / 2, cols / 2 - 12, "lol you fucking died nerd", (struct ui_cell_attr){
+				.fg = {0xac, 0x04, 0x04},
+			}, 50);
 			getchar();
 			return;
 		}
@@ -40,14 +42,16 @@ void event_loop(int (*keymap[])(void), void (*draw)(void))
 
 void menu_screen(void)
 {
+	int lines, cols;
+	ui_dimensions(&lines, &cols);
 	ui_clear();
 	ui_flush();
-	ui_draw_at_incremental(9, 37, "Torch", (struct ui_cell_attr){
+	ui_draw_at_incremental((lines / 2) - 3, cols / 2 - 3, "Torch", (struct ui_cell_attr){
 		.fg = {0xff, 0x50, 0x00},
-	}, 80);
-	ui_draw_at_incremental(12, 32, "Menu coming soon", (struct ui_cell_attr){
+	}, 50);
+	ui_draw_at_incremental(lines / 2, cols / 2 - 8, "Menu coming soon", (struct ui_cell_attr){
 		.fg = {0xcc, 0xcc, 0xcc},
-	}, 80);
+	}, 50);
 
 	ui_poll_event();
 }
