@@ -18,6 +18,7 @@ struct ui_cell_attr {
 };
 
 void ui_draw_at(int line, int col, const char *str, struct ui_cell_attr attr);
+void ui_set_attr_at(int line, int col, struct ui_cell_attr attr);
 
 /* This has to be a macro because va_lists don't play well with interrupts, and this is used
    by a signal handler. */

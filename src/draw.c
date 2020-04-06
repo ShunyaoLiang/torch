@@ -55,7 +55,7 @@ void draw_game(void)
 			struct tile tile = floor_map_at(cur_floor, y, x);
 			if (!tile.seen)
 				continue;
-			int line = y - clamp(player.posy - view_lines / 2, 0, MAP_LINES - view_lines);
+			int line = y - clamp(player.posy - (view_lines-1) / 2, 0, MAP_LINES - (view_lines-1));
 			int col = x - clamp(player.posx - view_cols / 2, 0, MAP_COLS - view_cols);
 
 			/* If it is not a floor tile... */
@@ -71,13 +71,22 @@ void draw_game(void)
 			}
 		}
 
-	raycast_at(cur_floor, player.posx, player.posy, max(view_lines, view_cols) / 2, &draw_thing, &(struct draw_info) {
-		view_lines, view_cols
+	raycast_at(cur_floor, player.posx, player.posy, max(view_lines-1, view_cols) / 2, &draw_thing, &(struct draw_info) {
+		view_lines-1, view_cols
 	});
 
-	ui_draw_format_at(0, 0, "Fuel: %d Torches: %d HP: %d Floor: %ld",
-			  (struct ui_cell_attr){ .fg = { .g = 0xaa } },
-			  player_fuel, player_torches, player.combat.hp, cur_floor - floors);
+	ui_draw_format_at(view_lines-1, 0, "Fuel: %d", (struct ui_cell_attr){ .fg = { .g = 0xaa } }, player_fuel);
+
+	ui_draw_format_at(view_lines-1, 10, "Torches: %d", (struct ui_cell_attr){ .fg = { .g = 0xaa } }, player_torches);
+
+#define HPBARLEN 10
+	ui_draw_format_at(view_lines-1, 24, "HP: %-6d", (struct ui_cell_attr){ .fg = { .g = 0xaa } }, player.combat.hp);
+	int shaded_len = HPBARLEN * player.combat.hp / player.combat.hp_max;
+	for(int col = 24; col < 24 + shaded_len; col++)
+		ui_set_attr_at(view_lines-1, col, (struct ui_cell_attr){ .bg = { .r = 0xaa } });
+
+	ui_draw_format_at(view_lines-1, 35, "Floor: %ld", (struct ui_cell_attr){ .fg = { .g = 0xaa } }, cur_floor - floors);
+
 }
 
 void draw_init(void)

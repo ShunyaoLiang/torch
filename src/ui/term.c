@@ -182,6 +182,13 @@ void ui_draw_at(int line, int col, const char *str, struct ui_cell_attr attr)
 		ui_buffer.last_changed_line = line;
 }
 
+void ui_set_attr_at(int line, int col, struct ui_cell_attr attr)
+{
+	struct ui_cell *cell;
+	if((cell = ui_buffer_at(line, col)))
+		cell->attr = attr;
+}
+
 static void move_cursor(int line, int col)
 {
 	unibi_print_str(unibi, unibi_cursor_address, (unibi_var_t[9]) {
