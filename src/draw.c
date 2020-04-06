@@ -84,11 +84,11 @@ void draw_game(void)
 
 #define HPBARLEN 10
 	ui_draw_format_at(view_lines-1, 24, "HP: %-d", (struct ui_cell_attr){ .fg = barfg }, player.combat.hp);
-	int shaded_len = HPBARLEN * roundf((float)player.combat.hp / player.combat.hp_max);
+	int shaded_len = roundf((float)HPBARLEN * player.combat.hp / player.combat.hp_max);
 	for(int col = 24; col < 24 + shaded_len; col++)
 		ui_set_attr_at(view_lines-1, col, (struct ui_cell_attr){ .fg = barfg, .bg = hpbg });
 
-	ui_draw_format_at(view_lines-1, 35, "Floor: %ld", (struct ui_cell_attr){ .fg = barfg }, cur_floor - floors);
+	ui_draw_format_at(view_lines-1, 24+HPBARLEN+1, "Floor: %ld", (struct ui_cell_attr){ .fg = barfg }, cur_floor - floors);
 
 }
 
