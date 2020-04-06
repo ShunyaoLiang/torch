@@ -168,19 +168,78 @@ static void utf8_copy(char *restrict dest, const char *restrict src)
 
 void ui_draw_at(int line, int col, const char *str, struct ui_cell_attr attr)
 {
-	if (!ui_buffer_in_bounds(line, col))
-		return;
-
+	size_t pos = 0;
 	for (const char *ch = str; *ch; ch += utf8_codepoint_len(ch)) {
-		struct ui_cell *cell = ui_buffer_at(line, col + ch - str);
+		struct ui_cell *cell = ui_buffer_at(line, col + pos);
 		if (!cell)
 			break;
 		utf8_copy(cell->ch, ch);
 		cell->attr = attr;
+		pos++;
 	}
 
 	if (line > ui_buffer.last_changed_line)
 		ui_buffer.last_changed_line = line;
+}
+
+static void move_cursor(int line, int col)
+{
+	unibi_print_str(unibi, unibi_cursor_address, (unibi_var_t[9]) {
+		unibi_var_from_num(line),
+		unibi_var_from_num(col),
+	});
+}
+
+static void update_attributes(struct ui_cell_attr cur, struct ui_cell_attr last)
+{
+	if (cur.bold != last.bold ||
+	    cur.italics != last.italics ||
+	    cur.underline != last.underline ||
+	    cur.blink != last.blink ||
+	    cur.reverse != last.reverse) {
+		unibi_print_str(unibi, unibi_exit_attribute_mode, NULL);
+		set_fg_rgb(cur.fg);
+		set_bg_rgb(cur.bg);
+	} else {
+		if (!color_equal(cur.fg, last.fg))
+			set_fg_rgb(cur.fg);
+
+		if (!color_equal(cur.bg, last.bg))
+			set_bg_rgb(cur.bg);
+	}
+
+	if (cur.bold)
+		unibi_print_str(unibi, unibi_enter_bold_mode, NULL);
+
+	if (cur.italics)
+		unibi_print_str(unibi, unibi_enter_italics_mode, NULL);
+
+	if (cur.underline)
+		unibi_print_str(unibi, unibi_enter_underline_mode, NULL);
+
+	if (cur.blink)
+		unibi_print_str(unibi, unibi_enter_blink_mode, NULL);
+
+	if (cur.reverse)
+		unibi_print_str(unibi, unibi_enter_reverse_mode, NULL);
+}
+
+void ui_draw_at_incremental(int line, int col, const char *str, struct ui_cell_attr attr, int wait)
+{
+	move_cursor(line, col);
+	update_attributes(attr, (struct ui_cell_attr) {});
+
+	size_t pos = 0;
+	for (const char *ch = str; *ch; ch += utf8_codepoint_len(ch)) {
+		if (!ui_buffer_in_bounds(line, col + pos))
+			return;
+		char buf[4] = {0};
+		utf8_copy(buf, ch);
+		printf("%.4s", buf);
+		fflush(stdout);
+		usleep(wait * 1000);
+		pos++;
+	}
 }
 
 void ui_clear(void)
@@ -188,40 +247,6 @@ void ui_clear(void)
 	for (int line = 0; line < ui_buffer.lines; ++line)
 		for (int col = 0; col < ui_buffer.cols; ++col)
 			*ui_buffer_at(line, col) = UI_CELL_DEFAULT;
-}
-
-static void update_attributes(struct ui_cell cur, struct ui_cell last)
-{
-	if (cur.attr.bold != last.attr.bold ||
-	    cur.attr.italics != last.attr.italics ||
-	    cur.attr.underline != last.attr.underline ||
-	    cur.attr.blink != last.attr.blink ||
-	    cur.attr.reverse != last.attr.reverse) {
-		unibi_print_str(unibi, unibi_exit_attribute_mode, NULL);
-		set_fg_rgb(cur.attr.fg);
-		set_bg_rgb(cur.attr.bg);
-	} else {
-		if (!color_equal(cur.attr.fg, last.attr.fg))
-			set_fg_rgb(cur.attr.fg);
-
-		if (!color_equal(cur.attr.bg, last.attr.bg))
-			set_bg_rgb(cur.attr.bg);
-	}
-
-	if (cur.attr.bold)
-		unibi_print_str(unibi, unibi_enter_bold_mode, NULL);
-
-	if (cur.attr.italics)
-		unibi_print_str(unibi, unibi_enter_italics_mode, NULL);
-
-	if (cur.attr.underline)
-		unibi_print_str(unibi, unibi_enter_underline_mode, NULL);
-
-	if (cur.attr.blink)
-		unibi_print_str(unibi, unibi_enter_blink_mode, NULL);
-
-	if (cur.attr.reverse)
-		unibi_print_str(unibi, unibi_enter_reverse_mode, NULL);
 }
 
 void ui_flush(void)
@@ -232,7 +257,7 @@ void ui_flush(void)
 	for (int line = 0; line < ui_buffer.lines; ++line) {
 		for (int col = 0; col < ui_buffer.cols; ++col) {
 			struct ui_cell cur = *ui_buffer_at(line, col);
-			update_attributes(cur, last);
+			update_attributes(cur.attr, last.attr);
 			printf("%.4s", cur.ch);
 			last = cur;
 		}

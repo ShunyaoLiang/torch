@@ -41,13 +41,14 @@ void event_loop(int (*keymap[])(void), void (*draw)(void))
 void menu_screen(void)
 {
 	ui_clear();
-	ui_draw_at(9, 37, "Torch", (struct ui_cell_attr){
-		.fg = {0xff, 0x50, 0x00},
-	});
-	ui_draw_at(12, 32, "Menu coming soon", (struct ui_cell_attr){
-		.fg = {0xcc, 0xcc, 0xcc},
-	});
 	ui_flush();
+	ui_draw_at_incremental(9, 37, "Torch", (struct ui_cell_attr){
+		.fg = {0xff, 0x50, 0x00},
+	}, 80);
+	ui_draw_at_incremental(12, 32, "Menu coming soon", (struct ui_cell_attr){
+		.fg = {0xcc, 0xcc, 0xcc},
+	}, 80);
+
 	ui_poll_event();
 }
 

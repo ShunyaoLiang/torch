@@ -27,6 +27,8 @@ void ui_draw_at(int line, int col, const char *str, struct ui_cell_attr attr);
 	ui_draw_at(line, col, buf, attr); \
 } while (0);
 
+void ui_draw_at_incremental(int line, int col, const char *str, struct ui_cell_attr attr, int wait);
+
 void ui_clear(void);
 void ui_flush(void);
 
