@@ -78,17 +78,17 @@ void draw_game(void)
 	struct color barfg = { 0xff, 0x50, 0 };
 	struct color hpbg = { 100, 20, 20 };
 
-	ui_draw_format_at(view_lines-1, 0, "Fuel: %-3d", (struct ui_cell_attr){ .fg = barfg }, player_fuel);
+	ui_draw_format_at(view_lines-1, 0, "Fuel: %-3d ", (struct ui_cell_attr){ .fg = barfg }, player_fuel);
 
-	ui_draw_format_at(view_lines-1, 10, "Torches: %-3d", (struct ui_cell_attr){ .fg = barfg }, player_torches);
+	ui_draw_format_at(view_lines-1, 10, "Torches: %-4d ", (struct ui_cell_attr){ .fg = barfg }, player_torches);
 
 #define HPBARLEN 10
-	ui_draw_format_at(view_lines-1, 24, "HP: %-3d", (struct ui_cell_attr){ .fg = barfg }, player.combat.hp);
+	ui_draw_format_at(view_lines-1, 24, "HP: %-5d ", (struct ui_cell_attr){ .fg = barfg }, player.combat.hp);
 	int shaded_len = roundf((float)HPBARLEN * player.combat.hp / player.combat.hp_max);
 	for(int col = 24; col < 24 + shaded_len; col++)
 		ui_set_attr_at(view_lines-1, col, (struct ui_cell_attr){ .fg = barfg, .bg = hpbg });
 
-	ui_draw_format_at(view_lines-1, 24+HPBARLEN+1, "Floor: %-ld", (struct ui_cell_attr){ .fg = barfg }, cur_floor - floors);
+	ui_draw_format_at(view_lines-1, 34, "Floor: %-ld", (struct ui_cell_attr){ .fg = barfg }, cur_floor - floors);
 
 }
 
