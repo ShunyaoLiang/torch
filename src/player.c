@@ -9,7 +9,7 @@ struct entity player = {
 		.r = 0xa5, .g = 0xa5, .b = 0xa5,
 	},
 	.combat = {
-		.hp = 5, .hp_max = 5,
+		.hp = 10, .hp_max = 10,
 	},
 	.token = "@",
 	.posy = 50, .posx = 50,

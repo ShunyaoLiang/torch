@@ -66,7 +66,7 @@ void draw_game(void)
 			} else {
 				/* Draw floor tiles at a constant color, so they're visible. */
 				ui_draw_at(line, col, tile.seen_as.token, (struct ui_cell_attr) {
-					.fg = (struct color) {0x10, 0x10, 0x10},
+					.fg = (struct color) {0x7, 0x7, 0x7},
 				});
 			}
 		}

@@ -194,14 +194,6 @@ def_input_key_fn(demo_ascend_floor)
 	}
 }
 
-void demo_place_snake(int y, int x)
-{
-	struct entity snake = demo_new_snake(y, x);
-	struct entity *s = malloc(sizeof(snake));
-	memcpy(s, &snake, sizeof(snake));
-	floor_add_entity(cur_floor, s);
-}
-
 def_entity_fn(demo_snake_update)
 {
 	if (this->combat.hp <= 0) {
@@ -229,26 +221,4 @@ def_entity_fn(demo_snake_update)
 	if (abs(this->posy - player.posy) == 1 && abs(this->posx - player.posx) == 1) {
 		combat_do(&this->combat, &player.combat);
 	}
-}
-
-
-struct entity demo_new_snake(int y, int x)
-{
-	struct entity snake = {
-		.color = {
-			.r = 0x19, .g = 0x19, .b = 0x8c,
-		},
-		.combat = {
-			.hp = 1, .hp_max = 1,
-		},
-		.token = "S",
-		.posy = y, .posx = x,
-		.update = demo_snake_update,
-		.destroy = NULL,
-		.list = LIST_HEAD_INIT(snake.list),
-		.floor = &floors[0],
-		.blocks_light = false,
-	};
-
-	return snake;
 }
