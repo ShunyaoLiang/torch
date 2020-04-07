@@ -46,10 +46,10 @@ void menu_screen(void)
 	ui_dimensions(&lines, &cols);
 	ui_clear();
 	ui_flush();
-	ui_draw_at_incremental((lines / 2) - 3, cols / 2 - 3, "Torch", (struct ui_cell_attr){
+	ui_draw_at_incremental((lines / 2) - 3, (cols / 2) - 3, "Torch", (struct ui_cell_attr){
 		.fg = {0xff, 0x50, 0x00},
 	}, 50);
-	ui_draw_at_incremental(lines / 2, cols / 2 - 8, "We couldn't afford a menu", (struct ui_cell_attr){
+	ui_draw_at_incremental(lines / 2, cols / 2 - 12, "We couldn't afford a menu", (struct ui_cell_attr){
 		.fg = {0xcc, 0xcc, 0xcc},
 	}, 50);
 

@@ -11,11 +11,27 @@ struct draw_info {
 	int view_lines, view_cols;
 };
 
+void xy_to_linecol(int x, int y, int *restrict line, int *restrict col)
+{
+	int view_lines, view_cols;
+	ui_dimensions(&view_lines, &view_cols);
+
+	if (view_lines > MAP_LINES)	
+		*line = y - player.posy + view_lines / 2;
+	else
+		*line = y - clamp(player.posy - view_lines / 2, 0, MAP_LINES - view_lines);
+
+	if (view_cols > MAP_COLS)	
+		*col = x - player.posx + view_cols / 2;
+	else
+		*col = x - clamp(player.posx - view_cols / 2, 0, MAP_COLS - view_cols);
+}
+
 void draw_thing(struct tile *tile, int x, int y, void *context)
 {
 	struct draw_info *info = context;
-	int line = y - clamp(player.posy - info->view_lines / 2, 0, MAP_LINES - info->view_lines);
-	int col = x - clamp(player.posx - info->view_cols / 2, 0, MAP_COLS - info->view_cols);
+	int line, col;
+	xy_to_linecol(x, y, &line, &col);
 	const char *token = " ";
 	struct color color = {0};
 	if (tile->entity) {
@@ -55,8 +71,8 @@ void draw_game(void)
 			struct tile tile = floor_map_at(cur_floor, y, x);
 			if (!tile.seen)
 				continue;
-			int line = y - clamp(player.posy - (view_lines-1) / 2, 0, MAP_LINES - (view_lines-1));
-			int col = x - clamp(player.posx - view_cols / 2, 0, MAP_COLS - view_cols);
+			int line, col;
+			xy_to_linecol(x, y, &line, &col);
 
 			/* If it is not a floor tile... */
 			if (strcmp(tile.seen_as.token, ".")) {
