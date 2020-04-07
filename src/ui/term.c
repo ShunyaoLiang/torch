@@ -74,13 +74,16 @@ static void term_resize_handler(int signal)
 	(void)signal;
 }
 
+static void unibi_out(void *context, const char *str, size_t size)
+{
+	fwrite(str, 1, size, stdout);
+}
+
 static void unibi_print_str(unibi_term *unibi, enum unibi_string s, unibi_var_t param[9])
 {
 	const char *fmt = unibi_get_str(unibi, s);
-	char buf[unibi_run(fmt, param, NULL, 0) + 1];
-	unibi_run(fmt, param, buf, sizeof(buf));
-	buf[sizeof(buf) - 1] = '\0';
-	fputs(buf, stdout);
+	unibi_var_t vars[26 + 26] = {{0}};
+	unibi_format(vars, vars + 26, fmt, param, unibi_out, NULL, NULL, NULL);
 }
 
 #define CSI "\x1b["
@@ -102,8 +105,7 @@ void ui_init(void)
 
 	setvbuf(stdout, NULL, _IOFBF, 0);
 
-	const char *term = getenv("TERM");
-	unibi = unibi_from_term(term);
+	unibi = unibi_from_env();
 
 	unibi_print_str(unibi, unibi_enter_ca_mode, NULL);
 	unibi_print_str(unibi, unibi_cursor_invisible, NULL);
