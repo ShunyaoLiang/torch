@@ -29,7 +29,6 @@ void xy_to_linecol(int x, int y, int *restrict line, int *restrict col)
 
 void draw_thing(struct tile *tile, int x, int y, void *context)
 {
-	struct draw_info *info = context;
 	int line, col;
 	xy_to_linecol(x, y, &line, &col);
 	const char *token = " ";
