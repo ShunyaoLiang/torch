@@ -46,7 +46,7 @@ void floor_map_generate(struct floor *floor)
 		struct item *item = malloc(sizeof(struct item));
 		*item = (struct item) {
 			.name = "Sword",
-			.token = "/",
+			.token = "!",
 			.color = { 0xff, 0xd7, 0x00 },
 			.list = LIST_HEAD_INIT(item->list)
 		};
@@ -208,8 +208,8 @@ static void cave_floor_write_grid(struct floor *floor, cell_grid grid)
 	floor_for_each_tile(t, floor) {
 		if (*c) {
 			t->token = "#";
-			t->seen_as.token = "#";
 			t->blocks = true;
+			t->color = (struct color) { 0x36, 0x38, 0x38 };
 		} else {
 			t->token = ".";
 			t->blocks = false;
@@ -261,7 +261,7 @@ static void entity_place(enum entity_type type, struct floor *floor, int x, int 
 		*entity = (struct entity) {
 			.info = COMBAT,
 			.color = {
-				.r = 0x19, .g = 0x19, .b = 0x8c,
+				.r = 0x47, .g = 0xff, .b = 0x2a,
 			},
 			.combat = {
 				.hp = 1, .hp_max = 1,

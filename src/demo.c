@@ -29,8 +29,8 @@ void cast_light_at(struct tile *tile, int x, int y, void *context)
 		return;
 	struct light_info *info = context;
 	drawn_to[y][x] = 1;
-	int distance = sqrt(pow(y - info->y, 2) + pow(x - info->x, 2));
-	const float dlight = info->bright / (2 * distance + 1);
+	int distance = max(sqrt(pow(y - info->y, 2) + pow(x - info->x, 2)), 1);
+	const float dlight = info->bright / (distance + 1) / (distance + 1);
 	if (y == info->y && x == info->x) {
 		(*info->map)[y][x].light += info->bright;
 	} else {
@@ -53,7 +53,7 @@ def_entity_fn(demo_player_update)
 {
 	int y = this->posy;
 	int x = this->posx;
-	float bright = 0.5f;
+	float bright = 0.8f;
 	if (player_lantern_on) {
 		if (player_fuel > 0) {
 			player_fuel--;
@@ -132,7 +132,7 @@ struct entity demo_new_torch(int y, int x)
 		.color = {
 			.r = 0xe2, .g = 0x58, .b = 0x22,
 		},
-		.token = "!",
+		.token = "i",
 		.posy = y, .posx = x,
 		.update = demo_torch_update,
 		.destroy = demo_torch_destroy,

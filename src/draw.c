@@ -47,6 +47,7 @@ void draw_thing(struct tile *tile, int x, int y, void *context)
 	if (tile->light > 0)
 		ui_draw_at(line, col, token, (struct ui_cell_attr) {
 			.fg = color,
+			.reverse = tile->blocks,
 		});	
 
 	/* Unless it is a wall tile and we haven't seen it in a better light... */
@@ -76,7 +77,8 @@ void draw_game(void)
 			/* If it is not a floor tile... */
 			if (strcmp(tile.seen_as.token, ".")) {
 				ui_draw_at(line, col, tile.seen_as.token, (struct ui_cell_attr) {
-					.fg = color_multiply_by(color_as_grayscale(tile.seen_as.color), 0.6),
+					.fg = color_multiply_by(color_as_grayscale(tile.seen_as.color), 0.4),
+					.reverse = tile.blocks,
 				});
 			} else {
 				/* Draw floor tiles at a constant color, so they're visible. */
