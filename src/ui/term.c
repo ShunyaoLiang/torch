@@ -53,15 +53,22 @@ static void ui_buffer_realloc(struct ui_buffer *b)
 {
 	/* Get new terminal dimensions. */
 	struct term_dimensions new_dimensions = term_dimensions();
-
+	/* Free excess lines */
+	for (int line = new_dimensions.lines; line < b->lines; ++line) {
+		free(b->buffer[line]);
+	}
 	/* Resize top array of pointers. */
 	b->buffer = realloc(b->buffer, new_dimensions.lines * sizeof(struct ui_cell *));
-
-	/* Resize lines. */
-	for (int line = 0; line < new_dimensions.lines; ++line) {
-		b->buffer[line] = realloc(b->buffer[line], new_dimensions.cols * sizeof(struct ui_cell));
-	}
-
+	/*  */
+	if (new_dimensions.lines > b->lines) {
+		for (int line = 0; line < b->lines; ++line) {
+			b->buffer[line] = realloc(b->buffer[line], new_dimensions.cols * sizeof(struct ui_cell));
+		}
+		for (int line = b->lines; line < new_dimensions.lines; ++line) {
+			b->buffer[line] = malloc(new_dimensions.cols * sizeof(struct ui_cell));
+		}
+	} else for (int line = 0; line < new_dimensions.lines; ++line)
+				b->buffer[line] = realloc(b->buffer[line], new_dimensions.cols * sizeof(struct ui_cell));
 	/* Update buffer dimensions. */
 	b->lines = new_dimensions.lines;
 	b->cols = new_dimensions.cols;
