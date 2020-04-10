@@ -333,6 +333,7 @@ static int load_terminfo(TermKeyTI *ti)
 
   /* Finally mouse mode */
   {
+#if 0
     const char *value = NULL;
 
 #ifdef HAVE_UNIBILIUM
@@ -340,7 +341,8 @@ static int load_terminfo(TermKeyTI *ti)
       value = unibi_get_str_by_name(ti->unibi, "key_mouse");
 #else
     if(ti->term)
-      value = tigetstr("key_mouse");
+//      value = tigetstr("key_mouse");
+      value = ((TERMTYPE *)(cur_term))->Strings[355];
 #endif
 
     if(ti->tk->ti_getstr_hook)
@@ -350,9 +352,14 @@ static int load_terminfo(TermKeyTI *ti)
      * give X10 encoding. We'll only accept this if it's exactly "\e[M"
      */
     if(value && streq(value, "\x1b[M")) {
+
       struct trie_node *node = new_node_key(TERMKEY_TYPE_MOUSE, 0, 0, 0);
       insert_seq(ti, value, node);
     }
+#endif
+    /* XXX - Hack around tigetstr() returning (char *)-1 because key_mouse isn't a capability. */
+    struct trie_node *node = new_node_key(TERMKEY_TYPE_MOUSE, 0, 0, 0);
+    insert_seq(ti, "\x1b[M", node);
   }
 
   /* Take copies of these terminfo strings, in case we build multiple termkey
