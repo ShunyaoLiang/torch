@@ -17,12 +17,12 @@ void xy_to_linecol(int x, int y, int *restrict line, int *restrict col)
 	ui_dimensions(&view_lines, &view_cols);
 
 	if (view_lines > MAP_LINES)	
-		*line = y - player.posy + view_lines / 2;
+		*line = y - min(player.posy + view_lines / 2, 0);
 	else
 		*line = y - clamp(player.posy - view_lines / 2, 0, MAP_LINES - view_lines);
 
 	if (view_cols > MAP_COLS)	
-		*col = x - player.posx + view_cols / 2;
+		*col = x - min(player.posx + view_cols / 2, 0);
 	else
 		*col = x - clamp(player.posx - view_cols / 2, 0, MAP_COLS - view_cols);
 }

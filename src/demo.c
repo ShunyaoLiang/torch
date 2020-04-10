@@ -30,7 +30,7 @@ void cast_light_at(struct tile *tile, int x, int y, void *context)
 	struct light_info *info = context;
 	drawn_to[y][x] = 1;
 	int distance = max(sqrt(pow(y - info->y, 2) + pow(x - info->x, 2)), 1);
-	const float dlight = info->bright / (distance + 1) / (distance + 1);
+	const float dlight = info->bright / (2 * distance + 1);
 	if (y == info->y && x == info->x) {
 		(*info->map)[y][x].light += info->bright;
 	} else {
