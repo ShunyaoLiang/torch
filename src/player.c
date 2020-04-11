@@ -101,11 +101,11 @@ def_input_key_fn(player_pick_up_item)
 	int strcmp(const char *, const char *);
 	void exit(int);
 	if (!strcmp(((struct item *)tile->items.next)->name, "Sword")) {
-		int lines, cols;
-		ui_dimensions(&lines, &cols);
+		int rows, cols;
+		ui_dimensions(&rows, &cols);
 		ui_clear();
 		ui_flush();
-		ui_draw_at_incremental(lines / 2, cols / 2 - 19, "a pretty message, you found the sword!", (struct ui_cell_attr) {
+		ui_draw_at_incremental(rows / 2, cols / 2 - 19, "a pretty message, you found the sword!", (struct ui_cell_attr) {
 			.fg = {0xff, 0xd7, 0x00},
 		}, 50);
 		getchar();

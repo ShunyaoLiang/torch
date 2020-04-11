@@ -22,11 +22,11 @@ void event_loop(int (*keymap[])(void), void (*draw)(void))
 		floor_update_entities(cur_floor);
 
 		if (player.combat.hp <= 0) {
-			int lines, cols;
-			ui_dimensions(&lines, &cols);
+			int rows, cols;
+			ui_dimensions(&rows, &cols);
 			ui_clear();
 			ui_flush();
-			ui_draw_at_incremental(lines / 2, cols / 2 - 12, "lol you fucking died nerd", (struct ui_cell_attr){
+			ui_draw_at_incremental(rows / 2, cols / 2 - 12, "lol you fucking died nerd", (struct ui_cell_attr){
 				.fg = {0xac, 0x04, 0x04},
 			}, 50);
 			getchar();
@@ -42,14 +42,14 @@ void event_loop(int (*keymap[])(void), void (*draw)(void))
 
 void menu_screen(void)
 {
-	int lines, cols;
-	ui_dimensions(&lines, &cols);
+	int rows, cols;
+	ui_dimensions(&rows, &cols);
 	ui_clear();
 	ui_flush();
-	ui_draw_at_incremental(lines / 2 - 2, cols / 2 - 3, "Torch", (struct ui_cell_attr){
+	ui_draw_at_incremental(rows / 2 - 2, cols / 2 - 3, "Torch", (struct ui_cell_attr){
 		.fg = {0xff, 0x50, 0x00},
 	}, 50);
-	ui_draw_at_incremental(lines / 2 + 1, cols / 2 - 12, "We couldn't afford a menu", (struct ui_cell_attr){
+	ui_draw_at_incremental(rows / 2 + 1, cols / 2 - 12, "We couldn't afford a menu", (struct ui_cell_attr){
 		.fg = {0xcc, 0xcc, 0xcc},
 	}, 50);
 
