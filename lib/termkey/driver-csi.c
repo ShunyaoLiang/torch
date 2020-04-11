@@ -582,7 +582,7 @@ static TermKeyResult peekkey_csi(TermKey *tk, TermKeyCsi *csi, size_t introlen, 
         fprintf(stderr, "CSI: Unknown arg1=%ld arg2=%ld arg3=%ld cmd=%c\n", arg[0], arg[1], arg[2], (char)cmd);
         break;
       default:
-        fprintf(stderr, "CSI: Unknown arg1=%ld arg2=%ld arg3=%ld ... args=%d cmd=%c\n", arg[0], arg[1], arg[2], args, (char)cmd);
+        fprintf(stderr, "CSI: Unknown arg1=%ld arg2=%ld arg3=%ld ... args=%d cmd=%c\n", arg[0], arg[1], arg[2], (int)args, (char)cmd);
         break;
     }
 #endif
@@ -668,7 +668,7 @@ static TermKeyResult peekkey_ctrlstring(TermKey *tk, TermKeyCsi *csi, size_t int
 
 #ifdef DEBUG
   fprintf(stderr, "Found a control string: %*s",
-      str_end - introlen, tk->buffer + tk->buffstart + introlen);
+      (int)(str_end - introlen), tk->buffer + tk->buffstart + introlen);
 #endif
 
   *nbytep = str_end + 1;
