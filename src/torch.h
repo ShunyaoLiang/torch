@@ -133,7 +133,6 @@ typedef struct tile tile_map[MAP_LINES][MAP_COLS];
 struct staircase {
 	struct floor *floor;
 	int x, y;
-	bool informed;
 };
 
 enum floor_type {

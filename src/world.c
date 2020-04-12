@@ -55,20 +55,21 @@ void floor_map_generate(struct floor *floor)
 		};
 		list_add_tail(&item->list, &item_tile->items);
 
-		/* Place the staircases. */
+		/* Place the staircases.
+		   Upstairs */
 		while (floor_map_at(floor, (x = random_int() % 100), (y = random_int() % 100)).blocks);
-		struct tile *downstair_tile = floor_map_at_unsafe(floor, 40, 40);
-		downstair_tile->type = TILE_STAIR;
-		downstair_tile->token = "<";
-		floor->downstairs.x = 40;
-		floor->downstairs.y = 40;
+		struct tile *stair_tile = floor_map_at_unsafe(floor, x, y);
+		stair_tile->type = TILE_STAIR;
+		stair_tile->token = "<";
+		floor->upstairs.x = x;
+		floor->upstairs.y = y;
 
-		while (floor_map_at(floor, (x = random_int() % 100), (y = random_int() % 100)).blocks);
-		struct tile *upstair_tile = floor_map_at_unsafe(floor, 43, 43);
-		upstair_tile->type = TILE_STAIR;
-		upstair_tile->token = ">";
-		floor->upstairs.x = 43;
-		floor->upstairs.y = 43;
+		/* Downstairs */
+		stair_tile = floor_map_at_unsafe(floor, x + 2, y + 2);
+		stair_tile->type = TILE_STAIR;
+		stair_tile->token = ">";
+		floor->downstairs.x = x + 2;
+		floor->downstairs.y = y + 2;
 	}
 
 	floor->generated = true;
@@ -128,8 +129,6 @@ bool tile_blocks_light(struct tile tile)
 
 void floor_move_player(struct floor *floor)
 {
-	cur_floor = floor;
-
 	if (!floor->generated) {
 		INIT_LIST_HEAD(&floor->entities);
 		floor_map_generate(floor);
@@ -137,12 +136,14 @@ void floor_move_player(struct floor *floor)
 
 	/* Get staircase information. */
 	int x, y;
-	if (player.floor->upstairs.floor == floor) {
-		x = floor->upstairs.x;
-		y = floor->upstairs.y;
-	} else if (player.floor->downstairs.floor == floor) {
+	if (floor == player.floor->upstairs.floor) {
+		/* If the player is moving up... */
 		x = floor->downstairs.x;
 		y = floor->downstairs.y;
+	} else if (floor == player.floor->downstairs.floor) {
+		/* If the player is moving down... */
+		x = floor->upstairs.x;
+		y = floor->upstairs.y;
 	} else {
 		/* Does the player's current floor even connect to the next floor? */
 		return;
@@ -157,6 +158,8 @@ void floor_move_player(struct floor *floor)
 	player.posy = y;
 	/* Move the list entry. */
 	list_move_tail(&player.list, &floor->entities);
+
+	cur_floor = floor;
 }
 
 #define cell_grid_for_each_cell(pos, grid) \
