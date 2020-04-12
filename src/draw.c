@@ -105,7 +105,7 @@ void draw_game(void)
 	for(int col = 24; col < 24 + shaded_len; col++)
 		ui_set_attr_at(view_rows-1, col, (struct ui_cell_attr){ .fg = barfg, .bg = hpbg });
 
-	ui_draw_format_at(view_rows-1, 34, "Floor: %-ld", (struct ui_cell_attr){ .fg = barfg }, cur_floor - floors);
+	ui_draw_format_at(view_rows-1, 34, "Depth: %-ld", (struct ui_cell_attr){ .fg = barfg }, cur_floor - floors);
 
 }
 

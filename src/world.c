@@ -28,6 +28,9 @@ static void cave_floor_write_grid(struct floor *floor, cell_grid grid);
 
 void floor_map_generate(struct floor *floor)
 {
+	if (floor->generated)
+		return;
+
 	if (floor->type == CAVE) {
 		cell_grid grid = { 0 };
 		cave_populate_grid(grid, 0.45f);
@@ -51,7 +54,24 @@ void floor_map_generate(struct floor *floor)
 			.list = LIST_HEAD_INIT(item->list)
 		};
 		list_add_tail(&item->list, &item_tile->items);
+
+		/* Place the staircases. */
+		while (floor_map_at(floor, (x = random_int() % 100), (y = random_int() % 100)).blocks);
+		struct tile *downstair_tile = floor_map_at_unsafe(floor, 40, 40);
+		downstair_tile->type = TILE_STAIR;
+		downstair_tile->token = "<";
+		floor->downstairs.x = 40;
+		floor->downstairs.y = 40;
+
+		while (floor_map_at(floor, (x = random_int() % 100), (y = random_int() % 100)).blocks);
+		struct tile *upstair_tile = floor_map_at_unsafe(floor, 43, 43);
+		upstair_tile->type = TILE_STAIR;
+		upstair_tile->token = ">";
+		floor->upstairs.x = 43;
+		floor->upstairs.y = 43;
 	}
+
+	floor->generated = true;
 }
 
 struct tile floor_map_at(struct floor *floor, int y, int x)
@@ -106,29 +126,28 @@ bool tile_blocks_light(struct tile tile)
 	return tile.blocks || (tile.entity ? tile.entity->blocks_light : (bool)tile.entity);
 }
 
-void floor_init(void)
-{
-	INIT_LIST_HEAD(&floors[0].entities);
-	floor_map_generate(&floors[0]);
-	floor_add_entity(cur_floor, &player);
-
-	//XXX
-	INIT_LIST_HEAD(&floors[1].entities);
-	floor_map_generate(&floors[1]);
-
-	floor_move_player(cur_floor, 66, 66);
-}
-
-void floor_move_player(struct floor *floor, int x, int y)
+void floor_move_player(struct floor *floor)
 {
 	cur_floor = floor;
 
 	if (!floor->generated) {
-		floor->generated = true;
 		INIT_LIST_HEAD(&floor->entities);
 		floor_map_generate(floor);
 	}
 
+	/* Get staircase information. */
+	int x, y;
+	if (player.floor->upstairs.floor == floor) {
+		x = floor->downstairs.x;
+		y = floor->downstairs.y;
+	} else if (player.floor->downstairs.floor == floor) {
+		x = floor->upstairs.x;
+		y = floor->upstairs.y;
+	} else {
+		/* Does the player's current floor even connect to the next floor? */
+		return;
+	}
+	
 	/* Update tile information. */
 	floor_map_at_unsafe(player.floor, player.posx, player.posy)->entity = NULL;
 	floor_map_at_unsafe(floor, x, y)->entity = &player;
@@ -222,7 +241,11 @@ static void cave_floor_write_grid(struct floor *floor, cell_grid grid)
 }
 
 struct floor floors[5] = {
-	{ .type = CAVE },
+	{ 
+		.type = CAVE,
+		.upstairs = { .floor = NULL, },
+		.downstairs = { .floor = &floors[1], },
+	},
 	{ .type = CAVE },
 	{ .type = CAVE },
 	{ .type = CAVE },

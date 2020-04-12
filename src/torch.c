@@ -62,7 +62,7 @@ int main(int argc, char *argv[])
 	debug_log = fopen("debug_log", "w");
 #endif
 	ui_init();
-	floor_move_player(cur_floor, 50, 50);
+	floor_move_player(cur_floor);
 
 	menu_screen();
 	draw_init();

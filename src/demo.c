@@ -174,9 +174,13 @@ def_input_key_fn(demo_get_fuel)
 
 def_input_key_fn(demo_descend_floor)
 {
-	int floor_index = player.floor - floors - 1;
-	if (floor_index >= 0 && floor_index < 5) {
-		floor_move_player(&floors[floor_index], player.posx, player.posy);
+	struct tile player_tile = floor_map_at(player.floor, player.posx, player.posy);
+	if (player_tile.type != TILE_STAIR)
+		return 1;
+
+	int floor_index = player.floor - floors + 1;
+	if (floor_index < 5) {
+		floor_move_player(&floors[floor_index]);
 		return 0;
 	} else {
 		return 1;
@@ -185,9 +189,13 @@ def_input_key_fn(demo_descend_floor)
 
 def_input_key_fn(demo_ascend_floor)
 {
-	int floor_index = player.floor - floors + 1;
-	if (floor_index < 5) {
-		floor_move_player(&floors[floor_index], player.posx, player.posy);
+	struct tile player_tile = floor_map_at(player.floor, player.posx, player.posy);
+	if (player_tile.type != TILE_STAIR)
+		return 1;
+
+	int floor_index = player.floor - floors - 1;
+	if (floor_index >= 0 && floor_index < 5) {
+		floor_move_player(&floors[floor_index]);
 		return 0;
 	} else {
 		return 1;

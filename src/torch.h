@@ -95,8 +95,20 @@ struct item {
 	struct color color;
 };
 
+enum tile_type {
+	TILE_NONE,
+	TILE_STAIR,
+};
+
 struct tile {
+	enum tile_type type;
 	bool blocks;
+
+	const char *token;
+	struct color color;
+
+	float light;
+	struct color lighting;
 
 	bool seen;
 	struct {
@@ -104,12 +116,6 @@ struct tile {
 		const char *token;
 		float light;
 	} seen_as;
-
-	const char *token;
-	struct color color;
-
-	float light;
-	struct color lighting;
 
 	struct list_head items;
 
@@ -124,6 +130,12 @@ bool tile_blocks_light(struct tile);
 typedef struct list_head entity_list;
 typedef struct tile tile_map[MAP_LINES][MAP_COLS];
 
+struct staircase {
+	struct floor *floor;
+	int x, y;
+	bool informed;
+};
+
 enum floor_type {
 	CAVE,
 	DEV,
@@ -134,6 +146,9 @@ struct floor {
 	entity_list entities;
 	tile_map map;
 	bool generated;
+
+	struct staircase upstairs;
+	struct staircase downstairs;
 };
 
 extern struct floor floors[];
@@ -146,7 +161,7 @@ void        floor_map_clear_lights(void);
 void        floor_map_generate(struct floor *floor);
 
 void floor_init(void);
-void floor_move_player(struct floor *floor, int x, int y);
+void floor_move_player(struct floor *floor);
 int  floor_add_entity(struct floor *floor, struct entity *entity);
 void floor_update_entities(struct floor *floor);
 
