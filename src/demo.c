@@ -175,7 +175,7 @@ def_input_key_fn(demo_get_fuel)
 def_input_key_fn(demo_descend_floor)
 {
 	struct tile player_tile = floor_map_at(player.floor, player.posy, player.posx);
-	if (player_tile.type != TILE_STAIR)
+	if (player_tile.type != TILE_DOWNSTAIR)
 		return 1;
 
 	int floor_index = player.floor - floors + 1;
@@ -190,7 +190,7 @@ def_input_key_fn(demo_descend_floor)
 def_input_key_fn(demo_ascend_floor)
 {
 	struct tile player_tile = floor_map_at(player.floor, player.posy, player.posx);
-	if (player_tile.type != TILE_STAIR)
+	if (player_tile.type != TILE_UPSTAIR)
 		return 1;
 
 	int floor_index = player.floor - floors - 1;

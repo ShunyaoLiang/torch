@@ -97,7 +97,8 @@ struct item {
 
 enum tile_type {
 	TILE_NONE,
-	TILE_STAIR,
+	TILE_UPSTAIR,
+	TILE_DOWNSTAIR,
 };
 
 struct tile {

@@ -59,14 +59,14 @@ void floor_map_generate(struct floor *floor)
 		   Upstairs */
 		while (floor_map_at(floor, (x = random_int() % 100), (y = random_int() % 100)).blocks);
 		struct tile *stair_tile = floor_map_at_unsafe(floor, x, y);
-		stair_tile->type = TILE_STAIR;
+		stair_tile->type = TILE_UPSTAIR;
 		stair_tile->token = "<";
 		floor->upstairs.x = x;
 		floor->upstairs.y = y;
 
 		/* Downstairs */
 		stair_tile = floor_map_at_unsafe(floor, x + 2, y + 2);
-		stair_tile->type = TILE_STAIR;
+		stair_tile->type = TILE_DOWNSTAIR;
 		stair_tile->token = ">";
 		floor->downstairs.x = x + 2;
 		floor->downstairs.y = y + 2;
