@@ -138,11 +138,11 @@ void floor_move_player(struct floor *floor)
 	/* Get staircase information. */
 	int x, y;
 	if (player.floor->upstairs.floor == floor) {
-		x = floor->downstairs.x;
-		y = floor->downstairs.y;
-	} else if (player.floor->downstairs.floor == floor) {
 		x = floor->upstairs.x;
 		y = floor->upstairs.y;
+	} else if (player.floor->downstairs.floor == floor) {
+		x = floor->downstairs.x;
+		y = floor->downstairs.y;
 	} else {
 		/* Does the player's current floor even connect to the next floor? */
 		return;
@@ -246,10 +246,26 @@ struct floor floors[5] = {
 		.upstairs = { .floor = NULL, },
 		.downstairs = { .floor = &floors[1], },
 	},
-	{ .type = CAVE },
-	{ .type = CAVE },
-	{ .type = CAVE },
-	{ .type = CAVE },
+	{ 
+		.type = CAVE,
+		.upstairs = { .floor = &floors[0], },
+		.downstairs = { .floor = &floors[2], },
+	},
+	{ 
+		.type = CAVE,
+		.upstairs = { .floor = &floors[1], },
+		.downstairs = { .floor = &floors[3], },
+	},
+	{ 
+		.type = CAVE,
+		.upstairs = { .floor = &floors[2], },
+		.downstairs = { .floor = &floors[4], },
+	},
+	{ 
+		.type = CAVE,
+		.upstairs = { .floor = &floors[3], },
+		.downstairs = { .floor = NULL, },
+	},
 };
 
 int entity_move_pos(struct entity *entity, int y, int x)
