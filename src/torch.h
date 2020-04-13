@@ -1,8 +1,15 @@
 #ifndef TORCH
 #define TORCH
 
+#if defined(unix) || defined(__unix__) || defined(__unix) || defined(__APPLE__) || defined(__MACH__)
+#define is_posix() true
+#else
+#define is_posix() false
+#endif
+
 #include "list.h"
 
+#include <errno.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
@@ -18,9 +25,15 @@
 	b = temp; \
 } while (0);
 
-typedef unsigned int uint;
-
 extern FILE *debug_log;
+
+#define fperror(fd, s) fputs(strerror(errno), fd)
+
+#define log_generic(level, fmt, ...) fprintf(debug_log, level " %s: "fmt"\n", __func__, __VA_ARGS__)
+#define log_infof(fmt, ...) log_generic("INFO", fmt, __VA_ARGS__)
+#define log_info(str) log_infof("%s", str)
+
+typedef unsigned int uint;
 
 /* Input */
 #define def_input_key_fn(name) int name(void)

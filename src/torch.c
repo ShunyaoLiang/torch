@@ -1,13 +1,51 @@
 #include "torch.h"
 #include "ui.h"
 
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 
-#ifdef DEBUG
 FILE *debug_log;
-#endif
+
+void log_init(void)
+{
+	char dir_name[] = "/tmp/torchXXXXXX";
+	if (is_posix()) {
+		if (!mkdtemp(dir_name))
+			goto fail;
+		if (chdir(dir_name))
+			goto fail;
+		if (!(debug_log = fopen("log", "w")))
+			goto fail;
+	}
+
+	fprintf(stderr, "%s: log file located at %s", __func__, dir_name);
+
+	return;
+
+fail:
+	fperror(stderr, __func__);
+	exit(EXIT_FAILURE);
+}
+
+void menu_screen(void)
+{
+	int rows, cols;
+	ui_dimensions(&rows, &cols);
+	ui_clear();
+	ui_flush();
+	ui_draw_at_incremental(rows / 2 - 2, cols / 2 - 3, "Torch", (struct ui_cell_attr){
+		.fg = {0xff, 0x50, 0x00},
+	}, 50);
+	ui_draw_at_incremental(rows / 2 + 1, cols / 2 - 12, "We couldn't afford a menu", (struct ui_cell_attr){
+		.fg = {0xcc, 0xcc, 0xcc},
+	}, 50);
+
+	ui_poll_event();
+}
 
 void event_loop(int (*keymap[])(void), void (*draw)(void))
 {
@@ -40,27 +78,9 @@ void event_loop(int (*keymap[])(void), void (*draw)(void))
 	} while (event = ui_poll_event(), event.key != 'Q');
 }
 
-void menu_screen(void)
-{
-	int rows, cols;
-	ui_dimensions(&rows, &cols);
-	ui_clear();
-	ui_flush();
-	ui_draw_at_incremental(rows / 2 - 2, cols / 2 - 3, "Torch", (struct ui_cell_attr){
-		.fg = {0xff, 0x50, 0x00},
-	}, 50);
-	ui_draw_at_incremental(rows / 2 + 1, cols / 2 - 12, "We couldn't afford a menu", (struct ui_cell_attr){
-		.fg = {0xcc, 0xcc, 0xcc},
-	}, 50);
-
-	ui_poll_event();
-}
-
 int main(int argc, char *argv[])
 {
-#ifdef DEBUG
-	debug_log = fopen("debug_log", "w");
-#endif
+	log_init();
 	ui_init();
 	floor_move_player(cur_floor);
 
