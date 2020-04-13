@@ -16,12 +16,12 @@ void xy_to_rowcol(int x, int y, int *restrict row, int *restrict col)
 	int view_rows, view_cols;
 	ui_dimensions(&view_rows, &view_cols);
 
-	if (view_rows > MAP_LINES)	
+	if (view_rows > MAP_LINES)
 		*row = y - min(player.posy + view_rows / 2, 0);
 	else
 		*row = y - clamp(player.posy - view_rows / 2, 0, MAP_LINES - view_rows);
 
-	if (view_cols > MAP_COLS)	
+	if (view_cols > MAP_COLS)
 		*col = x - min(player.posx + view_cols / 2, 0);
 	else
 		*col = x - clamp(player.posx - view_cols / 2, 0, MAP_COLS - view_cols);
@@ -44,19 +44,20 @@ void draw_thing(struct tile *tile, int x, int y, void *context)
 		token = tile->token;
 		color = color_add(color_multiply_by(tile->color, tile->light), tile->lighting);
 	}
-	if (tile->light > 0)
+	if (tile->light > 0) {
 		ui_draw_at(row, col, token, (struct ui_cell_attr) {
 			.fg = color,
 			.reverse = tile->blocks,
-		});	
+		});
+	}
 
-	/* If it is a floor tile and we haven't seen it in a better light... */
-	if (!strcmp(tile->token, ".") || tile->light > tile->seen_as.light) {
+	/* If it isn't a floor tile or it is and we haven't seen it in a better light... */
+	if (strcmp(tile->token, "#") || tile->light > tile->seen_as.light) {
 		/* ... remember the color of the wall. */
 		tile->seen_as.color = color;
 		tile->seen_as.light = tile->light;
 		/* Don't remember the token if it's the player's token. */
-		if (strcmp(token, "@"))
+		if (tile->entity != &player)
 			tile->seen_as.token = token;
 	}
 }
@@ -66,7 +67,7 @@ void draw_game(void)
 	int view_rows, view_cols;
 	ui_dimensions(&view_rows, &view_cols);
 
-	for (int y = 0; y < MAP_LINES; ++y)
+	for (int y = 0; y < MAP_LINES; ++y) {
 		for (int x = 0; x < MAP_COLS; ++x) {
 			struct tile tile = floor_map_at(cur_floor, y, x);
 			if (!tile.seen)
@@ -79,14 +80,15 @@ void draw_game(void)
 				/* Draw floor tiles at a constant color, so they're visible. */
 				ui_draw_at(row, col, tile.seen_as.token, (struct ui_cell_attr) {
 					.fg = (struct color) {0x7, 0x7, 0x7},
-				});	
+				});
 			} else {
 				ui_draw_at(row, col, tile.seen_as.token, (struct ui_cell_attr) {
-					.fg = color_multiply_by(color_as_grayscale(tile.seen_as.color), 0.4),
+					.fg = color_as_grayscale(tile.seen_as.color),
 					.reverse = tile.blocks,
 				});
 			}
 		}
+	}
 
 	raycast_at(cur_floor, player.posx, player.posy, max(view_rows-1, view_cols) / 2, &draw_thing, &(struct draw_info) {
 		view_rows-1, view_cols

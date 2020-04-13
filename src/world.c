@@ -61,6 +61,7 @@ void floor_map_generate(struct floor *floor)
 		struct tile *stair_tile = floor_map_at_unsafe(floor, x, y);
 		stair_tile->type = TILE_UPSTAIR;
 		stair_tile->token = "<";
+		stair_tile->color = (struct color) { 0x01, 0xcd, 0xfe };
 		floor->upstairs.x = x;
 		floor->upstairs.y = y;
 
@@ -68,6 +69,7 @@ void floor_map_generate(struct floor *floor)
 		stair_tile = floor_map_at_unsafe(floor, x + 2, y + 2);
 		stair_tile->type = TILE_DOWNSTAIR;
 		stair_tile->token = ">";
+		stair_tile->color = (struct color) { 0x01, 0xcd, 0xfe };
 		floor->downstairs.x = x + 2;
 		floor->downstairs.y = y + 2;
 	}
