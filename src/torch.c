@@ -22,7 +22,7 @@ void log_init(void)
 			goto fail;
 	}
 
-	fprintf(stderr, "%s: log file located at %s", __func__, dir_name);
+	fprintf(stderr, "%s: log file located at %s\n", __func__, dir_name);
 
 	return;
 
@@ -57,6 +57,7 @@ void event_loop(int (*keymap[])(void), void (*draw)(void))
 
 		floor_map_clear_lights();
 
+		flickering = false;
 		floor_update_entities(cur_floor);
 
 		if (player.combat.hp <= 0) {
@@ -75,6 +76,7 @@ void event_loop(int (*keymap[])(void), void (*draw)(void))
 		draw();
 
 		ui_flush();
+		flickering = true;
 	} while (event = ui_poll_event(), event.key != 'Q');
 }
 

@@ -40,8 +40,12 @@ void floor_map_generate(struct floor *floor)
 		}
 
 		cave_floor_write_grid(floor, grid);
-		for (int i = 0; i < 10; ++i)
-			entity_place(SNAKE, floor, random_int() % 100, random_int() % 100);
+		for (int i = 0; i < 10; ++i) {
+			entity_place(
+					random_int() % 2 ? ET_FLOATER : ET_SNAKE,
+					floor, random_int() % 100, random_int() % 100
+			);
+		}
 
 		int x, y;
 		while (floor_map_at(floor, (x = random_int() % 100), (y = random_int() % 100)).blocks);
@@ -301,24 +305,16 @@ static void entity_place(enum entity_type type, struct floor *floor, int x, int 
 	def_entity_fn(demo_snake_update);
 	struct entity *entity = malloc(sizeof(struct entity));
 	switch (type) {
-	case SNAKE:
-		*entity = (struct entity) {
-			.info = COMBAT,
-			.color = {
-				.r = 0x47, .g = 0xff, .b = 0x2a,
-			},
-			.combat = {
-				.hp = 1, .hp_max = 1,
-			},
-			.token = "S",
-			.posx = x, .posy = y,
-			.update = demo_snake_update,
-			.destroy = NULL,
-			.inventory = LIST_HEAD_INIT(entity->inventory),
-			.floor = floor,
-			.blocks_light = false,
-		};
+	case ET_SNAKE:
+		*entity = default_snake;
+		break;
+	case ET_FLOATER:
+		*entity = default_floater;
+		break;
 	}
+	entity->posx = x;
+	entity->posy = y;
+	entity->floor = floor;
 	floor_add_entity(floor, entity);
 }
 

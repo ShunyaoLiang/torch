@@ -45,11 +45,14 @@ extern input_key_fn *input_keymap[];
 void draw_init(void);
 void draw_game(void);
 
+extern bool flickering;
+
 struct color {
 	uint8_t r, g, b;
 };
 
 struct color color_add(struct color c, struct color a);
+struct color color_subtract(struct color c, struct color a);
 struct color color_multiply_by(struct color c, float m);
 struct color color_as_grayscale(struct color c);
 bool color_equal(struct color a, struct color b);
@@ -63,6 +66,16 @@ struct combat {
 
 int combat_do(struct combat *c, struct combat *target);
 
+/* Charge */
+enum direction {
+       UP, DOWN, LEFT, RIGHT, LEFT_UP, RIGHT_UP, LEFT_DOWN, RIGHT_DOWN, NONE
+};
+
+struct charge {
+	enum direction last_seen;
+	int rounds;
+};
+
 /* World */
 struct entity;
 
@@ -70,18 +83,23 @@ struct entity;
 typedef def_entity_fn(entity_fn);
 
 enum entity_type {
-	SNAKE,
+	ET_PLAYER,
+	ET_TORCH,
+	ET_SNAKE,
+	ET_FLOATER
 };
 
 enum entity_info {
-	PLAYER,
-	COMBAT,
-	LIGHT_SOURCE,
+	CHARGE = 1 << 0,
+	COMBAT = 1 << 1,
+	FLICKER = 1 << 2
 };
 
 struct entity {
+	enum entity_type type;
 	enum entity_info info;
 	struct combat combat;
+	struct charge charge;
 
 	int posx, posy;
 	bool blocks_light;
@@ -180,6 +198,10 @@ void floor_update_entities(struct floor *floor);
 
 #define floor_for_each_tile(pos, floor) \
 	for (pos = *floor->map; pos != back(floor->map); ++pos)
+
+/* entities */
+extern struct entity default_snake;
+extern struct entity default_floater;
 
 /* Player */
 extern struct entity player;

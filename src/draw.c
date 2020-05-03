@@ -133,6 +133,15 @@ struct color color_add(struct color c, struct color a)
 	};
 }
 
+struct color color_subtract(struct color c, struct color a)
+{
+	return (struct color){
+		c.r > a.r ? c.r-a.r : 0,
+		c.g > a.g ? c.g-a.g : 0,
+		c.b > a.b ? c.b-a.b : 0,
+	};
+}
+
 struct color color_multiply_by(struct color c, float m)
 {
 	return (struct color){
