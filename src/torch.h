@@ -200,6 +200,7 @@ void floor_update_entities(struct floor *floor);
 	for (pos = *floor->map; pos != back(floor->map); ++pos)
 
 /* entities */
+extern struct entity default_torch;
 extern struct entity default_snake;
 extern struct entity default_floater;
 

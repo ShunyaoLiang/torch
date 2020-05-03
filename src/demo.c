@@ -145,23 +145,25 @@ void torch_flicker(int signal)
 	ui_flush();
 }
 
+struct entity default_torch = {
+	.type = ET_TORCH,
+	.info = FLICKER,
+	.color = {
+		.r = 0xe2, .g = 0x58, .b = 0x22,
+	},
+	.token = "i",
+	.update = demo_torch_update,
+	.destroy = demo_torch_destroy,
+	.list = LIST_HEAD_INIT(default_torch.list),
+	.blocks_light = false,
+};
+
 struct entity demo_new_torch(int y, int x)
 {
-	struct entity torch = {
-		.type = ET_TORCH,
-		.info = FLICKER,
-		.color = {
-			.r = 0xe2, .g = 0x58, .b = 0x22,
-		},
-		.token = "i",
-		.posy = y, .posx = x,
-		.update = demo_torch_update,
-		.destroy = demo_torch_destroy,
-		.list = LIST_HEAD_INIT(torch.list),
-		.floor = cur_floor,
-		.blocks_light = false,
-	};
-
+	struct entity torch = default_torch;
+	torch.posy = y;
+	torch.posx = x;
+	torch.floor = cur_floor;
 	return torch;
 }
 
@@ -181,9 +183,8 @@ def_input_key_fn(place_torch)
 	}
 	if (!floor_map_in_bounds(x, y))
 		return -1;
-	struct entity torch = demo_new_torch(y, x);
-	struct entity *t = malloc(sizeof(torch));
-	memcpy(t, &torch, sizeof(torch));
+	struct entity *t = malloc(sizeof(*t));
+	*t = demo_new_torch(y, x);
 	return floor_add_entity(cur_floor, t);
 }
 
@@ -267,6 +268,15 @@ struct entity default_snake = {
 	.blocks_light = false,
 };
 
+struct entity demo_new_floater(int y, int x)
+{
+	struct entity floater = default_floater;
+	floater.posy = y;
+	floater.posx = x;
+	floater.floor = cur_floor;
+	return floater;
+}
+
 def_entity_fn(demo_floater_update)
 {
 	if(!flickering) { // XXX
@@ -294,7 +304,6 @@ def_entity_fn(demo_floater_update)
 		break;
 	}
 
-
 	entity_move_pos_rel(this, rely, relx);
 	for(int y = this->posy - 1; y <= this->posy + 1; y++)
 		for (int x = this->posx - 1; x <= this->posx + 1; x++)
@@ -307,16 +316,27 @@ def_entity_fn(demo_floater_update)
 				}
 			}
 
-	if(--this->charge.rounds < 0) {
+	struct charge *charge = &this->charge;
+	if(--charge->rounds < 0) {
 		if (this->posy > player.posy && this->posx > player.posx)
-			this->charge.last_seen = LEFT_UP;
+			charge->last_seen = LEFT_UP;
 		else if (this->posy > player.posy && this->posx < player.posx)
-			this->charge.last_seen = RIGHT_UP;
+			charge->last_seen = RIGHT_UP;
 		else if (this->posy < player.posy && this->posx > player.posx)
-			this->charge.last_seen = LEFT_DOWN;
+			charge->last_seen = LEFT_DOWN;
 		else if (this->posy < player.posy && this->posx < player.posx)
-			this->charge.last_seen = RIGHT_DOWN;
-		this->charge.rounds = 3;
+			charge->last_seen = RIGHT_DOWN;
+		// overall 1/9 chance of duplication
+		int nodup = random_int() % 6;
+		int dupy = random_int() % 3 - 1;
+		int dupx = random_int() % 3 - 1;
+		if (charge->last_seen != NONE && !nodup && dupy && dupx &&
+			floor_map_in_bounds(this->posy + dupy, this->posx + dupx)) { // not 0
+			struct entity *dup = malloc(sizeof(*dup));
+			*dup = demo_new_floater(this->posy + dupy, this->posx + dupx);
+			return floor_add_entity(cur_floor, dup);
+		}
+		charge->rounds = 5;
 	}
 	}
 
@@ -347,7 +367,7 @@ struct entity default_floater = {
 	},
 	.charge = {
 		.last_seen = NONE,
-		.rounds = 3
+		.rounds = 1
 	},
 	.combat = {
 		.hp = 1, .hp_max = 1,
