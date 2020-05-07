@@ -19,13 +19,13 @@ impl Ui {
 		let mut terminfo = TermInfo::from_name(&term).unwrap_or_else(|_| -> TermInfo {
 			eprintln!(
 				"Failed to parse the terminfo entry for {}. \
-                 Is one installed for your terminal emulator? \
-                 Defaulting to xterm.",
+			     Is one installed for your terminal emulator? \
+			     Defaulting to xterm.",
 				term
 			);
 			TermInfo::from_name("xterm").expect(
 				"Failed to parse the terminfo entry for xterm. \
-                 You're on your own.",
+			     You're on your own.",
 			)
 		});
 		terminfo.strings.insert(
