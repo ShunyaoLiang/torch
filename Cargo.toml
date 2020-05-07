@@ -1,0 +1,9 @@
+[package]
+name = "torch-rs"
+version = "0.0.0"
+authors = ["Shunyao Liang"]
+edition = "2018"
+
+[dependencies]
+term = "*"
+libc = "0.2"
