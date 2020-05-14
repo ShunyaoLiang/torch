@@ -1,18 +1,22 @@
+#[macro_use]
+extern crate bitflags;
+
 mod ui;
 
 fn main() {
-    let mut ui = ui::Ui::new(ui::Rgb::from(0x0b302c));
+    let mut ui = ui::Ui::new();
 
     let test_windows = [ui::Window {
         lines: 18,
         cols: 32,
         line: 0,
         col: 0,
-        draw: Box::new(|ui, window| {
-            ui.draw(window, 0, 0, "Tes\nt", ui::Rgb::from(0xff5000), None);
-        }),
+        update: |window, ui| {
+            window.draw_ch(ui, 1, 1, '@', ui::Rgb::new(0xff5000), None, ui::Attr::NONE);
+        },
     }];
+
     ui.render(&test_windows);
 
-    std::io::stdin().read_line(&mut String::new());
+    let event = ui.poll_event();
 }
