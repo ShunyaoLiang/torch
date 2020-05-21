@@ -5,8 +5,17 @@ authors = ["Shunyao Liang"]
 edition = "2018"
 
 [dependencies]
-term = "*"
-libc = "0.2"
 bitflags = "1.2"
 cfg-if = "0.1"
-termios = "0.3"
+
+term = { version = "*", optional = true }
+termios = { version = "0.3", optional = true }
+libc = { version = "0.2", optional = true }
+
+sdl2 = { version = "0.34", optional = true, features = ["ttf"] }
+
+[features]
+# Default to a terminal frontend
+default = ["term", "termios", "libc"]
+
+gui = ["sdl2"]
