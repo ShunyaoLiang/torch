@@ -11,6 +11,7 @@ pub struct Gui {
     sdl: sdl2::Sdl,
     video: sdl2::VideoSubsystem,
     ttf: sdl2::ttf::Sdl2TtfContext,
+    event_pump: sdl2::EventPump,
     canvas: sdl2::render::WindowCanvas,
 }
 
@@ -19,22 +20,14 @@ impl Ui for Gui {
         let sdl = sdl2::init().unwrap();
         let video = sdl.video().unwrap();
         let ttf = sdl2::ttf::init().unwrap();
+        let event_pump = sdl.event_pump().unwrap();
         let window = video.window("Torch", 800, 600)
             .position_centered()
             .build()
             .unwrap();
         let mut canvas = window.into_canvas().build().unwrap();
 
-        {
-            let font = ttf.load_font("/usr/share/fonts/misc/cherry-13-r.otb", 13).unwrap();
-            let surface = font.render("@").solid(sdl2::pixels::Color::RGB(255, 80, 0)).unwrap();
-            let texture_creator = canvas.texture_creator();
-            let texture = texture_creator.create_texture_from_surface(&surface).unwrap();
-            canvas.copy(&texture, None, surface.rect()).unwrap();
-            canvas.present();
-        }
-
-        Self { sdl, video, ttf, canvas, }
+        Self { sdl, video, ttf, event_pump, canvas, }
     }
 
     fn render(&mut self, components: &[Component]) {
@@ -50,8 +43,25 @@ impl Ui for Gui {
 
         self.canvas.present();
     }
-    fn size(&self) -> (usize, usize) { unimplemented!() }
-    fn poll_event(&self) -> Event { unimplemented!() }
+
+    fn size(&self) -> (usize, usize) {
+        (24, 80)
+    }
+
+    fn poll_event(&mut self) -> Event {
+        let event = self.event_pump.wait_event();
+        if let sdl2::event::Event::KeyDown { keycode, .. } = event {
+            match keycode.unwrap() {
+                sdl2::keyboard::Keycode::H => Event::Key('h' as u8),
+                sdl2::keyboard::Keycode::J => Event::Key('j' as u8),
+                sdl2::keyboard::Keycode::K => Event::Key('k' as u8),
+                sdl2::keyboard::Keycode::L => Event::Key('l' as u8),
+                _ => Event::Key('_' as u8),
+            }
+        } else {
+            self.poll_event()
+        }
+    }
 }
 
 struct GuiBuffer<'a> {

@@ -15,7 +15,7 @@ pub trait Ui {
     fn new() -> Self;
     fn render(&mut self, components: &[Component]);
     fn size(&self) -> (usize, usize);
-    fn poll_event(&self) -> Event;
+    fn poll_event(&mut self) -> Event;
 }
 
 pub trait Buffer {

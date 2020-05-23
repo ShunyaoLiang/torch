@@ -1,4 +1,5 @@
 use std::ops;
+use std::slice;
 
 pub struct Grid<T: Clone> {
     buf: Vec<T>,
@@ -31,7 +32,7 @@ impl<T: Clone> Grid<T> {
         line < self.lines && col < self.cols
     }
 
-    pub fn windows(&self, size: usize) -> std::slice::Windows<T> {
+    pub fn windows(&self, size: usize) -> slice::Windows<T> {
         self.buf.windows(size)
     }
 }

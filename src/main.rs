@@ -22,16 +22,12 @@ fn f(buffer: &mut dyn ui::Buffer, component: &ui::Component) {
 fn main() {
     let ui;
     cfg_if::cfg_if! {
-        if #[cfg(feature = "default")] {
+        if #[cfg(feature = "gui")] {
+            ui = ui::Gui::new();
+        } else {
             ui = ui::Tui::new();
         }
     }
-    cfg_if::cfg_if! {
-        if #[cfg(feature = "gui")] {
-            ui = ui::Gui::new();
-        }
-    }
-    let g = 0;
     let viewport_component = ui::Component::new((0, 0), (24, 80), f);
     let main_components = [viewport_component];
 
@@ -44,8 +40,8 @@ fn run<Ui>(mut ui: Ui, main_components: &[ui::Component]) -> Result<(), Box<dyn 
     where Ui: ui::Ui {
     loop {
         ui.render(main_components);
-//        let _ = ui.poll_event();
-        let _ = std::io::stdin().read_line(&mut String::new());
+        let _ = ui.poll_event();
+        break;
     }
     
     Ok(())

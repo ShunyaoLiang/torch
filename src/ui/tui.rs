@@ -80,7 +80,7 @@ impl Ui for Tui {
         self.buffer.size()
     }
 
-    fn poll_event(&self) -> Event {
+    fn poll_event(&mut self) -> Event {
         let mut buffer = [0u8; 1];
         let _ = stdin().read_exact(&mut buffer);
         Event::Key(buffer[0])
