@@ -6,16 +6,4 @@ edition = "2018"
 
 [dependencies]
 bitflags = "1.2"
-cfg-if = "0.1"
-
-term = { version = "*", optional = true }
-termios = { version = "0.3", optional = true }
-libc = { version = "0.2", optional = true }
-
-sdl2 = { version = "0.34", optional = true, features = ["ttf"] }
-
-[features]
-# Default to a terminal frontend
-default = ["term", "termios", "libc"]
-
-gui = ["sdl2"]
+crossterm = "0.17"

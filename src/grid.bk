@@ -9,7 +9,7 @@ pub struct Grid<T: Clone> {
 
 impl<T: Clone> Grid<T> {
     pub fn new((lines, cols): (usize, usize), value: T) -> Self {
-        Self { buf: vec![value; lines * cols], lines, cols }
+        Self { buf: vec![value; lines * cols], lines, cols, }
     }
 
     pub fn resize(&mut self, (new_lines, new_cols): (usize, usize), value: T) {
@@ -55,7 +55,7 @@ impl<T: Clone> ops::IndexMut<(usize, usize)> for Grid<T> {
     fn index_mut(&mut self, (line, col): (usize, usize)) -> &mut Self::Output {
         if self.in_bounds((line, col)) {
             &mut self.buf[line * self.cols + col]
-        } else {
+        } else { 
             panic!(
                 "pos out of bounds: size is {:?} but pos is {:?}",
                 (self.lines, self.cols),
