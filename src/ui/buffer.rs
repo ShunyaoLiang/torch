@@ -19,20 +19,8 @@ impl Buffer {
         self.0.resize(size, Glyph::default());
     }
 
-    fn clear(&mut self) {
+    pub fn clear(&mut self) {
         self.0.fill(Glyph::default());
-    }
-
-    fn size(&self) -> (usize, usize) {
-        self.0.size()
-    }
-
-    fn first(&self) -> &Glyph {
-        &self.0[(0, 0)]
-    }
-
-    fn windows(&self, size: usize) -> std::slice::Windows<Glyph> {
-        self.0.windows(size)
     }
 
     pub fn draw(
@@ -63,7 +51,15 @@ impl Buffer {
             update_term_attrs(&pair[0], &pair[1]);
             print!("{}", &pair[1].ch);
         }
-        stdout.flush();
+        stdout.flush().unwrap();
+    }
+
+    fn first(&self) -> &Glyph {
+        &self.0[(0, 0)]
+    }
+
+    fn windows(&self, size: usize) -> std::slice::Windows<Glyph> {
+        self.0.windows(size)
     }
 }
 

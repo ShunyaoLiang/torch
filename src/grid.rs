@@ -22,10 +22,6 @@ impl<T: Clone> Grid<T> {
         self.buf = vec![value; self.lines * self.cols];
     }
 
-    pub fn size(&self) -> (usize, usize) {
-        (self.lines, self.cols)
-    }
-
     pub fn in_bounds(&self, (line, col): (usize, usize)) -> bool {
         line < self.lines && col < self.cols
     }

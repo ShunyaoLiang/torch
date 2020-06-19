@@ -1,16 +1,15 @@
 use crate::ui::buffer::{Buffer, Modifiers, Rgb};
 
 use crossterm::{
-    cursor, event, execute, queue,
-    style::{
-        Attribute::{Bold, Reset, Reverse, SlowBlink, Underlined},
-        Color, Print, SetAttribute, SetBackgroundColor, SetForegroundColor,
+    cursor, event, execute,
+    style::{Attribute::Reset, SetAttribute},
+    terminal::{
+        self, disable_raw_mode, enable_raw_mode, Clear, ClearType, EnterAlternateScreen,
+        LeaveAlternateScreen,
     },
-    terminal::{self, Clear, ClearType, EnterAlternateScreen, LeaveAlternateScreen},
     QueueableCommand,
 };
 
-use std::fmt::Display;
 use std::io::{self, Write};
 
 pub struct Ui<'a> {
@@ -19,10 +18,11 @@ pub struct Ui<'a> {
 }
 
 impl<'a> Ui<'a> {
-    pub fn new() -> Self {
+    pub fn with_components(components: &'a [Component<'a>]) -> Self {
         execute!(io::stdout(), SetAttribute(Reset), cursor::Hide, EnterAlternateScreen,).unwrap();
+        enable_raw_mode().unwrap();
 
-        Self { components: &[], buffer: Buffer::new(terminal_size()) }
+        Self { components, buffer: Buffer::new(terminal_size()) }
     }
 
     pub fn set_components(&mut self, components: &'a [Component<'a>]) {
@@ -33,6 +33,7 @@ impl<'a> Ui<'a> {
         let mut stdout = io::stdout();
 
         self.buffer.resize(terminal_size());
+        self.buffer.clear();
 
         stdout.queue(Clear(ClearType::All)).unwrap();
         for component in self.components {
@@ -58,6 +59,7 @@ impl<'a> Ui<'a> {
 
 impl Drop for Ui<'_> {
     fn drop(&mut self) {
+        disable_raw_mode().unwrap();
         execute!(io::stdout(), SetAttribute(Reset), cursor::Show, LeaveAlternateScreen,).unwrap();
     }
 }
@@ -96,7 +98,7 @@ impl<'buf> Pen<'buf> {
             if ch == '\n' {
                 self.draw_str(&text[pos + 1..], (line + 1, col), fg, bg, modifiers);
                 break;
-            } else if col + pos as u16 > self.cols {
+            } else if col + pos as u16 == self.cols {
                 // Wrap text if we have the lines to do so
                 if line < self.lines - 1 {
                     self.draw_str(&text[pos..], (line + 1, col), fg, bg, modifiers);
@@ -115,7 +117,7 @@ impl<'buf> Pen<'buf> {
     }
 }
 
-fn terminal_size() -> (usize, usize) {
+pub fn terminal_size() -> (usize, usize) {
     let (cols, lines) = terminal::size().expect("Failed to get terminal size");
     (lines as usize, cols as usize)
 }
