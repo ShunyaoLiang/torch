@@ -1,35 +1,21 @@
-mod grid;
 mod ui;
 
-use ui::Component;
-use ui::Modifiers;
-use ui::Rgb;
-use ui::Ui;
-
-use std::error::Error;
+use ui::{Color, Modifiers, Pen, Ui};
 
 fn main() {
-    let test_component = Component::new((3, 4), (24, 80), |mut pen| {
-        pen.draw('@', (0, 0), Rgb::new(0xeedc67), Rgb::black(), Modifiers::UNDERLINE);
-        pen.draw_str(
-            "Very Long Test String",
-            (1, 0),
-            Rgb::new(0xeedc67),
-            Rgb::black(),
-            Modifiers::BLINK,
-        );
-    });
-    let test_components = [test_component];
-    let ui = Ui::with_components(&test_components);
-
-    if let Err(e) = run(ui) {
-        eprintln!("Runtime Error: {}", e);
-    };
-}
-
-fn run(mut ui: ui::Ui) -> Result<(), Box<dyn Error>> {
+    let mut ui = Ui::new(&[&TestComponent]);
     ui.render_components();
     ui.poll_event();
+}
 
-    Ok(())
+struct TestComponent;
+
+impl ui::Component for TestComponent {
+    fn bounds(&self) -> ui::Rectangle {
+        ui::Rectangle::new((2, 0), (24, 80))
+    }
+
+    fn view(&self, mut pen: Pen) {
+        pen.draw_text("Test", (0, 2), Color::new(0xff5000), Color::default(), Modifiers::BOLD);
+    }
 }
