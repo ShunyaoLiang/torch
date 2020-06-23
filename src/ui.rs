@@ -1,4 +1,4 @@
-//! A module that abstracts and buffers interacting with the terminal.
+//! A simple module that abstracts and buffers creating terminal user interfaces.
 
 use crossterm::{
     self as ct,
@@ -12,44 +12,53 @@ use std::slice;
 
 pub use ct::event::Event;
 
-pub struct Ui<'a> {
-    buffer: Buffer,
-    components: &'a [&'a dyn Component],
+pub struct Ui {
+    lines: u16,
+    cols: u16,
 }
 
-impl<'a> Ui<'a> {
-    pub fn new(components: &'a [&'a dyn Component]) -> Self {
-        set_up_terminal();
-        Self {
-            components,
-            buffer: Buffer::new(terminal_size()),
-        }
+impl Ui {
+    pub fn new() -> Self {
+        || -> ct::Result<()> {
+            stdout()
+                .execute(ct::style::SetAttribute(ct::style::Attribute::Reset))?
+                .execute(ct::cursor::Hide)?
+                .execute(ct::terminal::EnterAlternateScreen)?;
+            ct::terminal::enable_raw_mode()?;
+
+            Ok(())
+        }().expect("Couldn't set up the terminal");
+
+        let (lines, cols) = terminal_size();
+
+        Self { lines, cols }
     }
 
-    pub fn set_components(&mut self, components: &'a [&'a dyn Component]) {
-        self.components = components;
-    }
-
-    pub fn render_components(&mut self) {
-        self.buffer.clear();
-        for component in self.components {
-            let pen = Pen::new(&mut self.buffer, component.bounds());
+    pub fn render<F>(&self, f: F)
+    where
+        F: FnOnce(u16, u16) -> Box<[Box<dyn Component>]>
+    {
+        let mut buffer = Buffer::new(self.lines as usize, self.cols as usize);
+        for component in f(self.lines, self.cols).iter_mut() {
+            let pen = Pen::new(&mut buffer, component.bounds());
             component.view(pen);
         }
-        self.buffer.flush();
+        buffer.flush();
     }
 
     pub fn poll_event(&mut self) -> Event {
         let event = ct::event::read().expect("Couldn't poll for an input event");
         if let Event::Resize(cols, lines) = event {
-            self.buffer.resize(lines as usize, cols as usize);
-            return Event::Resize(lines, cols)
+            self.lines = lines;
+            self.cols = cols;
+            return self.poll_event();
         }
+
         event
     }
 }
 
-impl Drop for Ui<'_> {
+impl Drop for Ui {
     fn drop(&mut self) {
         || -> ct::Result<()> {
             ct::terminal::disable_raw_mode()?;
@@ -64,7 +73,7 @@ impl Drop for Ui<'_> {
 
 pub trait Component {
     fn bounds(&self) -> Rectangle;
-    fn view(&self, pen: Pen);
+    fn view(&mut self, pen: Pen);
 }
 
 /// Abstracts drawing to the buffer. Used by `Component`s to draw to buffers.
@@ -113,13 +122,11 @@ struct Buffer {
 }
 
 impl Buffer {
-    fn new((lines, cols): (usize, usize)) -> Self {
+    fn new(lines: usize, cols: usize) -> Self {
         Self { buf: vec![Glyph::default(); lines * cols], lines, cols, }
     }
 
     fn flush(&self) {
-        use ct::style::{Print, SetBackgroundColor, SetForegroundColor};
-        use ct::cursor::MoveTo;
         use std::io::Write;        
 
         || -> ct::Result<()> {
@@ -127,28 +134,19 @@ impl Buffer {
             let first = self.first();
             set_term_attrs(&Glyph::default(), first)?;
             stdout
-                .queue(SetForegroundColor(From::from(first.fg)))?
-                .queue(SetBackgroundColor(From::from(first.bg)))?
-                .queue(MoveTo(0, 0))?
-                .queue(Print(first.c))?;
+                .queue(ct::style::SetForegroundColor(first.fg.into()))?
+                .queue(ct::style::SetBackgroundColor(first.bg.into()))?
+                .queue(ct::cursor::MoveTo(0, 0))?
+                .queue(ct::style::Print(first.c))?;
 
             for pair in self.pairs() {
                 set_term_attrs(&pair[0], &pair[1])?;
-                stdout.queue(Print(pair[1].c))?;
+                stdout.queue(ct::style::Print(pair[1].c))?;
             }
             stdout.flush()?;
 
             Ok(())
         }().expect("Couldn't flush the UI buffer");
-    }
-
-    fn clear(&mut self) {
-        self.buf = vec![Glyph::default(); self.lines * self.cols];
-    }
-
-    fn resize(&mut self, lines: usize, cols: usize) {
-        self.lines = lines;
-        self.cols = cols;
     }
 
     fn in_bounds(&self, (line, col): (usize, usize)) -> bool {
@@ -201,16 +199,16 @@ fn set_term_attrs(from: &Glyph, to: &Glyph) -> ct::Result<()> {
     let enable = if !(from.modifiers - to.modifiers).is_empty() {
         stdout
             .queue(SetAttribute(Attribute::Reset))?
-            .queue(SetForegroundColor(From::from(to.fg)))?
-            .queue(SetBackgroundColor(From::from(to.bg)))?;
+            .queue(SetForegroundColor(to.fg.into()))?
+            .queue(SetBackgroundColor(to.bg.into()))?;
 
         to.modifiers
     } else {
         if from.fg != to.fg {
-            stdout.queue(SetForegroundColor(From::from(to.fg)))?;
+            stdout.queue(SetForegroundColor(to.fg.into()))?;
         }
         if from.bg != to.bg {
-            stdout.queue(SetBackgroundColor(From::from(to.bg)))?;
+            stdout.queue(SetBackgroundColor(to.bg.into()))?;
         }
 
         to.modifiers - from.modifiers
@@ -330,22 +328,11 @@ impl ops::Add<(u16, u16)> for Rectangle {
     }
 }
 
-fn set_up_terminal() {
-    || -> ct::Result<()> {
-        stdout()
-            .execute(ct::style::SetAttribute(ct::style::Attribute::Reset))?
-            .execute(ct::cursor::Hide)?
-            .execute(ct::terminal::EnterAlternateScreen)?;
-        ct::terminal::enable_raw_mode()?;
-        Ok(())
-    }().expect("Couldn't set up the terminal");
-}
-
 /// Returns the current terminal dimensions as (lines, cols).
-pub fn terminal_size() -> (usize, usize) {
+pub fn terminal_size() -> (u16, u16) {
     let (cols, lines) = ct::terminal::size().map_err(|_| {
         eprintln!("Couldn't get the size of the terminal. Defaulting to 24x80");
         (80, 24)
     }).unwrap();
-    (lines as usize, cols as usize)
+    (lines, cols)
 }
