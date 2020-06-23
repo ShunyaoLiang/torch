@@ -1,5 +1,5 @@
 [package]
-name = "torch-rs"
+name = "torch"
 version = "0.0.0"
 authors = ["Shunyao Liang"]
 edition = "2018"
