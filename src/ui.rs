@@ -1,6 +1,6 @@
 //! A module that buffers and provides abstractions over creating terminal user interfaces.
 //!
-//! All terminal interaction is done through the `Ui` struct. There are two primary methods of 
+//! All terminal interaction is done through the `Ui` struct. There are two primary methods of
 //! drawing to the screen: `Ui::render()` which lets the client draw to a buffer which is
 //! flushed to the screen at the end, and `ui::Glimmer`s which are scheduled draws to the
 //! screen at regular intervals only while the `Ui` is blocking (`Ui::read_event()`).
@@ -55,6 +55,7 @@ use std::thread;
 use std::time::{Duration, SystemTime};
 
 pub use ct::event::Event;
+pub use ct::event::KeyCode;
 
 /// Abstracts and buffers terminal interaction.
 pub struct Ui {
@@ -83,7 +84,10 @@ impl Ui {
 			(80, 24)
 		});
 
-		Self { lines, cols, buffer: Buffer::new(lines, cols), glimmers: Glimmers::new() }
+		let buffer = Buffer::new(lines, cols);
+		buffer.flush();
+
+		Self { lines, cols, buffer, glimmers: Glimmers::new() }
 	}
 
 	pub fn render<F>(&mut self, f: F)
@@ -147,6 +151,11 @@ impl Ui {
 		event
 	}
 
+	pub fn size(&self) -> (u16, u16) {
+		(self.lines, self.cols)
+	}
+
+	#[allow(dead_code)]
 	pub fn typewrite<T>(
 		&mut self, text: T, pos: (u16, u16), fg: Color, bg: Color, modifiers: Modifiers,
 	) where
@@ -157,7 +166,6 @@ impl Ui {
 			pos,
 			Rectangle::new((0, 0), (self.lines, self.cols)),
 			|c, pos| {
-				// draw_direct(c, pos, fg, bg, modifiers);
 				self.buffer[pos]
 					.set_c(c)
 					.set_modifiers(modifiers)
@@ -215,6 +223,10 @@ impl Glimmers {
 			Ok(index) => self.0.insert(index, glimmer),
 			Err(index) => self.0.insert(index, glimmer),
 		}
+	}
+
+	pub fn clear(&mut self) {
+		self.0.clear();
 	}
 
 	fn is_empty(&self) -> bool {
@@ -302,6 +314,14 @@ impl<'buffer> Canvas<'buffer> {
 
 	pub fn darken(&mut self, factor: f32, pos: (u16, u16)) {
 		self.lighten(-factor, pos);
+	}
+
+	pub fn size(&self) -> (u16, u16) {
+		(self.buffer.lines, self.buffer.cols)
+	}
+
+	pub fn in_bounds(&self, pos: (u16, u16)) -> bool {
+		self.buffer.in_bounds(pos)
 	}
 }
 
@@ -567,7 +587,7 @@ bitflags::bitflags! {
 	}
 }
 
-#[derive(Clone, Copy, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Color {
 	r: u8,
 	g: u8,
@@ -586,9 +606,35 @@ impl Default for Color {
 	}
 }
 
-impl From<Color> for ct::style::Color {
-	fn from(color: Color) -> Self {
-		Self::Rgb { r: color.r, g: color.g, b: color.b }
+impl ops::Add for Color {
+	type Output = Self;
+
+	fn add(self, other: Self) -> Self {
+		Self {
+			r: self.r.saturating_add(other.r),
+			g: self.g.saturating_add(other.g),
+			b: self.b.saturating_add(other.b),
+		}
+	}
+}
+
+impl ops::AddAssign for Color {
+	fn add_assign(&mut self, other: Color) {
+		self.r = self.r.saturating_add(other.r);
+		self.g = self.g.saturating_add(other.g);
+		self.b = self.g.saturating_add(other.b);
+	}
+}
+
+impl ops::Mul<f32> for Color {
+	type Output = Self;
+
+	fn mul(self, rhs: f32) -> Self {
+		Self {
+			r: ((self.r as f32) * rhs) as u8,
+			g: ((self.g as f32) * rhs) as u8,
+			b: ((self.b as f32) * rhs) as u8,
+		}
 	}
 }
 
@@ -597,6 +643,12 @@ impl ops::MulAssign<f32> for Color {
 		self.r = (self.r as f32 * rhs) as u8;
 		self.g = (self.g as f32 * rhs) as u8;
 		self.b = (self.b as f32 * rhs) as u8;
+	}
+}
+
+impl From<Color> for ct::style::Color {
+	fn from(color: Color) -> Self {
+		Self::Rgb { r: color.r, g: color.g, b: color.b }
 	}
 }
 
