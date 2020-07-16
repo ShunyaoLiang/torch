@@ -51,8 +51,7 @@ use std::io::{stdout, Write};
 use std::ops;
 use std::slice;
 use std::string;
-use std::thread;
-use std::time::{Duration, SystemTime};
+use std::time::{Duration, Instant};
 
 pub use ct::event::Event;
 pub use ct::event::KeyCode;
@@ -108,11 +107,11 @@ impl Ui {
 			}
 
 			let timeout = glimmers.next_timeout();
-			let now = SystemTime::now();
+			let now = Instant::now();
 			match ct::event::poll(timeout) {
 				// Interrupted by incoming event.
 				Ok(true) => {
-					decrement_timeouts(glimmers, now.elapsed().unwrap());
+					decrement_timeouts(glimmers, min(now.elapsed(), timeout));
 					return self.read_event_internal();
 				}
 				// No event.
@@ -131,7 +130,6 @@ impl Ui {
 				_ => unreachable!(),
 			}
 		}
-
 
 		fn decrement_timeouts(glimmers: &mut Glimmers, elapsed: Duration) {
 			for glimmer in glimmers {
@@ -174,7 +172,6 @@ impl Ui {
 				if !is_event_available() {
 					self.buffer.resize(self.lines, self.cols);
 					self.buffer.flush();
-					thread::sleep(Duration::from_millis(100));
 				}
 			},
 		);
