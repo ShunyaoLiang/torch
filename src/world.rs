@@ -1,248 +1,185 @@
-use crate::ray_cast;
-use crate::ui::{Canvas, Color, Element};
+mod entity;
+mod region;
 
-use std::cmp::max;
-use std::collections::HashSet;
-use std::f64::consts::PI;
-use std::ops;
+use components::LightComponent;
 
+use entity::Entity;
+use entity::EntityClass;
+
+use region::Region;
+use region::cave::new_cave;
+
+use petgraph::graph::DefaultIx;
+use petgraph::graph::NodeIndex;
+use petgraph::graph::UnGraph;
+
+use slotmap::new_key_type;
+use slotmap::SecondaryMap;
+use slotmap::SlotMap;
+
+use torch_core::color::Color;
+use torch_core::shadow::cast as shadow_cast;
+use torch_core::frontend::Event;
+use torch_core::frontend::Frontend;
+use torch_core::frontend::KeyCode;
+
+use std::num::TryFromIntError;
+
+pub mod camera;
+pub mod position;
+
+pub use position::Offset;
+pub use position::Position;
+
+#[derive(Clone, Debug)]
 pub struct World {
-	place: Place,
+	entities: SlotMap<EntityKey, Entity>,
+	light_components: SecondaryMap<EntityKey, LightComponent>,
+	player: EntityKey,
+	regions: UnGraph<Region, ()>,
+	current_region: RegionKey,
 }
 
 impl World {
 	pub fn new() -> Self {
-		Self { place: Place::new() }
+		let mut world = Self {
+			entities: SlotMap::with_key(),
+			light_components: SecondaryMap::new(),
+			player: EntityKey::default(),
+			regions: UnGraph::new_undirected(),
+			current_region: RegionKey::default(),
+		};
+
+		let test_region = world.regions.add_node(new_cave());
+		world.current_region = test_region;
+
+		let player = world.create_entity(EntityClass::PLAYER, test_region, (19, 19))
+			.light(LightComponent::PLAYER)
+			.create();
+		world.player = player;
+
+		world.create_entity(EntityClass::TORCH, test_region, (20, 20))
+			.light(LightComponent::TORCH)
+			.create();
+
+		world
 	}
 
-	pub fn current_place_mut(&mut self) -> &mut Place {
-		&mut self.place
-	}
-}
-
-pub struct Place {
-	pub entities: Vec<Entity>,
-	pub map: Map,
-}
-
-impl Place {
-	pub fn new() -> Self {
-		Self { entities: Vec::new(), map: Map::default() }
+	pub fn update(&mut self) {
+		self.update_light_components();
 	}
 
-	pub fn add_entity(&mut self, entity: Entity) -> Result<(), ()> {
-		let (x, y) = (entity.x, entity.y);
-		if !self.map[(x, y)].holds_entity {
-			self.entities.push(entity);
-			self.map[(x, y)].holds_entity = true;
-
-			Ok(())
-		} else {
-			Err(())
+	fn update_light_components(&mut self) {
+		for tile in self.current_region_mut().tiles.iter_mut() {
+			tile.light_level = 0.;
+			tile.lighting = Color::BLACK;
 		}
-	}
-}
 
-pub struct Map {
-	grid: Vec<Tile>,
-	width: u16,
-	height: u16,
-}
+		let mut light_components = self.light_components.clone();
+		for (key, entity) in self.entities.clone() {
+			if !light_components.contains_key(key) {
+				continue;
+			}
+			let mut light_component = light_components.get_mut(key).unwrap();
+			light_component.lit_positions.clear();
+			let pos = entity.position.into();
+			shadow_cast(self.current_region_mut(), pos, 8, |tile, (x, y)| {
+				light_component.lit_positions.push((x, y).into());
+				let distance_2 =
+					(pos.0 as f32 - x as f32).powi(2) +
+					(pos.1 as f32 - y as f32).powi(2);
+				let dlight = light_component.luminance / distance_2.max(1.0);
+				tile.light_level += dlight;
+				tile.lighting += light_component.color * dlight;
 
-impl Map {
-	pub fn in_bounds(&self, x: u16, y: u16) -> bool {
-		x < self.width && y < self.height
-	}
-
-	pub fn clear_lights(&mut self) {
-		for tile in &mut self.grid {
-			tile.light = 0f32;
-			tile.lighting = Color::new(0);
-		}
-	}
-}
-
-impl Default for Map {
-	fn default() -> Self {
-		Self { grid: vec![Tile::default(); 10_000], width: 100, height: 100 }
-	}
-}
-
-impl ops::Index<(u16, u16)> for Map {
-	type Output = Tile;
-
-	fn index(&self, (x, y): (u16, u16)) -> &Self::Output {
-		if self.in_bounds(x, y) {
-			&self.grid[(y * self.width + x) as usize]
-		} else {
-			panic!(
-				"pos out of bounds: size is {:?} but pos is {:?}",
-				(self.width, self.height),
-				(x, y)
-			)
-		}
-	}
-}
-
-impl ops::IndexMut<(u16, u16)> for Map {
-	fn index_mut(&mut self, (x, y): (u16, u16)) -> &mut Self::Output {
-		if self.in_bounds(x, y) {
-			&mut self.grid[(y * self.width + x) as usize]
-		} else {
-			panic!(
-				"pos out of bounds: size is {:?} but pos is {:?}",
-				(self.width, self.height),
-				(x, y)
-			)
-		}
-	}
-}
-
-#[derive(Clone, Copy, Debug)]
-pub struct Tile {
-	holds_entity: bool,
-	blocks: bool,
-	pub sprite: char,
-	pub color: Color,
-	light: f32,
-	lighting: Color,
-}
-
-impl Tile {
-	pub fn blocks(&self) -> bool {
-		self.blocks || self.holds_entity
-	}
-
-	fn color(&self) -> Color {
-		self.color * self.light + self.lighting
-	}
-}
-
-impl Default for Tile {
-	fn default() -> Self {
-		Self {
-			holds_entity: false,
-			blocks: false,
-			sprite: '.',
-			color: Color::new(0x999999),
-			light: 0f32,
-			lighting: Color::new(0),
-		}
-	}
-}
-
-#[derive(Debug)]
-pub struct Entity {
-	pub x: u16,
-	pub y: u16,
-	pub sprite: char,
-	pub color: Color,
-	pub light_source: Option<LightSource>,
-}
-
-impl Entity {
-	pub fn new((x, y): (u16, u16), sprite: char, color: Color) -> Self {
-		Self { x, y, sprite, color, light_source: None }
-	}
-
-	pub fn move_by(&mut self, x: i16, y: i16, place: &mut Place) -> Result<(), ()> {
-		let x = (x + self.x as i16) as u16;
-		let y = (y + self.y as i16) as u16;
-
-		if place.map.in_bounds(x, y) && !place.map[(x, y)].blocks() {
-			place.map[(self.x, self.y)].holds_entity = false;
-			place.map[(x, y)].holds_entity = true;
-			self.x = x;
-			self.y = y;
-
-			Ok(())
-		} else {
-			Err(())
-		}
-	}
-
-	pub fn cast_light(&mut self, map: &mut Map) {
-		if let Some(light_source) = self.light_source.take() {
-			// XXX
-			let mut drawn_to = HashSet::new();
-			eprint!("8732");
-			ray_cast::cast_at(map, self.x, self.y, light_source.radius, |tile, x, y| {
-				if drawn_to.contains(&(x, y)) {
-					return;
-				}
-
-				// TODO: Should have a function for distance between two points.
-				let distance = max(
-					(((y as i32 - self.y as i32).pow(2) + (x as i32 - self.x as i32).pow(2)) as f64)
-						.sqrt() as u16,
-					1,
-				);
-				let dlight = light_source.bright / (distance.pow(1) as f64 * PI) as f32;
-
-				if x == self.x && y == self.y {
-					tile.light += light_source.bright;
-				} else {
-					tile.light += dlight;
-					tile.lighting += light_source.color * dlight;
-				}
-
-				drawn_to.insert((x, y));
-			});
-			self.light_source = Some(light_source);
-		}
-	}
-}
-
-pub struct Camera<'a> {
-	place: &'a mut Place,
-	player: &'a Entity,
-}
-
-impl<'a> Camera<'a> {
-	pub fn new(place: &'a mut Place, player: &'a Entity) -> Self {
-		Self { place, player }
-	}
-
-	fn xy_to_linecol(canvas: &mut Canvas, x: u16, y: u16) -> Result<(u16, u16), ()> {
-		let (lines, _) = canvas.size();
-		let pos = (lines.checked_sub(y + 1).ok_or(())?, x);
-		if canvas.in_bounds(pos) {
-			Ok(pos)
-		} else {
-			Err(())
-		}
-	}
-}
-
-impl Element for Camera<'_> {
-	fn view(&mut self, canvas: &mut Canvas) {
-		ray_cast::cast_at(&mut self.place.map, self.player.x, self.player.y, 100, |tile, x, y| {
-			let _ = Self::xy_to_linecol(canvas, x, y).map(|pos| {
-				canvas.draw(tile.sprite).at(pos).fg(tile.color()).ink();
-			});
-		});
-
-		for entity in &self.place.entities {
-			let _ = Self::xy_to_linecol(canvas, entity.x, entity.y).map(|pos| {
-				canvas.draw(entity.sprite).at(pos).fg(entity.color).ink();
+				Ok(())
 			});
 		}
+		self.light_components = light_components;
+	}
 
-		let _ = Self::xy_to_linecol(canvas, self.player.x, self.player.y).map(|pos|
-			canvas.draw(self.player.sprite).at(pos).fg(self.player.color).ink()
-		);
+	pub fn current_region_mut(&mut self) -> &mut Region {
+		self.regions.node_weight_mut(self.current_region).unwrap()
+	}
+
+	pub fn player_pos(&self) -> Position {
+		self.entity(self.player).unwrap().position
+	}
+
+	pub fn offset_player_position(&mut self, offset: impl Into<Offset>) -> Result<()> {
+		self.offset_entity_position(self.player, offset)
+	}
+
+	pub fn light_components(&self) -> &SecondaryMap<EntityKey, LightComponent> {
+		&self.light_components
 	}
 }
 
-#[derive(Debug)]
-pub struct LightSource {
-	pub radius: u16,
-	pub bright: f32,
-	pub color: Color,
+new_key_type! {
+	pub struct EntityKey;
 }
 
-impl LightSource {
-	pub fn new(radius: u16, bright: f32, color: Color) -> Self {
-		Self { radius, bright, color }
+pub type RegionKey = NodeIndex<DefaultIx>;
+
+#[derive(thiserror::Error, Debug)]
+pub enum Error {
+	#[error("entity does not exist")]
+	EntityKey,
+	#[error("integer overflow or underflow")]
+	Integer(#[from] TryFromIntError),
+	#[error("movement illegal")]
+	Movement,
+	#[error("position out of bounds")]
+	OutOfBounds,
+	#[error("region does not exist")]
+	RegionKey,
+}
+
+pub type Result<T> = std::result::Result<T, Error>;
+
+mod components {
+	use torch_core::color::Color;
+
+	use super::position::Position;
+
+	#[derive(Clone, Debug)]
+	pub struct LightComponent {
+		pub luminance: f32,
+		pub color: Color,
+		pub lit_positions: Vec<Position>,
 	}
+
+	impl LightComponent {
+		pub const PLAYER: Self = Self::new(1.8, Color::new(0x0a0a0a));
+		pub const TORCH: Self = Self::new(1., Color::new(0xff5000));
+
+		const fn new(luminance: f32, color: Color) -> Self {
+			Self { luminance, color, lit_positions: Vec::new() }
+		}
+	}
+}
+
+pub fn place_torch(world: &mut World, frontend: &mut Frontend) -> anyhow::Result<()> {
+	let pos = world.player_pos().try_add(match frontend.read_event()? {
+		Event::Key(key) => {
+			match key.code {
+				KeyCode::Char('h') => (-1, 0),
+				KeyCode::Char('j') => (0, -1),
+				KeyCode::Char('k') => (0, 1),
+				KeyCode::Char('l') => (1, 0),
+				KeyCode::Char('y') => (-1, 1),
+				KeyCode::Char('u') => (1, 1),
+				KeyCode::Char('b') => (-1, -1),
+				KeyCode::Char('n') => (1, -1),
+				_ => return place_torch(world, frontend),
+			}
+		}
+		_ => return place_torch(world, frontend),
+	})?;
+
+	world.create_entity(EntityClass::TORCH, world.current_region, pos)
+		.light(LightComponent::TORCH)
+		.create();
+
+	Ok(())
 }
