@@ -32,8 +32,7 @@ impl Buffer {
 		}
 	}
 
-	pub fn flush(&mut self, writer: &mut impl Write) -> Result<()>
-	{
+	pub fn flush(&mut self, writer: &mut impl Write) -> Result<()> {
 		queue!(writer, MoveCursorTo(0, 0))?;
 		queue_cell(writer, self.first())?;
 		for (current, last) in self.data.windows(2).map(|w| (w[1], w[0])) {
@@ -66,28 +65,18 @@ fn queue_cell(writer: &mut impl Write, cell: Cell) -> Result<()> {
 }
 
 fn queue_cell_diff(writer: &mut impl Write, current: Cell, last: Cell) -> Result<()> {
-	if colors_equal_and_attributes_cumulate(current, last) {
-		let added = current.attributes - last.attributes;
-		if added.contains(Attributes::BOLD) {
-			queue!(writer, SetAttribute(Attribute::Bold))?
-		}
-		if added.contains(Attributes::REVERSE) {
-			queue!(writer, SetAttribute(Attribute::Reverse))?
-		}
-		queue!(writer, Print(current.c))?;
-
-		Ok(())
-	} else if current == last {
-		queue!(writer, Print(current.c))?;
-
-		Ok(())
-	} else {
-		queue_cell(writer, current)
+	if current.fg_color != last.fg_color {
+		queue!(writer, SetForegroundColor(current.fg_color.into()))?;
 	}
-}
+	if current.bg_color != last.bg_color {
+		queue!(writer, SetBackgroundColor(current.bg_color.into()))?;
+	}
+	if current.attributes != last.attributes {
+		queue!(writer, SetAttributes(current.attributes.into()))?;
+	}
+	queue!(writer, Print(current.c))?;
 
-fn colors_equal_and_attributes_cumulate(a: Cell, b: Cell) -> bool {
-	a.fg_color == b.fg_color && a.bg_color == b.bg_color && a.attributes > b.attributes
+	Ok(())
 }
 
 impl<P> Index<P> for Buffer

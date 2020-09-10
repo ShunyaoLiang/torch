@@ -46,13 +46,15 @@ impl EntityClass {
 
 pub struct EntityBuilder<'a> {
 	world: &'a mut World,
-	entity: EntityKey,
+	class: EntityClass,
+	region: RegionKey,
+	position: Position,
 	light_component: Option<LightComponent>,
 }
 
 impl<'a> EntityBuilder<'a> {
-	fn new(world: &'a mut World, entity: EntityKey) -> Self {
-		Self { world, entity, light_component: None }
+	fn new(world: &'a mut World, class: EntityClass, region: RegionKey, position: Position) -> Self {
+		Self { world, class, region, position, light_component: None }
 	}
 
 	pub fn light(mut self, light_component: LightComponent) -> Self {
@@ -61,12 +63,17 @@ impl<'a> EntityBuilder<'a> {
 		self
 	}
 
-	pub fn create(mut self) -> EntityKey {
+	pub fn create(mut self) -> Result<EntityKey> {
+		let entity = self.world.entities.insert(Entity::new(self.class, self.region, self.position));
+		if self.world.is_tile_blocked(self.region, self.position)? {
+			return Err(Error::BadPosition);
+		}
+		self.world.tile_mut(self.region, self.position)?.held_entity = Some(entity);
 		if let Some(light_component) = self.light_component {
-			self.world.light_components.insert(self.entity, light_component);
+			self.world.light_components.insert(entity, light_component);
 		}
 
-		self.entity
+		Ok(entity)
 	}
 }
 
@@ -74,10 +81,7 @@ impl World {
 	pub(super) fn create_entity(
 		&mut self, class: EntityClass, region: RegionKey, position: impl Into<Position>
 	) -> EntityBuilder {
-		let position = position.into();
-		let entity = self.entities.insert(Entity::new(class, region, position));
-		self.tile_mut(region, position).unwrap().held_entity = Some(entity);
-		EntityBuilder::new(self, entity)
+		EntityBuilder::new(self, class, region, position.into())
 	}
 
 	pub fn set_entity_position(

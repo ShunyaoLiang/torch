@@ -54,7 +54,7 @@ fn run(mut world: World, mut frontend: Frontend) -> Result<()> {
 					screen.lighten(shift, (height - y - 1, *x));
 				}
 			}
-			
+
 			Some(Duration::from_millis(60))
 		})?;
 		match event.unwrap() {

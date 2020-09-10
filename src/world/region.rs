@@ -121,7 +121,7 @@ impl Default for Tile {
 
 impl Occluder for Tile {
 	fn occludes(&self) -> bool {
-		self.class.occludes
+		self.class.blocks
 	}
 }
 
@@ -129,12 +129,12 @@ impl Occluder for Tile {
 struct TileClass {
 	token: char,
 	color: Color,
-	occludes: bool,
+	blocks: bool,
 }
 
 impl TileClass {
-	const GROUND: Self = Self { token: '.', color: Color::new(0x222222), occludes: false };
-	const CAVE_WALL: Self = Self { token: '#', color: Color::new(0x222222), occludes: true };
+	const GROUND: Self = Self { token: '.', color: Color::new(0x222222), blocks: false };
+	const CAVE_WALL: Self = Self { token: '#', color: Color::new(0x222222), blocks: true };
 }
 
 impl Default for TileClass {
@@ -145,7 +145,8 @@ impl Default for TileClass {
 
 impl World {
 	pub(super) fn is_tile_blocked(&self, region: RegionKey, position: Position) -> Result<bool> {
-		Ok(self.tile(region, position)?.class.occludes)
+		let tile = self.tile(region, position)?;
+		Ok(tile.class.blocks || tile.held_entity.is_some())
 	}
 
 	pub(super) fn tile(&self, region: RegionKey, position: Position) -> Result<&Tile> {

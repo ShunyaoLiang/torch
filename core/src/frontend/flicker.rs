@@ -4,7 +4,6 @@ use super::Result;
 use super::Screen;
 
 use crossterm::event::poll as poll_event;
-use crossterm::event::read as read_event;
 
 use std::cmp::min;
 use std::time::Duration;
@@ -23,23 +22,23 @@ impl Frontend<'_> {
 	pub fn flicker(
 		&mut self, mut script: impl FnMut(&mut Screen) -> Option<Duration>
 	) -> Result<Option<Event>> {
-		let mut render = move || -> Result<Option<Duration>> {
-			let mut buffer = self.buffer.clone();
+		let mut render = |frontend: &mut Frontend| -> Result<Option<Duration>> {
+			let mut buffer = frontend.buffer.clone();
 			let timeout = script(&mut Screen::new(&mut buffer));
-			buffer.flush(&mut self.stdout)?;
+			buffer.flush(&mut frontend.stdout)?;
 			Ok(timeout)
 		};
 
-		let mut timeout = unwrap_or_return!(render()?, Ok(None));
+		let mut timeout = unwrap_or_return!(render(self)?, Ok(None));
 
 		loop {
 			let now = Instant::now();
 			match poll_event(timeout)? {
 				true => {
 					timeout -= min(now.elapsed(), timeout);
-					return Ok(Some(read_event()?));
+					return Ok(Some(self.read_event()?));
 				}
-				false => timeout = unwrap_or_return!(render()?, Ok(None)),
+				false => timeout = unwrap_or_return!(render(self)?, Ok(None)),
 			}
 		}
 	}

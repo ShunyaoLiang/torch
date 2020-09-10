@@ -13,6 +13,8 @@ use petgraph::graph::DefaultIx;
 use petgraph::graph::NodeIndex;
 use petgraph::graph::UnGraph;
 
+use rand::prelude::*;
+
 use slotmap::new_key_type;
 use slotmap::SecondaryMap;
 use slotmap::SlotMap;
@@ -53,14 +55,17 @@ impl World {
 		let test_region = world.regions.add_node(new_cave());
 		world.current_region = test_region;
 
-		let player = world.create_entity(EntityClass::PLAYER, test_region, (19, 19))
-			.light(LightComponent::PLAYER)
-			.create();
-		world.player = player;
-
-		world.create_entity(EntityClass::TORCH, test_region, (20, 20))
-			.light(LightComponent::TORCH)
-			.create();
+		let mut pos = (19, 19);
+		let mut rng = thread_rng();
+		loop {
+			world.player = match world.create_entity(EntityClass::PLAYER, test_region, pos)
+				.light(LightComponent::PLAYER)
+				.create() {
+				Err(_) => { pos = (rng.gen_range(0, 100), rng.gen_range(0, 100)); continue; },
+				Ok(key) => key,
+			};
+			break;
+		}
 
 		world
 	}
@@ -123,6 +128,8 @@ pub type RegionKey = NodeIndex<DefaultIx>;
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
+	#[error("position already has another entity or blocks")]
+	BadPosition,
 	#[error("entity does not exist")]
 	EntityKey,
 	#[error("integer overflow or underflow")]
