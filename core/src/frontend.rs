@@ -18,6 +18,7 @@ use crossterm::terminal::LeaveAlternateScreen;
 use crossterm::terminal::disable_raw_mode;
 use crossterm::terminal::enable_raw_mode;
 
+use std::convert::AsRef;
 use std::fmt;
 use std::fmt::Display;
 use std::fmt::Formatter;
@@ -83,11 +84,11 @@ impl<'a> Screen<'a> {
 	}
 
 	pub fn draw(
-		&mut self, text: impl ToString, point: impl Into<Point>, fg_color: Color, bg_color: Color,
+		&mut self, text: impl AsRef<str>, point: impl Into<Point>, fg_color: Color, bg_color: Color,
 		attributes: Attributes,
 	) {
 		let point = point.into();
-		for (i, c) in text.to_string().chars().enumerate() {
+		for (i, c) in text.as_ref().chars().enumerate() {
 			self.buffer[point.offset_col(i as i32)] = Cell { c, fg_color, bg_color, attributes };
 		}
 	}
@@ -112,7 +113,8 @@ impl Size {
 		self.height * self.width
 	}
 
-	fn contains(&self, Point { line, col }: Point) -> bool {
+	pub fn contains(&self, point: impl Into<Point>) -> bool {
+		let Point { line, col } = point.into();
 		line < self.height && col < self.width
 	}
 }

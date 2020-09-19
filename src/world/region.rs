@@ -1,159 +1,68 @@
-use super::EntityKey;
-use super::Error;
-use super::Position;
-use super::RegionKey;
-use super::Result;
-use super::World;
+use super::point::Point;
+use super::tile::Tile;
 
 use torch_core::color::Color;
-use torch_core::shadow::Map;
-use torch_core::shadow::Occluder;
+use torch_core::shadow;
 
 use std::ops::Index;
 use std::ops::IndexMut;
 
-pub mod cave;
-
 #[derive(Clone, Debug)]
 pub struct Region {
-	pub tiles: Box<[Tile]>,	
+	pub tiles: Box<[Tile]>,
 }
 
 impl Region {
-	const WIDTH: u16 = 100;
-	const HEIGHT: u16 = 100;
+	pub const WIDTH: u16 = 80;
+	pub const HEIGHT: u16 = 40;
 
 	pub fn new() -> Self {
-		Self {
-			tiles: vec![Tile::default(); (Self::WIDTH * Self::HEIGHT) as usize].into_boxed_slice()
-		}
+		let tiles = vec![Tile::default(); (Self::WIDTH * Self::HEIGHT) as usize]
+			.into_boxed_slice();
+
+		Self { tiles }
 	}
 
-	fn tile(&self, position: impl Into<Position>) -> Result<&Tile> {
-		let position = position.into();
-		if Self::contains(position) {
-			Ok(&self[position])
-		} else {
-			Err(Error::OutOfBounds)
+	pub fn clear_light_info(&mut self) {
+		for tile in self.tiles.iter_mut() {
+			tile.light_level = 0.;
+			tile.lighting = Color::BLACK;
 		}
-	}
-
-	fn tile_mut(&mut self, position: impl Into<Position>) -> Result<&mut Tile> {
-		let position = position.into();
-		if Self::contains(position) {
-			Ok(&mut self[position])
-		} else {
-			Err(Error::OutOfBounds)
-		}
-	}
-
-	fn contains(Position { x, y }: Position) -> bool {
-		x < Self::WIDTH && y < Self::HEIGHT
 	}
 }
 
-impl<P> Index<P> for Region
+impl<I> Index<I> for Region
 where
-	P: Into<Position>
+	I: Into<Point>
 {
 	type Output = Tile;
 
-	fn index(&self, position: P) -> &Self::Output {
-		let position = position.into();
-		let Position { x, y } = position;
-		if Self::contains(position) {
+	fn index(&self, pos: I) -> &Self::Output {
+		let Point { x, y } = pos.into();
+		if x < Self::WIDTH && y < Self::HEIGHT {
 			&self.tiles[(y * Self::WIDTH + x) as usize]
 		} else {
-			panic!();
+			panic!("out of bounds: {:?}", (x, y));
 		}
 	}
 }
 
-impl<P> IndexMut<P> for Region
+impl<I> IndexMut<I> for Region
 where
-	P: Into<Position>
+	I: Into<Point>
 {
-	fn index_mut(&mut self, position: P) -> &mut Self::Output {
-		let position = position.into();
-		let Position { x, y } = position;
-		if Self::contains(position) {
+	fn index_mut(&mut self, pos: I) -> &mut Self::Output {
+		let Point { x, y } = pos.into();
+		if x < Self::WIDTH && y < Self::HEIGHT {
 			&mut self.tiles[(y * Self::WIDTH + x) as usize]
 		} else {
-			panic!();
+			panic!("out of bounds: {:?}", (x, y));
 		}
 	}
 }
 
-impl Map for Region {
+impl shadow::Map for Region {
 	fn in_bounds(&self, x: u16, y: u16) -> bool {
-		x < Region::WIDTH && y < Region::HEIGHT
-	}
-}
-
-#[derive(Clone, Copy, Debug)]
-pub struct Tile {
-	class: TileClass,
-	pub held_entity: Option<EntityKey>,
-	pub light_level: f32,
-	pub lighting: Color,
-}
-
-impl Tile {
-	pub fn token(&self) -> char {
-		self.class.token
-	}
-
-	pub fn color(&self) -> Color {
-		self.class.color
-	}
-}
-
-impl Default for Tile {
-	fn default() -> Self {
-		Self {
-			class: TileClass::default(),
-			held_entity: None,
-			light_level: 0.,
-			lighting: Color::BLACK
-		}
-	}
-}
-
-impl Occluder for Tile {
-	fn occludes(&self) -> bool {
-		self.class.blocks
-	}
-}
-
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-struct TileClass {
-	token: char,
-	color: Color,
-	blocks: bool,
-}
-
-impl TileClass {
-	const GROUND: Self = Self { token: '.', color: Color::new(0x222222), blocks: false };
-	const CAVE_WALL: Self = Self { token: '#', color: Color::new(0x222222), blocks: true };
-}
-
-impl Default for TileClass {
-	fn default() -> Self {
-		Self::GROUND
-	}
-}
-
-impl World {
-	pub(super) fn is_tile_blocked(&self, region: RegionKey, position: Position) -> Result<bool> {
-		let tile = self.tile(region, position)?;
-		Ok(tile.class.blocks || tile.held_entity.is_some())
-	}
-
-	pub(super) fn tile(&self, region: RegionKey, position: Position) -> Result<&Tile> {
-		self.regions[region].tile(position)
-	}
-
-	pub(super) fn tile_mut(&mut self, region: RegionKey, position: Position) -> Result<&mut Tile> {
-		self.regions[region].tile_mut(position)
+		x < Self::WIDTH && y < Self::HEIGHT
 	}
 }

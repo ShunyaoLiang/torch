@@ -6,9 +6,7 @@ use super::Size;
 
 use crossterm::queue;
 use crossterm::cursor::MoveTo as MoveCursorTo;
-use crossterm::style::Attribute;
 use crossterm::style::Print;
-use crossterm::style::SetAttribute;
 use crossterm::style::SetAttributes;
 use crossterm::style::SetBackgroundColor;
 use crossterm::style::SetForegroundColor;

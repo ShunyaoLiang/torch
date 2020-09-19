@@ -1,6 +1,6 @@
 [package]
 name = "torch-core"
-version = "0.1.1"
+version = "0.1.2"
 authors = ["Shunyao Liang"]
 edition = "2018"
 workspace = ".."
@@ -10,7 +10,3 @@ anyhow = "1.0.32"
 bitflags = "1.2.1"
 crossterm = "0.17.7"
 thiserror = "1.0.20"
-tui = { version = "0.10.0", default-features = false, features = ["crossterm"] }
-
-[dev-dependencies]
-anyhow = "1.0.32"

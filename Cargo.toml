@@ -1,6 +1,6 @@
 [package]
 name = "torch"
-version = "0.1.1"
+version = "0.1.2"
 authors = ["Shunyao Liang"]
 edition = "2018"
 
@@ -9,12 +9,10 @@ members = ["core"]
 
 [dependencies]
 anyhow = "1.0"
-bitflags = "1.2"
 crossterm = "0.17"
-num-rational = { version = "0.3", default-features = false, features = ['std'] }
-num-traits = "0.2"
+counted-array = "0.1.2"
 petgraph = "0.5"
-rand = "0.7"
+rand = { version = "0.7", features = ["small_rng"] }
 slotmap = "0.4.0"
 thiserror = "1.0"
 

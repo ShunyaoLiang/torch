@@ -1,7 +1,7 @@
 Torch — A Terminal Roguelike About Light and Legacy
 ===================================================
 
-Torch is updated weekly! This is currently __v0.1.0__.
+Torch is updated weekly! This is currently __v0.1.2__.
 
 Features
 --------
@@ -12,9 +12,6 @@ Features
 Code Issues
 -----------
 
-- API visibility
-- Cave terrain generation
 - Camera code
 - Light casting
 - Handling 'errors' in input handling
-- Torch placement

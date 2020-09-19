@@ -1,118 +1,176 @@
 mod entity;
+mod generator;
+mod light;
+mod point;
 mod region;
+mod tile;
 
-use components::LightComponent;
+use petgraph::graphmap::DiGraphMap;
 
-use entity::Entity;
-use entity::EntityClass;
+use rand::SeedableRng;
+use rand::rngs::SmallRng;
 
-use region::Region;
-use region::cave::new_cave;
-
-use petgraph::graph::DefaultIx;
-use petgraph::graph::NodeIndex;
-use petgraph::graph::UnGraph;
-
-use rand::prelude::*;
-
-use slotmap::new_key_type;
+use slotmap::DenseSlotMap;
 use slotmap::SecondaryMap;
-use slotmap::SlotMap;
+use slotmap::new_key_type;
 
-use torch_core::color::Color;
-use torch_core::shadow::cast as shadow_cast;
-use torch_core::frontend::Event;
-use torch_core::frontend::Frontend;
-use torch_core::frontend::KeyCode;
+use std::collections::HashMap;
+use std::iter::IntoIterator;
 
-use std::num::TryFromIntError;
+pub use entity::Entity;
+pub use entity::EntityClassId;
 
-pub mod camera;
-pub mod position;
+pub use light::LightComponent;
+pub use light::LightComponentClassId;
 
-pub use position::Offset;
-pub use position::Position;
+pub use point::Offset;
+pub use point::Point;
 
-#[derive(Clone, Debug)]
+pub use region::Region;
+
+pub use tile::Tile;
+pub use tile::TileClassId;
+
+pub use generator::Generator;
+
+#[derive(Debug)]
 pub struct World {
-	entities: SlotMap<EntityKey, Entity>,
+	regions: HashMap<RegionKey, Region>,
+	region_graph: DiGraphMap<RegionKey, ()>,
+	entities: DenseSlotMap<EntityKey, Entity>,
 	light_components: SecondaryMap<EntityKey, LightComponent>,
-	player: EntityKey,
-	regions: UnGraph<Region, ()>,
-	current_region: RegionKey,
+	rng: SmallRng,
 }
 
 impl World {
 	pub fn new() -> Self {
-		let mut world = Self {
-			entities: SlotMap::with_key(),
+		Self {
+			regions: HashMap::new(),
+			region_graph: DiGraphMap::new(),
+			entities: DenseSlotMap::with_key(),
 			light_components: SecondaryMap::new(),
-			player: EntityKey::default(),
-			regions: UnGraph::new_undirected(),
-			current_region: RegionKey::default(),
-		};
-
-		let test_region = world.regions.add_node(new_cave());
-		world.current_region = test_region;
-
-		let mut pos = (19, 19);
-		let mut rng = thread_rng();
-		loop {
-			world.player = match world.create_entity(EntityClass::PLAYER, test_region, pos)
-				.light(LightComponent::PLAYER)
-				.create() {
-				Err(_) => { pos = (rng.gen_range(0, 100), rng.gen_range(0, 100)); continue; },
-				Ok(key) => key,
-			};
-			break;
+			rng: SmallRng::seed_from_u64(0),
 		}
-
-		world
 	}
 
-	pub fn update(&mut self) {
-		self.update_light_components();
-	}
+	pub fn create_regions(mut self, ident: &'static str, mut gen: impl Generator, n: u32) -> Self {
+		assert!(!self.regions.contains_key(&(ident, 0)));
 
-	fn update_light_components(&mut self) {
-		for tile in self.current_region_mut().tiles.iter_mut() {
-			tile.light_level = 0.;
-			tile.lighting = Color::BLACK;
+		for n in 0..n {
+			let key = (ident, n);
+			self.regions.insert(key, gen.generate(&mut self.rng));
+			self.region_graph.add_node(key);
 		}
 
+		// Create edges between the generated regions like a linked list.
+		for n in 0..n-1 {
+			let (a, b) = ((ident, n), (ident, n + 1));
+			self.region_graph.add_edge(a, b, ());
+			self.region_graph.add_edge(b, a, ());
+		}
+
+		self
+	}
+
+	pub fn connect_regions<I>(mut self, connections: I) -> Self
+	where
+		I: IntoIterator<Item = (RegionKey, RegionKey)>,
+	{
+		for (a, b) in connections {
+			self.region_graph.add_edge(a, b, ());
+			self.region_graph.add_edge(b, a, ());
+		}
+
+		self
+	}
+
+	pub fn update_region(&mut self, region_key: RegionKey) {
+		self.update_lights(region_key);
+	}
+
+	pub fn update_lights(&mut self, region_key: RegionKey) {
 		let mut light_components = self.light_components.clone();
-		for (key, entity) in self.entities.clone() {
-			if !light_components.contains_key(key) {
+		self.region_mut(region_key).clear_light_info();
+		for (entity_key, light_component) in &mut light_components {
+			let entity = self.entity(entity_key);
+			// Only update the light source entities on the given region.
+			if entity.region != region_key {
 				continue;
 			}
-			let mut light_component = light_components.get_mut(key).unwrap();
-			light_component.lit_positions.clear();
-			let pos = entity.position.into();
-			shadow_cast(self.current_region_mut(), pos, 8, |tile, (x, y)| {
-				light_component.lit_positions.push((x, y).into());
-				let distance_2 =
-					(pos.0 as f32 - x as f32).powi(2) +
-					(pos.1 as f32 - y as f32).powi(2);
-				let dlight = light_component.luminance / distance_2.max(1.0);
-				tile.light_level += dlight;
-				tile.lighting += light_component.color * dlight;
 
-				Ok(())
-			});
+			light_component.clear_lit_points();
+			light::cast(light_component, self, region_key, entity_key);
 		}
+
+		// The clone has the updated lit tile vectors, so we must move it back.
 		self.light_components = light_components;
 	}
 
-	pub fn current_region_mut(&mut self) -> &mut Region {
-		self.regions.node_weight_mut(self.current_region).unwrap()
+	pub fn region(&self, region_key: RegionKey) -> &Region {
+		self.regions.get(&region_key)
+			.unwrap()
 	}
 
-	pub fn player_pos(&self) -> Position {
-		self.entity(self.player).unwrap().position
+	pub fn region_mut(&mut self, region_key: RegionKey) -> &mut Region {
+		self.regions.get_mut(&region_key)
+			.unwrap()
 	}
 
-	pub fn offset_player_position(&mut self, offset: impl Into<Offset>) -> Result<()> {
-		self.offset_entity_position(self.player, offset)
+	pub fn add_entity(&mut self, entity: Entity) -> Result<EntityKey> {
+		let pos = entity.pos;
+		let region = self.regions.get_mut(&entity.region)
+			.expect(&format!("Entity's region does not exist: {:?}", entity.region));
+
+		if region[pos].blocks() {
+			return Err(Error::TileBlocks)
+		}
+
+		let key = self.entities.insert(entity);
+		region[pos].held_entity = Some(key);
+
+		Ok(key)
+	}
+
+	pub fn move_entity(&mut self, entity_key: EntityKey, offset: impl Into<Offset>) -> Result<()> {
+		let entity = self.entity(entity_key);
+		let region = self.region(entity.region);
+
+		// Make sure there's actually an entity.
+		assert!(region[entity.pos].held_entity.is_some());
+		assert_eq!(region[entity.pos].held_entity.unwrap(), entity_key);
+
+		let offset = offset.into();
+		let pos = self.entity(entity_key).pos + offset;
+
+		if region[pos].blocks() {
+			return Err(Error::TileBlocks);
+		}
+
+		{
+			let entity_region = entity.region;
+			let entity_pos = entity.pos;
+			let region = self.region_mut(entity_region);
+			region[pos].held_entity = Some(entity_key);
+			region[entity_pos].held_entity = None;
+		}
+
+		self.entity_mut(entity_key).pos = pos;
+
+		Ok(())
+	}
+
+	pub fn entity(&self, entity_key: EntityKey) -> &Entity {
+		self.entities.get(entity_key)
+			.expect("Attempted to get a deleted entity")
+	}
+
+	fn entity_mut(&mut self, entity_key: EntityKey) -> &mut Entity {
+		self.entities.get_mut(entity_key)
+			.expect("Attempted to get a deleted entity")
+	}
+
+	pub fn add_light_component(&mut self, entity_key: EntityKey, light_component: LightComponent) {
+		self.light_components.insert(entity_key, light_component);
 	}
 
 	pub fn light_components(&self) -> &SecondaryMap<EntityKey, LightComponent> {
@@ -120,73 +178,17 @@ impl World {
 	}
 }
 
+// TODO: Should probably become a named struct.
+pub type RegionKey = (&'static str, u32);
+
 new_key_type! {
 	pub struct EntityKey;
 }
 
-pub type RegionKey = NodeIndex<DefaultIx>;
-
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
-	#[error("position already has another entity or blocks")]
-	BadPosition,
-	#[error("entity does not exist")]
-	EntityKey,
-	#[error("integer overflow or underflow")]
-	Integer(#[from] TryFromIntError),
-	#[error("movement illegal")]
-	Movement,
-	#[error("position out of bounds")]
-	OutOfBounds,
-	#[error("region does not exist")]
-	RegionKey,
+	#[error("Attempted to place entity on blocking tile")]
+	TileBlocks,
 }
 
-pub type Result<T> = std::result::Result<T, Error>;
-
-mod components {
-	use torch_core::color::Color;
-
-	use super::position::Position;
-
-	#[derive(Clone, Debug)]
-	pub struct LightComponent {
-		pub luminance: f32,
-		pub color: Color,
-		pub lit_positions: Vec<Position>,
-	}
-
-	impl LightComponent {
-		pub const PLAYER: Self = Self::new(1.8, Color::new(0x0a0a0a));
-		pub const TORCH: Self = Self::new(1., Color::new(0xff5000));
-
-		const fn new(luminance: f32, color: Color) -> Self {
-			Self { luminance, color, lit_positions: Vec::new() }
-		}
-	}
-}
-
-pub fn place_torch(world: &mut World, frontend: &mut Frontend) -> anyhow::Result<()> {
-	let pos = world.player_pos().try_add(match frontend.read_event()? {
-		Event::Key(key) => {
-			match key.code {
-				KeyCode::Char('h') => (-1, 0),
-				KeyCode::Char('j') => (0, -1),
-				KeyCode::Char('k') => (0, 1),
-				KeyCode::Char('l') => (1, 0),
-				KeyCode::Char('y') => (-1, 1),
-				KeyCode::Char('u') => (1, 1),
-				KeyCode::Char('b') => (-1, -1),
-				KeyCode::Char('n') => (1, -1),
-				_ => return place_torch(world, frontend),
-			}
-		}
-		_ => return place_torch(world, frontend),
-	})?;
-
-	world.create_entity(EntityClass::TORCH, world.current_region, pos)
-		.light(LightComponent::TORCH)
-		.create();
-
-	Ok(())
-}
+pub type Result<T, E = Error> = std::result::Result<T, E>;

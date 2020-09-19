@@ -1,94 +1,115 @@
+mod camera;
+mod commands;
+mod generate;
+mod static_flyweight;
 mod world;
 
-use world::camera::camera;
-use world::position::Position;
+use camera::camera;
+use camera::xy_to_linecol;
+
+use world::Entity;
+use world::EntityClassId;
+use world::EntityKey;
+use world::LightComponent;
+use world::LightComponentClassId;
 use world::World;
 
-use torch_core::color::Color;
-use torch_core::frontend::Attributes;
 use torch_core::frontend::Event;
 use torch_core::frontend::Frontend;
 use torch_core::frontend::KeyCode;
 use torch_core::frontend::Size;
-use torch_core::shadow::cast as shadow_cast;
 
-use anyhow::anyhow;
 use anyhow::Result;
 
 use rand::prelude::*;
 use rand::distributions::uniform::Uniform;
+use rand::rngs::SmallRng;
 
 use std::io::stdout;
 use std::time::Duration;
 
 fn main() -> Result<()> {
 	let stdout = stdout();
-	let mut frontend = Frontend::new(&stdout)?;
+	let frontend = Frontend::new(&stdout)?;
 
-	run(World::new(), frontend)?;
+	let mut world = World::new()
+		.create_regions("Caves", generate::Caves, 2);
+	let player = create_player(&mut world);
+
+	run(world, frontend, player)?;
 
 	Ok(())
 }
 
-fn run(mut world: World, mut frontend: Frontend) -> Result<()> {
-	let mut rng = thread_rng();
-	while {
-		world.update();
-		frontend.render(|mut screen| {
-			camera(&mut screen, &mut world);
-		})?;
+fn run(mut world: World, mut frontend: Frontend, player: EntityKey) -> Result<()> {
+	let mut current_region = ("Caves", 0);
 
-		true
-	} {
-		let event = frontend.flicker(|mut screen| {
-			let player_pos = world.player_pos();
-			let Size { height, .. } = screen.size();
-			for light_component in world.light_components().values() {
-			let shift = match rng.sample(Uniform::from(-1..=1)) {
+	world.update_lights(current_region);
+	#[allow(unreachable_code)]
+	loop {
+		{
+			frontend.render(|mut screen| {
+				camera(&mut screen, &mut world, current_region, player);
+			})?;
+		}
+
+		loop {
+			match flicker(&world, &mut frontend)? {
+				Event::Key(key) => if match key.code {
+					KeyCode::Char('h') => commands::move_player(&mut world, player, (-1, 0)),
+					KeyCode::Char('j') => commands::move_player(&mut world, player, (0, -1)),
+					KeyCode::Char('k') => commands::move_player(&mut world, player, (0, 1)),
+					KeyCode::Char('l') => commands::move_player(&mut world, player, (1, 0)),
+					KeyCode::Char('y') => commands::move_player(&mut world, player, (-1, 1)),
+					KeyCode::Char('u') => commands::move_player(&mut world, player, (1, 1)),
+					KeyCode::Char('b') => commands::move_player(&mut world, player, (-1, -1)),
+					KeyCode::Char('n') => commands::move_player(&mut world, player, (1, -1)),
+					KeyCode::Char('t') => commands::place_torch(&mut world, player, &mut frontend).map(|_| ()),
+					KeyCode::Char('Q') => return Ok(()),
+					_ => continue,
+				}.is_err() { continue; }
+				_ => continue, // 
+			}
+			break;
+		}
+
+		world.update_region(current_region);
+	}
+
+	Ok(())
+}
+
+fn create_player(world: &mut World) -> EntityKey {
+	let player = world.add_entity(Entity::new(EntityClassId::Player, (20, 20), ("Caves", 0)))
+		.unwrap();
+	world.add_light_component(player, LightComponent::new(LightComponentClassId::Player));
+
+	player
+}
+
+fn flicker(world: &World, frontend: &mut Frontend) -> Result<Event> {
+	let mut rng = SmallRng::from_entropy();
+	let range = Uniform::from(-1..=1);
+	let event = frontend.flicker(move |screen| {
+		let Size { height, .. } = screen.size();
+		for light_component in world.light_components().values() {
+			let shift = match rng.sample(range) {
 				-1 => 0.8,
 				0 => 1.,
 				1 => 1.2,
 				_ => unreachable!(),
 			};
-				for Position { x, y } in &light_component.lit_positions {
-					screen.lighten(shift, (height - y - 1, *x));
-				}
+
+			for point in light_component.lit_points() {
+				xy_to_linecol(point.x, point.y, screen.size()).map(|point|
+					screen.lighten(shift, point)
+				);
 			}
 
-			Some(Duration::from_millis(60))
-		})?;
-		match event.unwrap() {
-			Event::Key(key) => {
-				if let KeyCode::Char('q') = key.code {
-					break;
-				}
-				handle(key.code, &mut world, &mut frontend)
-			}
-			_ => Err(anyhow!("unhandled type of input")),
-		};
-		/*
-		if success.is_err() {
-			continue;
 		}
-		*/
-	}
+		
+		Some(Duration::from_millis(80))
+	})?.unwrap();
 
-	Ok(())
-}
-
-fn handle(key_code: KeyCode, world: &mut World, frontend: &mut Frontend) -> Result<()> {
-	match key_code {
-		KeyCode::Char('h') => world.offset_player_position((-1, 0))?,
-		KeyCode::Char('j') => world.offset_player_position((0, -1))?,
-		KeyCode::Char('k') => world.offset_player_position((0, 1))?,
-		KeyCode::Char('l') => world.offset_player_position((1, 0))?,
-		KeyCode::Char('y') => world.offset_player_position((-1, 1))?,
-		KeyCode::Char('u') => world.offset_player_position((1, 1))?,
-		KeyCode::Char('b') => world.offset_player_position((-1, -1))?,
-		KeyCode::Char('n') => world.offset_player_position((1, -1))?,
-		KeyCode::Char('t') => world::place_torch(world, frontend)?,
-		_ => Err(anyhow!("unhandled key"))?,
-	}
-
-	Ok(())
+	Ok(event)
 }
