@@ -125,8 +125,10 @@ impl World {
 			return Err(Error::TileBlocks)
 		}
 
+		let entity_occludes = entity.occludes();
 		let key = self.entities.insert(entity);
 		region[pos].held_entity = Some(key);
+		region[pos].held_entity_occludes = entity_occludes;
 
 		Ok(key)
 	}
@@ -142,16 +144,19 @@ impl World {
 		let offset = offset.into();
 		let pos = self.entity(entity_key).pos + offset;
 
-		if region[pos].blocks() {
+		if !Region::in_bounds(pos) || region[pos].blocks() {
 			return Err(Error::TileBlocks);
 		}
 
 		{
 			let entity_region = entity.region;
 			let entity_pos = entity.pos;
+			let entity_occludes = entity.occludes();
 			let region = self.region_mut(entity_region);
 			region[pos].held_entity = Some(entity_key);
+			region[pos].held_entity_occludes = entity_occludes;
 			region[entity_pos].held_entity = None;
+			region[entity_pos].held_entity_occludes = false;
 		}
 
 		self.entity_mut(entity_key).pos = pos;

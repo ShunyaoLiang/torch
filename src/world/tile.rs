@@ -8,13 +8,14 @@ use torch_core::shadow;
 pub struct Tile {
 	pub class: TileClassId,
 	pub held_entity: Option<EntityKey>,
+	pub held_entity_occludes: bool,
 	pub light_level: f32,
 	pub lighting: Color,
 }
 
 impl Tile {
 	pub fn new(class: TileClassId) -> Self {
-		Self { class, held_entity: None, light_level: 0., lighting: Color::BLACK }
+		Self { class, held_entity: None, held_entity_occludes: false, light_level: 0., lighting: Color::BLACK }
 	}
 
 	pub fn token(&self) -> &'static str {
@@ -26,7 +27,7 @@ impl Tile {
 	}
 
 	pub fn blocks(&self) -> bool {
-		self.class.flyweight().blocks || self.held_entity.is_some()
+		self.class.flyweight().blocks || self.held_entity_occludes
 	}
 }
 

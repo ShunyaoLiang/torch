@@ -23,10 +23,10 @@ pub fn move_player(world: &mut World, player: EntityKey, offset: impl Into<Offse
 pub fn place_torch(
 	world: &mut World, player: EntityKey, frontend: &mut Frontend
 ) -> Result<EntityKey> {
-	let player_pos = world.entity(player).pos;
+	let player_pos = world.entity(player).pos();
 	let pos = player_pos + get_direction(frontend).into();
 	let torch = world.add_entity(
-		Entity::new(EntityClassId::Torch, pos, world.entity(player).region)
+		Entity::new(EntityClassId::Torch, pos, world.entity(player).region())
 	)?;
 	world.add_light_component(torch, LightComponent::new(LightComponentClassId::Torch));
 

@@ -14,7 +14,7 @@ use std::cmp::max;
 pub fn camera(
 	screen: &mut Screen, world: &mut World, region_key: RegionKey, player: EntityKey
 ) {
-	let pos = world.entity(player).pos.into_tuple();
+	let pos = world.entity(player).pos().into_tuple();
 	let region_clone = &mut world.region(region_key).clone();
 	shadow::cast(region_clone, pos, min_cast_radius(), |tile, (x, y)| {
 		let (token, mut color) = match tile.held_entity {

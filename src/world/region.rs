@@ -23,6 +23,11 @@ impl Region {
 		Self { tiles }
 	}
 
+	pub fn in_bounds(pos: impl Into<Point>) -> bool {
+		let pos = pos.into();
+		pos.x < Self::WIDTH && pos.y < Self::HEIGHT
+	}
+
 	pub fn clear_light_info(&mut self) {
 		for tile in self.tiles.iter_mut() {
 			tile.light_level = 0.;

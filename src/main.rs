@@ -47,11 +47,9 @@ fn run(mut world: World, mut frontend: Frontend, player: EntityKey) -> Result<()
 	world.update_lights(current_region);
 	#[allow(unreachable_code)]
 	loop {
-		{
-			frontend.render(|mut screen| {
-				camera(&mut screen, &mut world, current_region, player);
-			})?;
-		}
+		frontend.render(|mut screen| {
+			camera(&mut screen, &mut world, current_region, player);
+		})?;
 
 		loop {
 			match flicker(&world, &mut frontend)? {
@@ -70,6 +68,7 @@ fn run(mut world: World, mut frontend: Frontend, player: EntityKey) -> Result<()
 				}.is_err() { continue; }
 				_ => continue, // 
 			}
+
 			break;
 		}
 
