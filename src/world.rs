@@ -225,7 +225,7 @@ impl World {
 		&self.light_components
 	}
 
-	pub fn rng_clone(&mut self) -> impl Rng {
+	pub fn rng_clone(&self) -> impl Rng {
 		self.rng.clone()
 	}
 }
