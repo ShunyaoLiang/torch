@@ -186,6 +186,10 @@ pub enum Error {
 	Io(#[from] std::io::Error),
 }
 
+pub fn set_status_line(status_line: impl AsRef<str>) {
+	println!("\x1b]0;{}\x07", status_line.as_ref());
+}
+
 fn terminal_size() -> Size {
 	let (cols, lines) = crossterm::terminal::size()
 		.unwrap();

@@ -18,6 +18,7 @@ use torch_core::frontend::Event;
 use torch_core::frontend::Frontend;
 use torch_core::frontend::KeyCode;
 use torch_core::frontend::Size;
+use torch_core::frontend::set_status_line;
 
 use anyhow::Result;
 
@@ -31,6 +32,7 @@ use std::time::Duration;
 fn main() -> Result<()> {
 	let stdout = stdout();
 	let frontend = Frontend::new(&stdout)?;
+	set_status_line("Torch");
 
 	let mut world = World::new()
 		.create_regions("Caves", generate::Caves, 2);
