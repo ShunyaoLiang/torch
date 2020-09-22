@@ -5,6 +5,8 @@ mod point;
 mod region;
 mod tile;
 
+use num_rational::Ratio;
+
 use petgraph::graphmap::DiGraphMap;
 
 use rand::Rng;
@@ -89,6 +91,38 @@ impl World {
 
 	pub fn update_region(&mut self, region_key: RegionKey) {
 		self.update_lights(region_key);
+		loop {
+			let mut action_was_taken = false;
+
+			let mut actions = Vec::new();
+			for (key, entity) in self.entities.iter_mut() {
+				// Let the entity do something if it has more than one action remaining
+				if entity.actions.to_integer() >= 1 {
+					// TODO: Do an action
+					actions.push(key);
+					entity.actions -= 1;
+					action_was_taken = true;
+				}
+			}
+			// XXX
+			for entity in actions {
+				if self.entity(entity).token() == "@" {
+					continue;
+				}
+				let _ = self.move_entity(entity, (-1, 0));
+			}
+
+			if !action_was_taken {
+				self.replenish_entity_actions();
+				return;
+			}
+		}
+	}
+
+	fn replenish_entity_actions(&mut self) {
+		for entity in self.entities.values_mut() {
+			entity.actions += Ratio::new(entity.speed(), 12);
+		}
 	}
 
 	pub fn update_lights(&mut self, region_key: RegionKey) {

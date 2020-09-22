@@ -17,7 +17,6 @@ use world::World;
 use torch_core::frontend::Event;
 use torch_core::frontend::Frontend;
 use torch_core::frontend::KeyCode;
-use torch_core::frontend::Size;
 use torch_core::frontend::set_status_line;
 
 use anyhow::Result;
@@ -66,6 +65,7 @@ fn run(mut world: World, mut frontend: Frontend, player: EntityKey) -> Result<()
 					KeyCode::Char('n') => commands::move_player(&mut world, player, (1, -1)),
 					KeyCode::Char('t') => commands::place_torch(&mut world, player, &mut frontend).map(|_| ()),
 					KeyCode::Char('Q') => return Ok(()),
+					KeyCode::Char('.') => Ok(()), // no-op
 					_ => continue,
 				}.is_err() { continue; }
 				_ => continue, // 
@@ -92,7 +92,6 @@ fn flicker(world: &World, frontend: &mut Frontend) -> Result<Event> {
 	let mut rng = SmallRng::from_entropy();
 	let range = Uniform::from(-1..=1);
 	let event = frontend.flicker(move |screen| {
-		let Size { height, .. } = screen.size();
 		for light_component in world.light_components().values() {
 			let shift = match rng.sample(range) {
 				-1 => 0.8,

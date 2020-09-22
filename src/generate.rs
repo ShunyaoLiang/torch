@@ -2,7 +2,6 @@ use crate::world::Point;
 use crate::world::Region;
 
 use rand::Rng;
-use rand::distributions::Uniform;
 
 pub mod caves;
 

@@ -35,7 +35,7 @@ impl Generator for Caves {
 		let rng = &mut world.rng_clone();
 		for _ in 0..10 {
 			let pos = random_empty_tile(world.region(key), rng);
-			world.add_entity(Entity::new(EntityClassId::Snake, pos, key));
+			let _ = world.add_entity(Entity::new(EntityClassId::Snake, pos, key));
 		}
 	}
 }
