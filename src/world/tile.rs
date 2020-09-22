@@ -27,7 +27,7 @@ impl Tile {
 	}
 
 	pub fn blocks(&self) -> bool {
-		self.class.flyweight().blocks || self.held_entity_occludes
+		self.class.flyweight().blocks || self.held_entity.is_some()
 	}
 }
 
@@ -39,7 +39,7 @@ impl Default for Tile {
 
 impl shadow::Occluder for Tile {
 	fn occludes(&self) -> bool {
-		self.blocks()
+		self.class.flyweight().blocks || self.held_entity_occludes
 	}
 }
 

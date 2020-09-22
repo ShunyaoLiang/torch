@@ -8,7 +8,7 @@ use num_rational::Ratio;
 
 #[derive(Debug)]
 pub struct Entity {
-	pub class: EntityClassId,
+	pub(super) class: EntityClassId,
 	pub(super) pos: Point,
 	pub(super) region: RegionKey,
 	pub(super) actions: Ratio<u8>,

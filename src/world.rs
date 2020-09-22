@@ -7,6 +7,7 @@ mod tile;
 
 use petgraph::graphmap::DiGraphMap;
 
+use rand::Rng;
 use rand::SeedableRng;
 use rand::rngs::SmallRng;
 
@@ -58,8 +59,10 @@ impl World {
 
 		for n in 0..n {
 			let key = (ident, n);
-			self.regions.insert(key, gen.generate(&mut self.rng));
+			let region = gen.generate_terrain(&mut self.rng);
+			self.regions.insert(key, region);
 			self.region_graph.add_node(key);
+			gen.generate_entities(&mut self, key);
 		}
 
 		// Create edges between the generated regions like a linked list.
@@ -180,6 +183,10 @@ impl World {
 
 	pub fn light_components(&self) -> &SecondaryMap<EntityKey, LightComponent> {
 		&self.light_components
+	}
+
+	pub fn rng_clone(&mut self) -> impl Rng {
+		self.rng.clone()
 	}
 }
 

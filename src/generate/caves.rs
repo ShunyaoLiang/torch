@@ -1,7 +1,13 @@
+use crate::world::Entity;
+use crate::world::EntityClassId;
 use crate::world::Generator;
 use crate::world::Region;
+use crate::world::RegionKey;
 use crate::world::Tile;
 use crate::world::TileClassId;
+use crate::world::World;
+
+use super::random_empty_tile;
 
 use rand::Rng;
 
@@ -12,7 +18,7 @@ use std::ops::IndexMut;
 pub struct Caves;
 
 impl Generator for Caves {
-	fn generate(&mut self, rng: &mut impl Rng) -> Region {
+	fn generate_terrain(&mut self, rng: &mut impl Rng) -> Region {
 		let mut grid = &mut Grid::new(rng);
 		let mut clone = &mut grid.clone();
 
@@ -22,6 +28,15 @@ impl Generator for Caves {
 		}
 
 		grid.into_region()
+	}
+
+	fn generate_entities(&mut self, world: &mut World, key: RegionKey) {
+		// XXX: Cloning the Rng object
+		let rng = &mut world.rng_clone();
+		for _ in 0..10 {
+			let pos = random_empty_tile(world.region(key), rng);
+			world.add_entity(Entity::new(EntityClassId::Snake, pos, key));
+		}
 	}
 }
 
