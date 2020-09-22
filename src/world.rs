@@ -47,12 +47,18 @@ pub struct World {
 
 impl World {
 	pub fn new() -> Self {
+		let rng = if !cfg!(debug_assertions) {
+			SmallRng::from_entropy()
+		} else {
+			SmallRng::seed_from_u64(0)
+		};
+
 		Self {
 			regions: HashMap::new(),
 			region_graph: DiGraphMap::new(),
 			entities: DenseSlotMap::with_key(),
 			light_components: SecondaryMap::new(),
-			rng: SmallRng::seed_from_u64(0),
+			rng,
 		}
 	}
 
