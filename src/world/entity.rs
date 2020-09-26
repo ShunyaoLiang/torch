@@ -42,6 +42,10 @@ impl Entity {
 	pub fn region(&self) -> RegionKey {
 		self.region
 	}
+
+	pub fn actions_mut(&mut self) -> &mut Ratio<u8> {
+		&mut self.actions
+	}
 }
 
 struct EntityClass {
@@ -56,6 +60,6 @@ static_flyweight! {
 	pub enum EntityClassId -> EntityClass {
 		Player = { token: "@", color: Color::new(0xffffff), speed: 12, occludes: true },
 		Torch  = { token: "i", color: Color::new(0xe25822), speed: 0,  occludes: false },
-		Snake  = { token: "s", color: Color::new(0x47ff2a), speed: 8,  occludes: false },
+		Snake  = { token: "s", color: Color::new(0x47ff2a), speed: 6,  occludes: false },
 	}
 }

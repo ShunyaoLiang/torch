@@ -7,7 +7,7 @@ macro_rules! static_flyweight {
 		}
 	) => {
 		$(#[$attr])*
-		#[derive(Clone, Copy)]
+		#[derive(Clone, Copy, Eq, PartialEq)]
 		$v enum $id_name {
 			$($variant),*
 		}

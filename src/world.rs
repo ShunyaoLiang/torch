@@ -95,32 +95,43 @@ impl World {
 		self
 	}
 
-	pub fn update_region(&mut self, region_key: RegionKey) {
-		self.update_lights(region_key);
+	pub fn update_region(&mut self, region_key: RegionKey, player_key: EntityKey) {
+		// Update entities only after the player has used all their actions.
+		let player = self.entity_mut(player_key);
+		if player.actions.to_integer() >= 1 {
+			dbg!("player turn", &player);
+			player.actions -= 1;
+			dbg!(player.actions);
+			return;
+		}
+		// Iterate over every entity until all actions are used.
 		loop {
 			let mut action_was_taken = false;
-
 			let mut actions = Vec::new();
+			// XXX: We should really be iterating starting from the player, but it should be
+			// unnoticeable, pretending the player is the first entity.
 			for (key, entity) in self.entities.iter_mut() {
+				// Only update entities in the given region.
+				if entity.region != region_key && entity.class != EntityClassId::Player {
+					continue;
+				}
 				// Let the entity do something if it has more than one action remaining
 				if entity.actions.to_integer() >= 1 {
 					// TODO: Do an action
+					dbg!("snake turn", &entity);
 					actions.push(key);
 					entity.actions -= 1;
 					action_was_taken = true;
 				}
 			}
-			// XXX
+			// XXX: "AI".
 			for entity in actions {
-				if self.entity(entity).token() == "@" {
-					continue;
-				}
-				let _ = self.move_entity(entity, (-1, 0));
+				let _ = self.move_entity(entity, (0, -1));
 			}
-
+			// Check if round should be over; all actions have been taken.
 			if !action_was_taken {
 				self.replenish_entity_actions();
-				return;
+				break;
 			}
 		}
 	}
@@ -131,7 +142,7 @@ impl World {
 		}
 	}
 
-	pub fn update_lights(&mut self, region_key: RegionKey) {
+	pub fn update_region_lights(&mut self, region_key: RegionKey) {
 		let mut light_components = self.light_components.clone();
 		self.region_mut(region_key).clear_light_info();
 		for (entity_key, light_component) in &mut light_components {
@@ -212,7 +223,7 @@ impl World {
 			.expect("Attempted to get a deleted entity")
 	}
 
-	fn entity_mut(&mut self, entity_key: EntityKey) -> &mut Entity {
+	pub fn entity_mut(&mut self, entity_key: EntityKey) -> &mut Entity {
 		self.entities.get_mut(entity_key)
 			.expect("Attempted to get a deleted entity")
 	}

@@ -45,7 +45,7 @@ fn main() -> Result<()> {
 fn run(mut world: World, mut frontend: Frontend, player: EntityKey) -> Result<()> {
 	let mut current_region = ("Caves", 0);
 
-	world.update_lights(current_region);
+	world.update_region_lights(current_region);
 	#[allow(unreachable_code)]
 	loop {
 		frontend.render(|mut screen| {
@@ -53,7 +53,7 @@ fn run(mut world: World, mut frontend: Frontend, player: EntityKey) -> Result<()
 		})?;
 
 		loop {
-			match flicker(&world, &mut frontend)? {
+			match flicker_torches(&world, &mut frontend)? {
 				Event::Key(key) => if match key.code {
 					KeyCode::Char('h') => commands::move_player(&mut world, player, (-1, 0)),
 					KeyCode::Char('j') => commands::move_player(&mut world, player, (0, -1)),
@@ -63,7 +63,8 @@ fn run(mut world: World, mut frontend: Frontend, player: EntityKey) -> Result<()
 					KeyCode::Char('u') => commands::move_player(&mut world, player, (1, 1)),
 					KeyCode::Char('b') => commands::move_player(&mut world, player, (-1, -1)),
 					KeyCode::Char('n') => commands::move_player(&mut world, player, (1, -1)),
-					KeyCode::Char('t') => commands::place_torch(&mut world, player, &mut frontend).map(|_| ()),
+					KeyCode::Char('t') => commands::place_torch(&mut world, player, &mut frontend)
+						.map(|_| ()),
 					KeyCode::Char('Q') => return Ok(()),
 					KeyCode::Char('.') => Ok(()), // no-op
 					_ => continue,
@@ -71,10 +72,12 @@ fn run(mut world: World, mut frontend: Frontend, player: EntityKey) -> Result<()
 				_ => continue, // 
 			}
 
+			*world.entity_mut(player).actions_mut() -= 1;
 			break;
 		}
 
-		world.update_region(current_region);
+		world.update_region(current_region, player);
+		world.update_region_lights(current_region);
 	}
 
 	Ok(())
@@ -89,7 +92,7 @@ fn create_player(world: &mut World) -> EntityKey {
 	player
 }
 
-fn flicker(world: &World, frontend: &mut Frontend) -> Result<Event> {
+fn flicker_torches(world: &World, frontend: &mut Frontend) -> Result<Event> {
 	let mut rng = SmallRng::from_entropy();
 	let range = Uniform::from(-1..=1);
 	let event = frontend.flicker(move |screen| {
