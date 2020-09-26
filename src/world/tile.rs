@@ -11,11 +11,13 @@ pub struct Tile {
 	pub held_entity_occludes: bool,
 	pub light_level: f32,
 	pub lighting: Color,
+	pub seen_token: &'static str,
+	pub seen_color: Color,
 }
 
 impl Tile {
 	pub fn new(class: TileClassId) -> Self {
-		Self { class, held_entity: None, held_entity_occludes: false, light_level: 0., lighting: Color::BLACK }
+		Self { class, held_entity: None, held_entity_occludes: false, light_level: 0., lighting: Color::BLACK, seen_token: " ", seen_color: Color::BLACK }
 	}
 
 	pub fn token(&self) -> &'static str {

@@ -99,9 +99,7 @@ impl World {
 		// Update entities only after the player has used all their actions.
 		let player = self.entity_mut(player_key);
 		if player.actions.to_integer() >= 1 {
-			dbg!("player turn", &player);
 			player.actions -= 1;
-			dbg!(player.actions);
 			return;
 		}
 		// Iterate over every entity until all actions are used.
@@ -118,7 +116,6 @@ impl World {
 				// Let the entity do something if it has more than one action remaining
 				if entity.actions.to_integer() >= 1 {
 					// TODO: Do an action
-					dbg!("snake turn", &entity);
 					actions.push(key);
 					entity.actions -= 1;
 					action_was_taken = true;

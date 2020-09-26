@@ -14,9 +14,28 @@ use std::cmp::max;
 pub fn camera(
 	screen: &mut Screen, world: &mut World, region_key: RegionKey, player: EntityKey
 ) {
+	draw_seen(screen, world, region_key);
+	draw_visible(screen, world, region_key, player);
+}
+
+fn draw_seen(screen: &mut Screen, world: &mut World, region_key: RegionKey) {
+	for x in 0..Region::WIDTH {
+		for y in 0..Region::HEIGHT {
+			let tile = &world.region(region_key)[(x, y)];
+
+			let _ = xy_to_linecol(x, y, screen.size()).map(|point|
+				screen.draw(tile.seen_token, point, tile.seen_color.to_gray(), Color::BLACK, Attributes::NORMAL)
+			);
+		}
+	}
+}
+
+fn draw_visible(
+	screen: &mut Screen, world: &mut World, region_key: RegionKey, player: EntityKey
+) {
 	let pos = world.entity(player).pos().into_tuple();
-	let region_clone = &mut world.region(region_key).clone();
-	shadow::cast(region_clone, pos, min_cast_radius(), |tile, (x, y)| {
+	let mut region_clone = world.region(region_key).clone();
+	shadow::cast(&mut region_clone, pos, min_cast_radius(), |tile, (x, y)| {
 		let (token, mut color) = match tile.held_entity {
 			Some(key) =>  {
 				let entity = world.entity(key);
@@ -26,12 +45,17 @@ pub fn camera(
 		};
 		color = color * tile.light_level + tile.lighting;
 
+		tile.seen_token = token;
+		tile.seen_color = color;
+
 		let _ = xy_to_linecol(x, y, screen.size()).map(|point|
 			screen.draw(token, point, color, Color::BLACK, Attributes::NORMAL)
 		);
 
 		Ok(())
 	});
+
+	*world.region_mut(region_key) = region_clone;
 }
 
 fn min_cast_radius() -> u16 {

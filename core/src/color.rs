@@ -20,6 +20,11 @@ impl Color {
 	}
 
 	pub const BLACK: Self = Self::new(0);
+
+	pub fn to_gray(self) -> Self {
+		let gray = 0.2989 * self.r as f32 + 0.5870 * self.g  as f32 + 0.1140 * self.b as f32;
+		Self { r: gray as u8, g: gray as u8, b: gray as u8 }
+	}
 }
 
 impl Mul<f32> for Color {
