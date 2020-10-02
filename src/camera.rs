@@ -58,7 +58,7 @@ fn draw_visible(
 	*world.region_mut(region_key) = region_clone;
 }
 
-fn min_cast_radius() -> u16 {
+pub fn min_cast_radius() -> u16 {
 	max(Region::WIDTH, Region::HEIGHT) / 2
 }
 

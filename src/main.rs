@@ -18,6 +18,7 @@ use torch_core::frontend::Event;
 use torch_core::frontend::Frontend;
 use torch_core::frontend::KeyCode;
 use torch_core::frontend::set_status_line;
+use torch_core::shadow::cast as shadow_cast;
 
 use anyhow::Result;
 
@@ -25,6 +26,7 @@ use rand::prelude::*;
 use rand::distributions::uniform::Uniform;
 use rand::rngs::SmallRng;
 
+use std::collections::HashSet;
 use std::io::stdout;
 use std::time::Duration;
 
@@ -52,8 +54,15 @@ fn run(mut world: World, mut frontend: Frontend, player: EntityKey) -> Result<()
 			camera(&mut screen, &mut world, current_region, player);
 		})?;
 
+		let mut visible_tiles = HashSet::new();
+		let player_pos = world.entity(player).pos().into_tuple();
+		shadow_cast(world.region_mut(current_region), player_pos, camera::min_cast_radius(), |_, pos| {
+			visible_tiles.insert(pos);
+			Ok(())
+		});
+
 		loop {
-			match flicker_torches(&world, &mut frontend)? {
+			match flicker_torches(&world, &mut frontend, &mut visible_tiles)? {
 				Event::Key(key) => if match key.code {
 					KeyCode::Char('h') => commands::move_player(&mut world, player, (-1, 0)),
 					KeyCode::Char('j') => commands::move_player(&mut world, player, (0, -1)),
@@ -92,7 +101,9 @@ fn create_player(world: &mut World) -> EntityKey {
 	player
 }
 
-fn flicker_torches(world: &World, frontend: &mut Frontend) -> Result<Event> {
+fn flicker_torches(
+	world: &World, frontend: &mut Frontend, visible_tiles: &mut HashSet<(u16, u16)>
+) -> Result<Event> {
 	let mut rng = SmallRng::from_entropy();
 	let range = Uniform::from(-1..=1);
 	let event = frontend.flicker(move |screen| {
@@ -105,9 +116,11 @@ fn flicker_torches(world: &World, frontend: &mut Frontend) -> Result<Event> {
 			};
 
 			for point in light_component.lit_points() {
-				xy_to_linecol(point.x, point.y, screen.size()).map(|point|
-					screen.lighten(shift, point)
-				);
+				if visible_tiles.contains(&point.into_tuple()) {
+					xy_to_linecol(point.x, point.y, screen.size()).map(|point|
+						screen.lighten(shift, point)
+					);
+				}
 			}
 
 		}
