@@ -11,6 +11,7 @@ use torch_core::frontend::Frontend;
 use torch_core::frontend::KeyCode;
 
 use anyhow::Result;
+use anyhow::anyhow;
 
 // Should later contain interactions such as automatically attacking enemies.
 pub fn move_player(world: &mut World, player: EntityKey, offset: impl Into<Offset>) -> Result<()> {
@@ -50,4 +51,20 @@ fn get_direction(frontend: &mut Frontend) -> impl Into<Offset> {
 			_ => continue,
 		};
 	}
+}
+
+pub fn pick_up_item(world: &mut World, player_key: EntityKey) -> Result<()> {
+	let player = world.entity(player_key);
+	let pos = player.pos();
+	let mut inventory = (*world.inventory_component(player_key)).clone();
+	let region = world.region_mut(player.region());
+	if let Some(mut items) = region.items_mut().remove(&pos) {
+		inventory.inventory_mut().append(&mut items);
+	} else {
+		return Err(anyhow!("No item(s) to pick up"))
+	}
+
+	*world.inventory_component_mut(player_key) = inventory;
+
+	Ok(())
 }

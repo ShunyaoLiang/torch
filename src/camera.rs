@@ -36,12 +36,16 @@ fn draw_visible(
 	let pos = world.entity(player).pos().into_tuple();
 	let mut region_clone = world.region(region_key).clone();
 	shadow::cast(&mut region_clone, pos, min_cast_radius(), |tile, (x, y)| {
-		let (token, mut color) = match tile.held_entity {
-			Some(key) =>  {
-				let entity = world.entity(key);
-				(entity.token(), entity.color())
-			}
-			None => (tile.token(), tile.color()),
+		let region = world.region(region_key);
+		let (token, mut color) = if let Some(key) = tile.held_entity {
+			let entity = world.entity(key);
+			(entity.token(), entity.color())
+		} else if let Some(items) = region.items().get(&(x, y).into()) {
+			let top_item_key = items.last().unwrap();
+			let top_item = world.items().get(*top_item_key).unwrap();
+			(top_item.token(), top_item.color())
+		} else {
+			(tile.token(), tile.color())
 		};
 		color = color * tile.light_level + tile.lighting;
 

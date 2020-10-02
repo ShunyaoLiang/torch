@@ -12,6 +12,7 @@ use world::EntityClassId;
 use world::EntityKey;
 use world::LightComponent;
 use world::LightComponentClassId;
+use world::InventoryComponent;
 use world::World;
 
 use torch_core::frontend::Event;
@@ -74,6 +75,7 @@ fn run(mut world: World, mut frontend: Frontend, player: EntityKey) -> Result<()
 					KeyCode::Char('n') => commands::move_player(&mut world, player, (1, -1)),
 					KeyCode::Char('t') => commands::place_torch(&mut world, player, &mut frontend)
 						.map(|_| ()),
+					KeyCode::Char(',') => commands::pick_up_item(&mut world, player),
 					KeyCode::Char('Q') => return Ok(()),
 					KeyCode::Char('.') => Ok(()), // no-op
 					_ => continue,
@@ -97,6 +99,7 @@ fn create_player(world: &mut World) -> EntityKey {
 	let player = world.add_entity(Entity::new(EntityClassId::Player, pos, ("Caves", 0)))
 		.unwrap();
 	world.add_light_component(player, LightComponent::new(LightComponentClassId::Player));
+	world.add_inventory_component(player, InventoryComponent::default());
 
 	player
 }

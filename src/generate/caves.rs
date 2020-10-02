@@ -1,6 +1,8 @@
 use crate::world::Entity;
 use crate::world::EntityClassId;
 use crate::world::Generator;
+use crate::world::Item;
+use crate::world::ItemClassId;
 use crate::world::Region;
 use crate::world::RegionKey;
 use crate::world::Tile;
@@ -37,6 +39,9 @@ impl Generator for Caves {
 			let pos = random_empty_tile(world.region(key), rng);
 			let _ = world.add_entity(Entity::new(EntityClassId::Snake, pos, key));
 		}
+		// Pranking the interface. Generating items in generate_entities.
+		let pos = random_empty_tile(world.region(key), rng);
+		world.add_item(Item::new(ItemClassId::Sword), key, pos);
 	}
 }
 

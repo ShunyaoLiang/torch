@@ -1,6 +1,7 @@
 mod entity;
 mod generator;
 mod light;
+mod inventory;
 mod point;
 mod region;
 mod tile;
@@ -15,6 +16,7 @@ use rand::rngs::SmallRng;
 
 use slotmap::DenseSlotMap;
 use slotmap::SecondaryMap;
+use slotmap::SlotMap;
 use slotmap::new_key_type;
 
 use std::collections::HashMap;
@@ -25,6 +27,10 @@ pub use entity::EntityClassId;
 
 pub use light::LightComponent;
 pub use light::LightComponentClassId;
+
+pub use inventory::InventoryComponent;
+pub use inventory::Item;
+pub use inventory::ItemClassId;
 
 pub use point::Offset;
 pub use point::Point;
@@ -42,6 +48,8 @@ pub struct World {
 	region_graph: DiGraphMap<RegionKey, ()>,
 	entities: DenseSlotMap<EntityKey, Entity>,
 	light_components: SecondaryMap<EntityKey, LightComponent>,
+	inventory_components: SecondaryMap<EntityKey, InventoryComponent>,
+	items: SlotMap<ItemKey, Item>,
 	rng: SmallRng,
 }
 
@@ -58,6 +66,8 @@ impl World {
 			region_graph: DiGraphMap::new(),
 			entities: DenseSlotMap::with_key(),
 			light_components: SecondaryMap::new(),
+			inventory_components: SecondaryMap::new(),
+			items: SlotMap::with_key(),
 			rng,
 		}
 	}
@@ -233,8 +243,43 @@ impl World {
 		&self.light_components
 	}
 
+	// Should macro this maybe.
+	pub fn add_inventory_component(
+		&mut self, entity_key: EntityKey, inventory_component: InventoryComponent
+	) {
+		self.inventory_components.insert(entity_key, inventory_component);
+	}
+
+	pub fn inventory_component(&self, key: EntityKey) -> &InventoryComponent {
+		self.inventory_components.get(key)
+			.unwrap()
+	}
+
+	pub fn inventory_component_mut(&mut self, key: EntityKey) -> &mut InventoryComponent {
+		self.inventory_components.get_mut(key)
+			.unwrap()
+	}
+
 	pub fn rng_clone(&self) -> impl Rng {
 		self.rng.clone()
+	}
+
+	pub fn add_item(&mut self, item: Item, region: RegionKey, pos: impl Into<Point>) -> ItemKey {
+		let pos = pos.into();
+		let key = self.items.insert(item);
+		let region = self.region_mut(region);
+		match region.items.get_mut(&pos) {
+			Some(items) => items.push(key),
+			None => {
+				region.items.insert(pos, vec![key]);
+			}
+		};
+
+		key
+	}
+
+	pub fn items(&self) -> &SlotMap<ItemKey, Item> {
+		&self.items
 	}
 }
 
@@ -243,6 +288,10 @@ pub type RegionKey = (&'static str, u32);
 
 new_key_type! {
 	pub struct EntityKey;
+}
+
+new_key_type! {
+	pub struct ItemKey;
 }
 
 #[derive(thiserror::Error, Debug)]

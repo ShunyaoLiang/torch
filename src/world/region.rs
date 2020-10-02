@@ -1,15 +1,18 @@
+use super::ItemKey;
 use super::point::Point;
 use super::tile::Tile;
 
 use torch_core::color::Color;
 use torch_core::shadow;
 
+use std::collections::HashMap;
 use std::ops::Index;
 use std::ops::IndexMut;
 
 #[derive(Clone, Debug)]
 pub struct Region {
 	pub tiles: Box<[Tile]>,
+	pub(super) items: HashMap<Point, Vec<ItemKey>>
 }
 
 impl Region {
@@ -20,7 +23,7 @@ impl Region {
 		let tiles = vec![Tile::default(); (Self::WIDTH * Self::HEIGHT) as usize]
 			.into_boxed_slice();
 
-		Self { tiles }
+		Self { tiles, items: HashMap::new() }
 	}
 
 	pub fn in_bounds(pos: impl Into<Point>) -> bool {
@@ -33,6 +36,14 @@ impl Region {
 			tile.light_level = 0.;
 			tile.lighting = Color::BLACK;
 		}
+	}
+
+	pub fn items(&self) -> &HashMap<Point, Vec<ItemKey>> {
+		&self.items
+	}
+
+	pub fn items_mut(&mut self) -> &mut HashMap<Point, Vec<ItemKey>> {
+		&mut self.items
 	}
 }
 
