@@ -29,7 +29,7 @@ impl Generator for Caves {
 			swap(&mut grid, &mut clone);
 		}
 
-		grid.into_region()
+		grid.make_region()
 	}
 
 	fn generate_entities(&mut self, world: &mut World, key: RegionKey) {
@@ -51,17 +51,9 @@ fn iterate(grid: &mut Grid, clone: &Grid) {
 			let neighbours = clone.neighbours(x, y);
 			// Somehow this works.
 			grid[(x, y)] = if clone[(x, y)] {
-				if neighbours >= 4 {
-					true
-				} else {
-					false
-				}
+				neighbours >= 4
 			} else {
-				if neighbours >= 5 {
-					true
-				} else {
-					false
-				}
+				neighbours >= 5
 			};
 		}
 	}
@@ -104,7 +96,7 @@ impl Grid {
 		}
 	}
 
-	fn into_region(&mut self) -> Region {
+	fn make_region(&mut self) -> Region {
 		let mut region = Region::new();
 		for (cell, tile) in self.cells.iter().zip(region.tiles.iter_mut()) {
 			*tile = if *cell {

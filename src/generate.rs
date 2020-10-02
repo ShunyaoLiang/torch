@@ -10,7 +10,7 @@ pub use caves::Caves;
 pub fn random_empty_tile(region: &Region, rng: &mut impl Rng) -> Point {
 	for _ in 0..40 {
 		let pos = random_point(rng);
-		if !region[pos].held_entity.is_some() && !region[pos].blocks() {
+		if region[pos].held_entity.is_none() && !region[pos].blocks() {
 			return pos;
 		}
 	}

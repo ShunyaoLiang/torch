@@ -120,9 +120,9 @@ fn flicker_torches(
 
 			for point in light_component.lit_points() {
 				if visible_tiles.contains(&point.into_tuple()) {
-					xy_to_linecol(point.x, point.y, screen.size()).map(|point|
-						screen.lighten(shift, point)
-					);
+					if let Some(point) = xy_to_linecol(point.x, point.y, screen.size()) {
+						screen.lighten(shift, point);
+					}
 				}
 			}
 
