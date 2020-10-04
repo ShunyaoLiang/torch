@@ -108,12 +108,11 @@ impl World {
 		// Update entities only after the player has used all their actions.
 		let player = self.entity_mut(player_key);
 		if player.actions.to_integer() >= 1 {
-			player.actions -= 1;
 			return;
 		}
 		// Iterate over every entity until all actions are used.
 		loop {
-			let mut action_was_taken = false;
+			let mut action_taken = false;
 			let mut actions = Vec::new();
 			// XXX: We should really be iterating starting from the player, but it should be
 			// unnoticeable, pretending the player is the first entity.
@@ -127,7 +126,7 @@ impl World {
 					// TODO: Do an action
 					actions.push(key);
 					entity.actions -= 1;
-					action_was_taken = true;
+					action_taken = true;
 				}
 			}
 			// XXX: "AI".
@@ -135,15 +134,16 @@ impl World {
 				let _ = self.move_entity(entity, (0, -1));
 			}
 			// Check if round should be over; all actions have been taken.
-			if !action_was_taken {
-				self.replenish_entity_actions();
+			if !action_taken {
 				break;
 			}
 		}
+		
+		self.replenish_entity_actions(region_key);
 	}
 
-	fn replenish_entity_actions(&mut self) {
-		for entity in self.entities.values_mut() {
+	fn replenish_entity_actions(&mut self, region_key: RegionKey) {
+		for entity in self.entities.values_mut().filter(|e| e.region == region_key) {
 			entity.actions += Ratio::new(entity.speed(), 12);
 		}
 	}

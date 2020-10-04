@@ -11,7 +11,7 @@ pub struct Entity {
 	pub(super) class: EntityClassId,
 	pub(super) pos: Point,
 	pub(super) region: RegionKey,
-	pub(super) actions: Ratio<u8>,
+	pub actions: Ratio<u8>,
 }
 
 impl Entity {
