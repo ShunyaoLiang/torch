@@ -23,9 +23,15 @@ fn draw_seen(screen: &mut Screen, world: &mut World, region_key: RegionKey) {
 		for y in 0..Region::HEIGHT {
 			let tile = &world.region(region_key)[(x, y)];
 
-			let _ = xy_to_linecol(x, y, screen.size()).map(|point|
-				screen.draw(tile.seen_token, point, tile.seen_color.to_gray(), Color::BLACK, Attributes::NORMAL)
-			);
+			let color = tile.seen_color.to_gray();
+			if color != Color::BLACK {
+				let _ = xy_to_linecol(x, y, screen.size()).map(|point|
+					screen.draw(
+						tile.seen_token, point, tile.seen_color.to_gray(), Color::BLACK, 
+						Attributes::NORMAL
+					)
+				);
+			}
 		}
 	}
 }
@@ -55,9 +61,11 @@ fn draw_visible(
 		tile.seen_token = token;
 		tile.seen_color = color;
 
-		let _ = xy_to_linecol(x, y, screen.size()).map(|point|
-			screen.draw(token, point, color, Color::BLACK, Attributes::NORMAL)
-		);
+		if color != Color::BLACK {
+			let _ = xy_to_linecol(x, y, screen.size()).map(|point|
+				screen.draw(token, point, color, Color::BLACK, Attributes::NORMAL)
+			);
+		}
 
 		Ok(())
 	});

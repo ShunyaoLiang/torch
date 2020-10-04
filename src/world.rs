@@ -178,7 +178,7 @@ impl World {
 	pub fn add_entity(&mut self, entity: Entity) -> Result<EntityKey> {
 		let pos = entity.pos;
 		let region = self.regions.get_mut(&entity.region)
-			.expect(&format!("Entity's region does not exist: {:?}", entity.region));
+			.unwrap_or_else(|| panic!("Entity's region does not exist: {:?}", entity.region));
 
 		if region[pos].blocks() {
 			return Err(Error::TileBlocks)
@@ -217,9 +217,6 @@ impl World {
 		region[entity_pos].held_entity_occludes = false;
 
 		self.entity_mut(entity_key).pos = pos;
-
-		let region = self.region(entity_region);
-		(&region[self.entity(entity_key).pos]);
 
 		Ok(())
 	}
