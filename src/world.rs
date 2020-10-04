@@ -249,10 +249,6 @@ impl World {
 		self.inventory_components.insert(entity_key, inventory_component);
 	}
 
-	pub fn rng_clone(&self) -> impl Rng {
-		self.rng.clone()
-	}
-
 	pub fn add_item(&mut self, item: Item, region: RegionKey, pos: impl Into<Point>) -> ItemKey {
 		let pos = pos.into();
 		let key = self.items.insert(item);

@@ -33,14 +33,14 @@ impl Generator for Caves {
 	}
 
 	fn generate_entities(&mut self, world: &mut World, key: RegionKey) {
-		// XXX: Cloning the Rng object
-		let rng = &mut world.rng_clone();
+		let region = world.regions.get(&key).unwrap();
+		let rng = &mut world.rng;
 		for _ in 0..30 {
-			let pos = random_empty_tile(world.region(key), rng);
-			let _ = world.add_entity(Entity::new(EntityClassId::Snake, pos, key));
+			let pos = random_empty_tile(region, rng);
+			let _ = world.entities.insert(Entity::new(EntityClassId::Snake, pos, key));
 		}
 		// Pranking the interface. Generating items in generate_entities.
-		let pos = random_empty_tile(world.region(key), rng);
+		let pos = random_empty_tile(region, rng);
 		world.add_item(Item::new(ItemClassId::Sword), key, pos);
 	}
 }

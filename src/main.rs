@@ -95,7 +95,8 @@ fn run(mut world: World, mut frontend: Frontend, player: EntityKey) -> Result<()
 }
 
 fn create_player(world: &mut World) -> EntityKey {
-	let pos = generate::random_empty_tile(world.region(("Caves", 0)), &mut world.rng_clone());
+	let region = world.regions.get(&("Caves", 0)).unwrap();
+	let pos = generate::random_empty_tile(region, &mut world.rng);
 	let player = world.add_entity(Entity::new(EntityClassId::Player, pos, ("Caves", 0)))
 		.unwrap();
 	world.add_light_component(player, LightComponent::new(LightComponentClassId::Player));
