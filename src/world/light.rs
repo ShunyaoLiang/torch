@@ -1,6 +1,8 @@
 use crate::static_flyweight;
+use super::Entity;
 use super::EntityKey;
 use super::Point;
+use super::Region;
 use super::RegionKey;
 use super::World;
 
@@ -48,12 +50,8 @@ struct LightComponentClass {
 	color: Color,
 }
 
-pub fn cast(
-	light_component: &mut LightComponent, world: &mut World, region_key: RegionKey, 
-	entity_key: EntityKey
-) {
-	let pos = world.entity(entity_key).pos.into_tuple();
-	let region = world.region_mut(region_key);
+pub fn cast(light_component: &mut LightComponent, region: &mut Region, entity: &Entity) {
+	let pos = entity.pos().into_tuple();
 	shadow::cast(region, pos, 8, |tile, (x, y)| {
 		light_component.lit_points.push((x, y).into());
 		let distance_2 =

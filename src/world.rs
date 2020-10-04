@@ -150,21 +150,20 @@ impl World {
 	}
 
 	pub fn update_region_lights(&mut self, region_key: RegionKey) {
-		let mut light_components = self.light_components.clone();
-		self.region_mut(region_key).clear_light_info();
-		for (entity_key, light_component) in &mut light_components {
-			let entity = self.entity(entity_key);
+		let region = self.regions.get_mut(&region_key)
+			.unwrap();
+		region.clear_light_info();
+		for (entity_key, light_component) in &mut self.light_components {
+			let entity = self.entities.get(entity_key)
+				.unwrap();
 			// Only update the light source entities on the given region.
 			if entity.region != region_key {
 				continue;
 			}
 
 			light_component.clear_lit_points();
-			light::cast(light_component, self, region_key, entity_key);
+			light::cast(light_component, region, entity);
 		}
-
-		// The clone has the updated lit tile vectors, so we must move it back.
-		self.light_components = light_components;
 	}
 
 	pub fn region(&self, region_key: RegionKey) -> &Region {
