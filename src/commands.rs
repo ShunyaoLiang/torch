@@ -54,17 +54,15 @@ fn get_direction(frontend: &mut Frontend) -> impl Into<Offset> {
 }
 
 pub fn pick_up_item(world: &mut World, player_key: EntityKey) -> Result<()> {
-	let player = world.entity(player_key);
+	let player = world.entities.get(player_key).unwrap();
 	let pos = player.pos();
-	let mut inventory = (*world.inventory_component(player_key)).clone();
-	let region = world.region_mut(player.region());
+	let inventory = world.inventory_components.get_mut(player_key).unwrap();
+	let region = world.regions.get_mut(&player.region()).unwrap();
 	if let Some(mut items) = region.items_mut().remove(&pos) {
 		inventory.inventory_mut().append(&mut items);
 	} else {
 		return Err(anyhow!("No item(s) to pick up"))
 	}
-
-	*world.inventory_component_mut(player_key) = inventory;
 
 	Ok(())
 }

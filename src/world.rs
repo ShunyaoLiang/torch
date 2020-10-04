@@ -44,13 +44,13 @@ pub use generator::Generator;
 
 #[derive(Debug)]
 pub struct World {
-	regions: HashMap<RegionKey, Region>,
-	region_graph: DiGraphMap<RegionKey, ()>,
-	entities: DenseSlotMap<EntityKey, Entity>,
-	light_components: SecondaryMap<EntityKey, LightComponent>,
-	inventory_components: SecondaryMap<EntityKey, InventoryComponent>,
-	items: SlotMap<ItemKey, Item>,
-	rng: SmallRng,
+	pub regions: HashMap<RegionKey, Region>,
+	pub region_graph: DiGraphMap<RegionKey, ()>,
+	pub entities: DenseSlotMap<EntityKey, Entity>,
+	pub light_components: SecondaryMap<EntityKey, LightComponent>,
+	pub inventory_components: SecondaryMap<EntityKey, InventoryComponent>,
+	pub items: SlotMap<ItemKey, Item>,
+	pub rng: SmallRng,
 }
 
 impl World {
@@ -247,16 +247,6 @@ impl World {
 		&mut self, entity_key: EntityKey, inventory_component: InventoryComponent
 	) {
 		self.inventory_components.insert(entity_key, inventory_component);
-	}
-
-	pub fn inventory_component(&self, key: EntityKey) -> &InventoryComponent {
-		self.inventory_components.get(key)
-			.unwrap()
-	}
-
-	pub fn inventory_component_mut(&mut self, key: EntityKey) -> &mut InventoryComponent {
-		self.inventory_components.get_mut(key)
-			.unwrap()
 	}
 
 	pub fn rng_clone(&self) -> impl Rng {

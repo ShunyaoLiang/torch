@@ -1,10 +1,7 @@
 use crate::static_flyweight;
 use super::Entity;
-use super::EntityKey;
 use super::Point;
 use super::Region;
-use super::RegionKey;
-use super::World;
 
 use torch_core::color::Color;
 use torch_core::shadow;
