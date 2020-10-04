@@ -34,21 +34,24 @@ fn draw_visible(
 	screen: &mut Screen, world: &mut World, region_key: RegionKey, player: EntityKey
 ) {
 	let pos = world.entity(player).pos().into_tuple();
-	let mut region_clone = world.region(region_key).clone();
-	let region = world.region(region_key);
-	shadow::cast(&mut region_clone, pos, min_cast_radius(), |tile, (x, y)| {
+	let entities = &world.entities;
+	let items = &world.items;
+	let region = world.regions.get_mut(&region_key).unwrap();
+	shadow::cast(region, pos, min_cast_radius(), |region, (x, y)| {
+		let tile = &region[(x, y)];
 		let (token, mut color) = if let Some(key) = tile.held_entity {
-			let entity = world.entity(key);
+			let entity = entities.get(key).unwrap();
 			(entity.token(), entity.color())
-		} else if let Some(items) = region.items().get(&(x, y).into()) {
-			let top_item_key = items.last().unwrap();
-			let top_item = world.items().get(*top_item_key).unwrap();
+		} else if let Some(tile_items) = region.items.get(&(x, y).into()) {
+			let top_item_key = tile_items.last().unwrap();
+			let top_item = items.get(*top_item_key).unwrap();
 			(top_item.token(), top_item.color())
 		} else {
 			(tile.token(), tile.color())
 		};
 		color = color * tile.light_level + tile.lighting;
 
+		let tile = &mut region[(x, y)];
 		tile.seen_token = token;
 		tile.seen_color = color;
 
@@ -58,8 +61,6 @@ fn draw_visible(
 
 		Ok(())
 	});
-
-	*world.region_mut(region_key) = region_clone;
 }
 
 pub fn min_cast_radius() -> u16 {

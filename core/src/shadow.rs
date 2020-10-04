@@ -2,13 +2,13 @@ use std::mem::swap;
 use std::ops;
 
 // Sure would be great if this was an iterator.
-pub fn cast<M, F>(map: &mut M, pos: (u16, u16), radius: u16, mut f: F)
+pub fn cast<M, F>(mut map: &mut M, pos: (u16, u16), radius: u16, mut f: F)
 where
 	M: Map,
 	M::Output: Occluder,
-	F: FnMut(&mut M::Output, (u16, u16)) -> anyhow::Result<()>,
+	F: FnMut(&mut M, (u16, u16)) -> anyhow::Result<()>,
 {
-	let _ = f(&mut map[pos], pos);
+	let _ = f(&mut map, pos);
 
 	for octant in 0..8 {
 		cast_octant(map, pos, radius, 1, 1.0, 0.0, octant, &mut f);
@@ -16,12 +16,12 @@ where
 }
 
 fn cast_octant<M, F>(
-	map: &mut M, (x, y): (u16, u16), radius: u16, column: u16, mut start_slope: f32, end_slope: f32,
-	octant: u8, f: &mut F,
+	map: &mut M, (x, y): (u16, u16), radius: u16, column: u16, mut start_slope: f32,
+	end_slope: f32, octant: u8, f: &mut F,
 ) where
 	M: Map,
 	M::Output: Occluder,
-	F: FnMut(&mut M::Output, (u16, u16)) -> anyhow::Result<()>,
+	F: FnMut(&mut M, (u16, u16)) -> anyhow::Result<()>,
 {
 	if start_slope < end_slope {
 		return;
@@ -35,13 +35,6 @@ fn cast_octant<M, F>(
 			let tl_slope = (dy as f32 + 0.5) / (dx as f32 - 0.5);
 			let br_slope = (dy as f32 - 0.5) / (dx as f32 + 0.5);
 
-			/*
-			if br_slope > start_slope {
-				continue;
-			} else if tl_slope < end_slope {
-				break;
-			} */
-
 			if tl_slope < end_slope {
 				break;
 			} else if br_slope > start_slope {
@@ -54,7 +47,7 @@ fn cast_octant<M, F>(
 			}
 
 			if dx.pow(2) + dy.pow(2) <= radius.pow(2) && !should_exclude(dx, dy, octant) {
-				let _  = f(&mut map[(ax, ay)], (ax, ay));
+				let _  = f(map, (ax, ay));
 			}
 
 			let current_tile = &map[(ax, ay)];

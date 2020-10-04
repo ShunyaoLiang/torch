@@ -12,7 +12,7 @@ use std::ops::IndexMut;
 #[derive(Clone, Debug)]
 pub struct Region {
 	pub tiles: Box<[Tile]>,
-	pub(super) items: HashMap<Point, Vec<ItemKey>>
+	pub items: HashMap<Point, Vec<ItemKey>>
 }
 
 impl Region {
@@ -36,10 +36,6 @@ impl Region {
 			tile.light_level = 0.;
 			tile.lighting = Color::BLACK;
 		}
-	}
-
-	pub fn items(&self) -> &HashMap<Point, Vec<ItemKey>> {
-		&self.items
 	}
 
 	pub fn items_mut(&mut self) -> &mut HashMap<Point, Vec<ItemKey>> {

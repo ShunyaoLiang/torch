@@ -49,7 +49,8 @@ struct LightComponentClass {
 
 pub fn cast(light_component: &mut LightComponent, region: &mut Region, entity: &Entity) {
 	let pos = entity.pos().into_tuple();
-	shadow::cast(region, pos, 8, |tile, (x, y)| {
+	shadow::cast(region, pos, 8, |region, (x, y)| {
+		let tile = &mut region[(x, y)];
 		light_component.lit_points.push((x, y).into());
 		let distance_2 =
 			(pos.0 as f32 - x as f32).powi(2) +
