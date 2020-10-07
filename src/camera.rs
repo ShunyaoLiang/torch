@@ -1,4 +1,5 @@
 use crate::world::EntityKey;
+use crate::world::Point;
 use crate::world::RegionKey;
 use crate::world::Region;
 use crate::world::World;
@@ -14,18 +15,19 @@ use std::cmp::max;
 pub fn camera(
 	screen: &mut Screen, world: &mut World, region_key: RegionKey, player: EntityKey
 ) {
-	draw_seen(screen, world, region_key);
+	draw_seen(screen, world, region_key, player);
 	draw_visible(screen, world, region_key, player);
 }
 
-fn draw_seen(screen: &mut Screen, world: &mut World, region_key: RegionKey) {
+fn draw_seen(screen: &mut Screen, world: &mut World, region_key: RegionKey, player: EntityKey) {
+	let pos = world.entity(player).pos();
 	for x in 0..Region::WIDTH {
 		for y in 0..Region::HEIGHT {
 			let tile = &world.region(region_key)[(x, y)];
 
 			let color = tile.seen_color.to_gray();
 			if color != Color::BLACK {
-				let _ = xy_to_linecol(x, y, screen.size()).map(|point|
+				let _ = xy_to_linecol(x, y, screen.size(), pos).map(|point|
 					screen.draw(
 						tile.seen_token, point, tile.seen_color.to_gray(), Color::BLACK, 
 						Attributes::NORMAL
@@ -36,9 +38,7 @@ fn draw_seen(screen: &mut Screen, world: &mut World, region_key: RegionKey) {
 	}
 }
 
-fn draw_visible(
-	screen: &mut Screen, world: &mut World, region_key: RegionKey, player: EntityKey
-) {
+fn draw_visible(screen: &mut Screen, world: &mut World, region_key: RegionKey, player: EntityKey) {
 	let pos = world.entity(player).pos().into_tuple();
 	let entities = &world.entities;
 	let items = &world.items;
@@ -62,7 +62,7 @@ fn draw_visible(
 		tile.seen_color = color;
 
 		if color != Color::BLACK {
-			let _ = xy_to_linecol(x, y, screen.size()).map(|point|
+			let _ = xy_to_linecol(x, y, screen.size(), pos.into()).map(|point|
 				screen.draw(token, point, color, Color::BLACK, Attributes::NORMAL)
 			);
 		}
@@ -75,8 +75,14 @@ pub fn min_cast_radius() -> u16 {
 	max(Region::WIDTH, Region::HEIGHT) / 2
 }
 
-pub fn xy_to_linecol(x: u16, y: u16, size: Size) -> Option<(u16, u16)> {
-	point(size.height as i32 - y as i32 - 1, x as i32)
+pub fn xy_to_linecol(x: u16, y: u16, size: Size, player_pos: Point) -> Option<(u16, u16)> {
+	// Get coordinates of top-left tile.
+	let tlx = clamp(player_pos.x as i32 - size.width  as i32 / 2, 0, Region::WIDTH as i32 - size.width as i32);
+	let tly = clamp(player_pos.y as i32 - size.height as i32 / 2, 0, Region::HEIGHT as i32 - size.height as i32);
+	// Calculate the coordinates relative to the top-left tile.
+	let x = x as i32 - tlx;
+	let y = y as i32 - tly;
+	point(size.height as i32 - y - 1, x)
 }
 
 fn point(line: i32, col: i32) -> Option<(u16, u16)> {
@@ -85,4 +91,17 @@ fn point(line: i32, col: i32) -> Option<(u16, u16)> {
 	} else {
 		None
 	}
+}
+
+fn clamp<T>(val: T, min: T, max: T) -> T
+where
+	T: PartialOrd,
+{
+    if val < min {
+        min
+    } else if val > max {
+        max
+    } else {
+        val
+    }
 }

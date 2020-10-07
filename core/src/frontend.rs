@@ -96,12 +96,20 @@ impl<'a> Screen<'a> {
 	) {
 		let point = point.into();
 		for (i, c) in text.as_ref().chars().enumerate() {
-			self.buffer[point.offset_col(i as i32)] = Cell { c, fg_color, bg_color, attributes };
+			let point = point.offset_col(i as i32);
+			if !self.size().contains(point) {
+				return;
+			}
+			// Silently fail if we draw outside the terminal.
+			self.buffer[point] = Cell { c, fg_color, bg_color, attributes };
 		}
 	}
 
 	pub fn lighten(&mut self, amount: f32, point: impl Into<Point>) {
-		self.buffer[point.into()].fg_color *= amount;
+		let point = point.into();
+		if self.size().contains(point) {
+			self.buffer[point].fg_color *= amount;
+		}
 	}
 
 	pub fn size(&self) -> Size {

@@ -15,6 +15,7 @@ use world::LightComponentClassId;
 use world::InventoryComponent;
 use world::Item;
 use world::ItemKey;
+use world::Point;
 use world::World;
 
 use torch_core::color::Color;
@@ -63,13 +64,16 @@ fn run(mut world: World, mut frontend: Frontend, player: EntityKey) -> Result<()
 
 		let mut visible_tiles = HashSet::new();
 		let player_pos = world.entity(player).pos().into_tuple();
-		shadow_cast(world.region_mut(current_region), player_pos, camera::min_cast_radius(), |_, pos| {
-			visible_tiles.insert(pos);
+		shadow_cast(world.region_mut(current_region), player_pos, camera::min_cast_radius(), |region, pos| {
+			if region[pos].light_level > 0. {
+				visible_tiles.insert(pos);
+			}
+
 			Ok(())
 		});
 
 		loop {
-			match flicker_torches(&world, &mut frontend, &mut visible_tiles)? {
+			match flicker_torches(&world, &mut frontend, &mut visible_tiles, player_pos.into())? {
 				Event::Key(key) => if match key.code {
 					KeyCode::Char('h') => commands::move_player(&mut world, player, (-1, 0), &mut current_region),
 					KeyCode::Char('j') => commands::move_player(&mut world, player, (0, -1), &mut current_region),
@@ -113,7 +117,8 @@ fn create_player(world: &mut World) -> EntityKey {
 }
 
 fn flicker_torches(
-	world: &World, frontend: &mut Frontend, visible_tiles: &mut HashSet<(u16, u16)>
+	world: &World, frontend: &mut Frontend, visible_tiles: &mut HashSet<(u16, u16)>,
+	player_pos: Point,
 ) -> Result<Event> {
 	let mut rng = SmallRng::from_entropy();
 	let range = Uniform::from(-1..=1);
@@ -128,7 +133,9 @@ fn flicker_torches(
 
 			for point in light_component.lit_points() {
 				if visible_tiles.contains(&point.into_tuple()) {
-					if let Some(point) = xy_to_linecol(point.x, point.y, screen.size()) {
+					if let Some(point) = xy_to_linecol(
+						point.x, point.y, screen.size(), player_pos
+					) {
 						screen.lighten(shift, point);
 					}
 				}
