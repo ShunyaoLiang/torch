@@ -13,8 +13,12 @@ use world::EntityKey;
 use world::LightComponent;
 use world::LightComponentClassId;
 use world::InventoryComponent;
+use world::Item;
+use world::ItemKey;
 use world::World;
 
+use torch_core::color::Color;
+use torch_core::frontend::Attributes;
 use torch_core::frontend::Event;
 use torch_core::frontend::Frontend;
 use torch_core::frontend::KeyCode;
@@ -26,6 +30,8 @@ use anyhow::Result;
 use rand::prelude::*;
 use rand::distributions::uniform::Uniform;
 use rand::rngs::SmallRng;
+
+use slotmap::SlotMap;
 
 use std::collections::HashSet;
 use std::io::stdout;
@@ -45,11 +51,11 @@ fn main() -> Result<()> {
 	Ok(())
 }
 
+#[allow(unreachable_code)]
 fn run(mut world: World, mut frontend: Frontend, player: EntityKey) -> Result<()> {
 	let mut current_region = ("Caves", 0);
 
 	world.update_region_lights(current_region);
-	#[allow(unreachable_code)]
 	loop {
 		frontend.render(|mut screen| {
 			camera(&mut screen, &mut world, current_region, player);
@@ -76,6 +82,7 @@ fn run(mut world: World, mut frontend: Frontend, player: EntityKey) -> Result<()
 					KeyCode::Char('t') => commands::place_torch(&mut world, player, &mut frontend)
 						.map(|_| ()),
 					KeyCode::Char(',') => commands::pick_up_item(&mut world, player),
+					KeyCode::Char('i') => Ok(inventory(&mut frontend, world.inventory_components.get(player).unwrap(), &world.items)),
 					KeyCode::Char('Q') => return Ok(()),
 					KeyCode::Char('.') => Ok(()), // no-op
 					_ => continue,
@@ -133,4 +140,19 @@ fn flicker_torches(
 	})?.unwrap();
 
 	Ok(event)
+}
+
+fn inventory(
+	frontend: &mut Frontend, inventory: &InventoryComponent, items: &SlotMap<ItemKey, Item>
+) {
+	frontend.render_unclearing(move |mut screen| {
+		screen.draw("Inventory", (0, 0), Color::new(0xffffff), Color::BLACK, Attributes::REVERSE);
+		for (i, item) in inventory.inventory().iter().enumerate() {
+			let item = items.get(*item).unwrap();
+			screen.draw(item.token(), (1 + i as u16, 0), item.color(), Color::BLACK, Attributes::NORMAL);
+			let s = dbg!(format!("- {}", item.class.to_string()));
+			screen.draw(s, (1 + i as u16, 2), Color::new(0xffffff), Color::BLACK, Attributes::NORMAL);
+		}
+	}).unwrap();
+	let _ = frontend.read_event().unwrap();
 }

@@ -52,9 +52,7 @@ impl Generator for Caves {
 		world.add_item(Item::new(ItemClassId::Sword), key, pos);
 	}
 
-	fn generate_connection(&mut self, direction: Direction) {
-		// Check if there is an existing gap in the edge
-	}
+	fn generate_connection(&mut self, _direction: Direction) {}
 }
 
 fn iterate(grid: &mut Grid, clone: &Grid) {

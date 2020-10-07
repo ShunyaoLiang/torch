@@ -97,6 +97,7 @@ impl World {
 		self
 	}
 
+	#[allow(dead_code)]
 	pub fn connect_regions<I>(mut self, connections: I) -> Self
 	where
 		I: IntoIterator<Item = (RegionKey, RegionKey, Direction)>,

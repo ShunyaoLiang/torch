@@ -3,6 +3,11 @@ use super::ItemKey;
 
 use torch_core::color::Color;
 
+use std::fmt::Debug;
+use std::fmt::Display;
+use std::fmt::Formatter;
+use std::fmt;
+
 #[derive(Clone, Copy, Debug)]
 pub struct Item {
 	pub class: ItemClassId,
@@ -13,11 +18,11 @@ impl Item {
 		Self { class }
 	}
 
-	pub fn token(self) -> &'static str {
+	pub fn token(&self) -> &'static str {
 		self.class.flyweight().token
 	}
 
-	pub fn color(self) -> Color {
+	pub fn color(&self) -> Color {
 		self.class.flyweight().color
 	}
 }
@@ -34,6 +39,12 @@ static_flyweight! {
 	}
 }
 
+impl Display for ItemClassId {
+	fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+		Debug::fmt(self, f)
+	}
+}
+
 #[derive(Clone, Debug, Default)]
 pub struct InventoryComponent {
 	inventory: Vec<ItemKey>,
@@ -41,6 +52,10 @@ pub struct InventoryComponent {
 }
 
 impl InventoryComponent {
+	pub fn inventory(&self) -> &Vec<ItemKey> {
+		&self.inventory
+	}
+
 	pub fn inventory_mut(&mut self) -> &mut Vec<ItemKey> {
 		&mut self.inventory
 	}

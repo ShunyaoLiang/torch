@@ -13,6 +13,8 @@ use crossterm::cursor::Hide as HideCursor;
 use crossterm::cursor::MoveTo as MoveCursorTo;
 use crossterm::cursor::Show as ShowCursor;
 use crossterm::event::read as read_event;
+use crossterm::style::Attribute;
+use crossterm::style::SetAttribute;
 use crossterm::terminal::EnterAlternateScreen;
 use crossterm::terminal::LeaveAlternateScreen;
 use crossterm::terminal::disable_raw_mode;
@@ -50,8 +52,13 @@ impl<'a> Frontend<'a> {
 
 	pub fn render(&mut self, script: impl FnOnce(Screen)) -> Result<()> {
 		self.buffer = Buffer::new(self.size);
+		self.render_unclearing(script)
+	}
+
+	pub fn render_unclearing(&mut self, script: impl FnOnce(Screen)) -> Result<()> {
 		script(Screen::new(&mut self.buffer));
 		self.buffer.flush(&mut self.stdout)?;
+		execute!(self.stdout, SetAttribute(Attribute::Reset))?;
 
 		Ok(())
 	}

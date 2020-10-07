@@ -7,6 +7,7 @@ use super::Size;
 use crossterm::queue;
 use crossterm::cursor::MoveTo as MoveCursorTo;
 use crossterm::style::Print;
+use crossterm::style::SetAttribute;
 use crossterm::style::SetAttributes;
 use crossterm::style::SetBackgroundColor;
 use crossterm::style::SetForegroundColor;
@@ -70,7 +71,13 @@ fn queue_cell_diff(writer: &mut impl Write, current: Cell, last: Cell) -> Result
 		queue!(writer, SetBackgroundColor(current.bg_color.into()))?;
 	}
 	if current.attributes != last.attributes {
-		queue!(writer, SetAttributes(current.attributes.into()))?;
+		queue!(
+			writer,
+			SetAttribute(crossterm::style::Attribute::Reset),	
+			SetForegroundColor(current.fg_color.into()),
+			SetBackgroundColor(current.bg_color.into()),
+			SetAttributes(current.attributes.into()),
+		)?;
 	}
 	queue!(writer, Print(current.c))?;
 
