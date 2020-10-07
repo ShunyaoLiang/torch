@@ -180,7 +180,7 @@ impl World {
 		let region = self.regions.get_mut(&entity.region)
 			.unwrap_or_else(|| panic!("Entity's region does not exist: {:?}", entity.region));
 
-		if region[pos].blocks() {
+		if !Region::in_bounds(pos) || region[pos].blocks() {
 			return Err(Error::TileBlocks)
 		}
 
