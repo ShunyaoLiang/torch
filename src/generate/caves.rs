@@ -1,5 +1,6 @@
 use crate::world::Entity;
 use crate::world::EntityClassId;
+use crate::world::Direction;
 use crate::world::Generator;
 use crate::world::Item;
 use crate::world::ItemClassId;
@@ -17,6 +18,7 @@ use std::mem::swap;
 use std::ops::Index;
 use std::ops::IndexMut;
 
+#[derive(Clone)]
 pub struct Caves;
 
 impl Generator for Caves {
@@ -48,6 +50,10 @@ impl Generator for Caves {
 		// Pranking the interface. Generating items in generate_entities.
 		let pos = random_empty_tile(region, rng);
 		world.add_item(Item::new(ItemClassId::Sword), key, pos);
+	}
+
+	fn generate_connection(&mut self, direction: Direction) {
+		// Check if there is an existing gap in the edge
 	}
 }
 

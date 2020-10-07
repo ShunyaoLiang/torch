@@ -65,14 +65,14 @@ fn run(mut world: World, mut frontend: Frontend, player: EntityKey) -> Result<()
 		loop {
 			match flicker_torches(&world, &mut frontend, &mut visible_tiles)? {
 				Event::Key(key) => if match key.code {
-					KeyCode::Char('h') => commands::move_player(&mut world, player, (-1, 0)),
-					KeyCode::Char('j') => commands::move_player(&mut world, player, (0, -1)),
-					KeyCode::Char('k') => commands::move_player(&mut world, player, (0, 1)),
-					KeyCode::Char('l') => commands::move_player(&mut world, player, (1, 0)),
-					KeyCode::Char('y') => commands::move_player(&mut world, player, (-1, 1)),
-					KeyCode::Char('u') => commands::move_player(&mut world, player, (1, 1)),
-					KeyCode::Char('b') => commands::move_player(&mut world, player, (-1, -1)),
-					KeyCode::Char('n') => commands::move_player(&mut world, player, (1, -1)),
+					KeyCode::Char('h') => commands::move_player(&mut world, player, (-1, 0), &mut current_region),
+					KeyCode::Char('j') => commands::move_player(&mut world, player, (0, -1), &mut current_region),
+					KeyCode::Char('k') => commands::move_player(&mut world, player, (0, 1), &mut current_region),
+					KeyCode::Char('l') => commands::move_player(&mut world, player, (1, 0), &mut current_region),
+					KeyCode::Char('y') => commands::move_player(&mut world, player, (-1, 1), &mut current_region),
+					KeyCode::Char('u') => commands::move_player(&mut world, player, (1, 1), &mut current_region),
+					KeyCode::Char('b') => commands::move_player(&mut world, player, (-1, -1), &mut current_region),
+					KeyCode::Char('n') => commands::move_player(&mut world, player, (1, -1), &mut current_region),
 					KeyCode::Char('t') => commands::place_torch(&mut world, player, &mut frontend)
 						.map(|_| ()),
 					KeyCode::Char(',') => commands::pick_up_item(&mut world, player),

@@ -1,9 +1,13 @@
+use crate::world::Direction;
 use crate::world::EntityClassId;
 use crate::world::Entity;
 use crate::world::EntityKey;
 use crate::world::LightComponent;
 use crate::world::LightComponentClassId;
 use crate::world::Offset;
+use crate::world::Point;
+use crate::world::Region;
+use crate::world::RegionKey;
 use crate::world::World;
 
 use torch_core::frontend::Event;
@@ -13,13 +17,40 @@ use torch_core::frontend::KeyCode;
 use anyhow::Result;
 use anyhow::anyhow;
 
-// Should later contain interactions such as automatically attacking enemies.
-pub fn move_player(world: &mut World, player: EntityKey, offset: impl Into<Offset>) -> Result<()> {
-	world.move_entity(player, offset)?;
+pub fn move_player(
+	world: &mut World, player: EntityKey, offset: impl Into<Offset>, current_region: &mut RegionKey
+) -> Result<()> {
+	let offset = offset.into();
+	// Detect if the player is moving off the edge of a region.
+	let player_pos = world.entity(player).pos();
+	let (yes, direction) = is_player_leaving_region(player_pos, offset);
+	if yes {
+		let region = world.entity(player).region();
+		let new_region = world.region_graph.edges(region).find(|e| *e.2 == direction)
+			.ok_or(anyhow!("no connected region in that direction"))?.1;
+		world.move_entity_region(player, new_region, direction)?;
+		*current_region = new_region;
+	} else {
+		world.move_entity(player, offset)?;
+	}
 
 	Ok(())
 }
 
+fn is_player_leaving_region(player_pos: Point, offset: impl Into<Offset>) -> (bool, Direction) {
+	let offset = offset.into();
+	if player_pos.x == 0 {
+		(offset == (-1, 0).into(), Direction::West)
+	} else if player_pos.y == 0 {
+		(offset == (0, -1).into(), Direction::South)
+	} else if player_pos.x == Region::WIDTH - 1 {
+		(offset == (1, 0).into(), Direction::East)
+	} else if player_pos.y == Region::HEIGHT - 1 {
+		(offset == (0, 1).into(), Direction::North)
+	} else {
+		(false, Direction::South) // Second value should be discarded if first is false.
+	}
+}
 
 pub fn place_torch(
 	world: &mut World, player: EntityKey, frontend: &mut Frontend

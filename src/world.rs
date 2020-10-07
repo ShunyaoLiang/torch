@@ -44,7 +44,7 @@ pub use generator::Generator;
 #[derive(Debug)]
 pub struct World {
 	pub regions: HashMap<RegionKey, Region>,
-	pub region_graph: DiGraphMap<RegionKey, ()>,
+	pub region_graph: DiGraphMap<RegionKey, Direction>,
 	pub entities: DenseSlotMap<EntityKey, Entity>,
 	pub light_components: SecondaryMap<EntityKey, LightComponent>,
 	pub inventory_components: SecondaryMap<EntityKey, InventoryComponent>,
@@ -71,11 +71,14 @@ impl World {
 		}
 	}
 
-	pub fn create_regions(mut self, ident: &'static str, mut gen: impl Generator, n: u32) -> Self {
+	pub fn create_regions(mut self, ident: &'static str, gen: impl Generator, n: u32) -> Self {
 		assert!(!self.regions.contains_key(&(ident, 0)));
+
+		let mut gens = vec![gen; n as usize];
 
 		for n in 0..n {
 			let key = (ident, n);
+			let gen = &mut gens[n as usize];
 			let region = gen.generate_terrain(&mut self.rng);
 			self.regions.insert(key, region);
 			self.region_graph.add_node(key);
@@ -83,10 +86,12 @@ impl World {
 		}
 
 		// Create edges between the generated regions like a linked list.
-		for n in 0..n-1 {
+		for n in 0..n - 1 {
 			let (a, b) = ((ident, n), (ident, n + 1));
-			self.region_graph.add_edge(a, b, ());
-			self.region_graph.add_edge(b, a, ());
+			self.region_graph.add_edge(a, b, Direction::South);
+			self.region_graph.add_edge(b, a, Direction::North);
+			gens[n as usize].generate_connection(Direction::South);
+			gens[n as usize + 1].generate_connection(Direction::North);
 		}
 
 		self
@@ -94,11 +99,11 @@ impl World {
 
 	pub fn connect_regions<I>(mut self, connections: I) -> Self
 	where
-		I: IntoIterator<Item = (RegionKey, RegionKey)>,
+		I: IntoIterator<Item = (RegionKey, RegionKey, Direction)>,
 	{
-		for (a, b) in connections {
-			self.region_graph.add_edge(a, b, ());
-			self.region_graph.add_edge(b, a, ());
+		for (a, b, direction) in connections {
+			self.region_graph.add_edge(a, b, direction);
+			self.region_graph.add_edge(b, a, -direction);
 		}
 
 		self
@@ -221,6 +226,39 @@ impl World {
 		Ok(())
 	}
 
+	pub fn move_entity_region(
+		&mut self, entity_key: EntityKey, region_key: RegionKey, direction: Direction
+	) -> Result<()> {
+		// TODO: This needs a serious overhaul. Regions should store where valid locations to spawn
+		// on the egdes are.
+		let entity = self.entities.get_mut(entity_key).unwrap();
+		let previous_entity_pos = entity.pos;
+		let entity_pos = &mut entity.pos;
+		let previous_entity_region = entity.region;
+		entity.region = region_key;
+		match direction {
+			Direction::North => entity_pos.y = 0,
+			Direction::South => entity_pos.y = Region::HEIGHT - 1,
+			Direction::East => entity_pos.x = 0,
+			Direction::West => entity_pos.x = Region::WIDTH - 1,
+		}
+		let previous_region = self.regions.get_mut(&previous_entity_region).unwrap();
+		previous_region[previous_entity_pos].held_entity = None;
+		let region = self.regions.get_mut(&region_key).unwrap();
+		region[*entity_pos].held_entity = Some(entity_key);
+
+		if region[*entity_pos].blocks() {
+			region[*entity_pos].held_entity = None;
+			*entity_pos = crate::generate::random_empty_tile(region, &mut self.rng);
+			region[*entity_pos].held_entity = Some(entity_key);
+		}
+
+		dbg!(&region[*entity_pos]);
+		dbg!(entity);
+
+		Ok(())
+	}
+
 	pub fn entity(&self, entity_key: EntityKey) -> &Entity {
 		self.entities.get(entity_key)
 			.expect("Attempted to get a deleted entity")
@@ -270,6 +308,27 @@ new_key_type! {
 
 new_key_type! {
 	pub struct ItemKey;
+}
+
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum Direction {
+	North,
+	South,
+	East,
+	West,
+}
+
+impl std::ops::Neg for Direction {
+	type Output = Direction;
+
+	fn neg(self) -> Self::Output {
+		match self {
+			Self::North => Self::South,
+			Self::South => Self::North,
+			Self::East => Self::West,
+			Self::West => Self::East,
+		}
+	}
 }
 
 #[derive(thiserror::Error, Debug)]
