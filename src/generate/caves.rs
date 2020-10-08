@@ -116,6 +116,9 @@ impl Grid {
 			};
 		}
 
+		// DEBUG
+		region[(52, 5)] = Tile::new(TileClassId::Water);
+
 		region
 	}
 }

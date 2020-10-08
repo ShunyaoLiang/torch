@@ -56,5 +56,6 @@ static_flyweight! {
 	pub enum TileClassId -> TileClass {
 		Ground = { token: ".", color: Color::new(0x222222), blocks: false },
 		CaveWall = { token: "#", color: Color::new(0x222222), blocks: true },
+		Water = { token: "~", color: Color::new(0x0b4ea3), blocks: false },
 	}
 }

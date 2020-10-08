@@ -8,6 +8,7 @@ use crate::world::Offset;
 use crate::world::Point;
 use crate::world::Region;
 use crate::world::RegionKey;
+use crate::world::TileClassId;
 use crate::world::World;
 
 use torch_core::frontend::Event;
@@ -18,7 +19,8 @@ use anyhow::Result;
 use anyhow::anyhow;
 
 pub fn move_player(
-	world: &mut World, player: EntityKey, offset: impl Into<Offset>, current_region: &mut RegionKey
+	world: &mut World, player: EntityKey, offset: impl Into<Offset>, current_region: &mut RegionKey,
+	message_buffer: &mut Vec<String>,
 ) -> Result<()> {
 	let offset = offset.into();
 	// Detect if the player is moving off the edge of a region.
@@ -32,6 +34,18 @@ pub fn move_player(
 		*current_region = new_region;
 	} else {
 		world.move_entity(player, offset)?;
+	}
+
+	let player_pos = world.entities.get(player).unwrap().pos();
+	let region = world.regions.get(&*current_region).unwrap();
+	if region[player_pos].class == TileClassId::Water {
+		for item_key in world.inventory_components.get_mut(player).unwrap().inventory_mut() {
+			let item = world.items.get_mut(*item_key).unwrap();
+			if !item.corroded {
+				message_buffer.push(format!("Your {} corrodes!", item.class.to_string()));
+				item.corroded = true;
+			}
+		}
 	}
 
 	Ok(())

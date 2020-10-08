@@ -11,11 +11,12 @@ use std::fmt;
 #[derive(Clone, Copy, Debug)]
 pub struct Item {
 	pub class: ItemClassId,
+	pub corroded: bool,
 }
 
 impl Item {
 	pub fn new(class: ItemClassId) -> Self {
-		Self { class }
+		Self { class, corroded: false }
 	}
 
 	pub fn token(&self) -> &'static str {
@@ -24,6 +25,12 @@ impl Item {
 
 	pub fn color(&self) -> Color {
 		self.class.flyweight().color
+	}
+}
+
+impl ToString for Item {
+	fn to_string(&self) -> String {
+		format!("{}{}", if self.corroded { "corroded " } else { "" }, self.class.to_string())
 	}
 }
 
