@@ -18,24 +18,46 @@ use std::ops::IndexMut;
 
 #[derive(Clone)]
 pub(super) struct Buffer {
-	data: Box<[Cell]>,
+	cells: Box<[Cell]>,
 	size: Size,
+	pub bg_color: Color,
 }
 
 impl Buffer {
 	pub fn new(size: impl Into<Size>) -> Self {
 		let size = size.into();
 		Self {
-			data: vec![Cell::default(); size.area() as usize].into_boxed_slice(),
-			size
+			cells: vec![Cell::default(); size.area() as usize].into_boxed_slice(),
+			size,
+			bg_color: Color::BLACK,
 		}
 	}
 
-	pub fn flush(&mut self, writer: &mut impl Write) -> Result<()> {
+	pub fn flush(&self, writer: &mut impl Write) -> Result<()> {
 		queue!(writer, MoveCursorTo(0, 0))?;
 		queue_cell(writer, self.first())?;
-		for (current, last) in self.data.windows(2).map(|w| (w[1], w[0])) {
-			queue_cell_diff(writer, current, last)?;
+
+		let mut last_queued_i = 0;
+		let mut last_cell = self.first();
+		for (i, cell) in self.cells.iter().enumerate().skip(1) {
+			// Don't print any blank tiles
+			if cell.bg_color == self.bg_color && cell.c == ' ' {
+				continue;
+			}
+
+			// Is it more efficient to print spaces or a cursor jump?
+			let jump = i - last_queued_i;
+			if jump > 1 && jump < 8 {
+				// Format string hack to print an arbitrary amount of the same character.
+				write!(writer, "{: <1$}", "", jump - 1)?;
+			} else {
+				let Point { line, col } = self.size.index_to_point(i);
+				queue!(writer, MoveCursorTo(col, line))?;
+			}
+
+			queue_cell_diff(writer, *cell, last_cell)?;
+			last_queued_i = i;
+			last_cell = *cell;
 		}
 		writer.flush()?;
 
@@ -47,7 +69,7 @@ impl Buffer {
 	}
 
 	fn first(&self) -> Cell {
-		self.data[0]
+		self.cells[0]
 	}
 }
 
@@ -94,7 +116,7 @@ where
 		let point = point.into();
 		let Point { line, col } = point;
 		if self.size.contains(point) {
-			&self.data[(line * self.size.width + col) as usize]
+			&self.cells[(line * self.size.width + col) as usize]
 		} else {
 			panic!("point out of bounds: point is {} but size is {}", point, self.size);
 		}
@@ -109,7 +131,7 @@ where
 		let point = point.into();
 		let Point { line, col } = point;
 		if self.size.contains(point) {
-			&mut self.data[(line * self.size.width + col) as usize]
+			&mut self.cells[(line * self.size.width + col) as usize]
 		} else {
 			panic!("point out of bounds: point is {} but size is {}", point, self.size);
 		}

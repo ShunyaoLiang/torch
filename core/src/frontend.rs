@@ -8,17 +8,21 @@ use crate::color::Color;
 
 use bitflags::bitflags;
 
-use crossterm::execute;
 use crossterm::cursor::Hide as HideCursor;
 use crossterm::cursor::MoveTo as MoveCursorTo;
 use crossterm::cursor::Show as ShowCursor;
 use crossterm::event::read as read_event;
+use crossterm::execute;
+use crossterm::queue;
 use crossterm::style::Attribute;
 use crossterm::style::SetAttribute;
-use crossterm::terminal::EnterAlternateScreen;
-use crossterm::terminal::LeaveAlternateScreen;
+use crossterm::style::SetBackgroundColor;
 use crossterm::terminal::disable_raw_mode;
 use crossterm::terminal::enable_raw_mode;
+use crossterm::terminal::Clear;
+use crossterm::terminal::ClearType;
+use crossterm::terminal::EnterAlternateScreen;
+use crossterm::terminal::LeaveAlternateScreen;
 
 use std::convert::AsRef;
 use std::fmt;
@@ -44,7 +48,14 @@ impl<'a> Frontend<'a> {
 	pub fn new(stdout: &'a Stdout) -> Result<Self> {
 		let size = terminal_size();
 		let mut stdout = stdout.lock();
-		execute!(stdout, HideCursor, EnterAlternateScreen, MoveCursorTo(0, 0))?;
+		execute!(
+			stdout,
+			HideCursor,
+			EnterAlternateScreen,
+			MoveCursorTo(0, 0),
+			SetBackgroundColor(Color::BLACK.into()),
+			Clear(ClearType::All),
+		)?;
 		enable_raw_mode()?;
 
 		Ok(Self { buffer: Buffer::new(size), stdout, size })
@@ -57,6 +68,7 @@ impl<'a> Frontend<'a> {
 
 	pub fn render_unclearing(&mut self, script: impl FnOnce(Screen)) -> Result<()> {
 		script(Screen::new(&mut self.buffer));
+		queue!(self.stdout, Clear(ClearType::All))?;
 		self.buffer.flush(&mut self.stdout)?;
 		execute!(self.stdout, SetAttribute(Attribute::Reset))?;
 
@@ -105,6 +117,10 @@ impl<'a> Screen<'a> {
 		}
 	}
 
+	pub fn set_bg_color(&mut self, color: Color) {
+		self.buffer.bg_color = color;
+	}
+
 	pub fn lighten(&mut self, amount: f32, point: impl Into<Point>) {
 		let point = point.into();
 		if self.size().contains(point) {
@@ -131,6 +147,13 @@ impl Size {
 	pub fn contains(&self, point: impl Into<Point>) -> bool {
 		let Point { line, col } = point.into();
 		line < self.height && col < self.width
+	}
+
+	fn index_to_point(&self, index: usize) -> Point {
+		(
+			(index / self.width as usize) as u16,
+			(index % self.width as usize) as u16,
+		).into()
 	}
 }
 
