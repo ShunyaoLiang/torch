@@ -63,14 +63,14 @@ impl<'a> Frontend<'a> {
 
 	pub fn render(&mut self, script: impl FnOnce(Screen)) -> Result<()> {
 		self.buffer = Buffer::new(self.size);
+		queue!(self.stdout, Clear(ClearType::All))?;
 		self.render_unclearing(script)
 	}
 
 	pub fn render_unclearing(&mut self, script: impl FnOnce(Screen)) -> Result<()> {
 		script(Screen::new(&mut self.buffer));
-		queue!(self.stdout, Clear(ClearType::All))?;
-		self.buffer.flush(&mut self.stdout)?;
 		execute!(self.stdout, SetAttribute(Attribute::Reset))?;
+		self.buffer.flush(&mut self.stdout)?;
 
 		Ok(())
 	}

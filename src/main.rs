@@ -63,7 +63,7 @@ fn run(mut world: World, mut frontend: Frontend, player: EntityKey) -> Result<()
 	let mut message_buffer = Vec::new();
 
 	world.update_region_lights(current_region);
-	loop {
+	'game_loop: loop {
 		frontend.render(|mut screen| {
 			camera(&mut screen, &mut world, current_region, player);
 			status(&mut screen, &mut message_buffer);
@@ -94,7 +94,10 @@ fn run(mut world: World, mut frontend: Frontend, player: EntityKey) -> Result<()
 					KeyCode::Char('t') => commands::place_torch(&mut world, player, &mut frontend)
 						.map(|_| ()),
 					KeyCode::Char(',') => commands::pick_up_item(&mut world, player),
-					KeyCode::Char('i') => Ok(inventory(&mut frontend, world.inventory_components.get(player).unwrap(), &world.items)),
+					KeyCode::Char('i') => {
+						inventory(&mut frontend, world.inventory_components.get(player).unwrap(), &world.items);
+						continue 'game_loop;
+					},
 					KeyCode::Char('Q') => return Ok(()),
 					KeyCode::Char('.') => Ok(()), // no-op
 					_ => continue,
@@ -165,7 +168,7 @@ fn inventory(
 		for (i, item) in inventory.inventory().iter().enumerate() {
 			let item = items.get(*item).unwrap();
 			screen.draw(item.token(), (1 + i as u16, 0), item.color(), Color::BLACK, Attributes::NORMAL);
-			let s = dbg!(format!("- {}", item.to_string()));
+			let s = format!("- {}", item.to_string());
 			screen.draw(s, (1 + i as u16, 2), Color::new(0xffffff), Color::BLACK, Attributes::NORMAL);
 		}
 	}).unwrap();
