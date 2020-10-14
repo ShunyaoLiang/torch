@@ -1,5 +1,2 @@
-*.o
-a.out
-debug_log
-tags
-bin/
+/target
+/core/target

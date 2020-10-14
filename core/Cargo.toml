@@ -1,0 +1,12 @@
+[package]
+name = "torch-core"
+version = "0.1.2"
+authors = ["Shunyao Liang"]
+edition = "2018"
+workspace = ".."
+
+[dependencies]
+anyhow = "1.0.32"
+bitflags = "1.2.1"
+crossterm = "0.17.7"
+thiserror = "1.0.20"

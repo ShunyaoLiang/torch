@@ -1,0 +1,21 @@
+[package]
+name = "torch"
+version = "0.1.2"
+authors = ["Shunyao Liang"]
+edition = "2018"
+
+[workspace]
+members = ["core"]
+
+[dependencies]
+anyhow = "1.0"
+crossterm = "0.17"
+counted-array = "0.1.2"
+num-rational = { version = "0.3", default-features = false }
+petgraph = "0.5"
+rand = { version = "0.7", features = ["small_rng"] }
+slotmap = "0.4.0"
+thiserror = "1.0"
+
+[dependencies.torch-core]
+path = "core"
