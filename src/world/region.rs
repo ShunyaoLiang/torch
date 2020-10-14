@@ -12,7 +12,8 @@ use std::ops::IndexMut;
 #[derive(Clone, Debug)]
 pub struct Region {
 	pub tiles: Box<[Tile]>,
-	pub items: HashMap<Point, Vec<ItemKey>>
+	pub items: HashMap<Point, Vec<ItemKey>>,
+	pub player_trail: HashMap<Point, u64>,
 }
 
 impl Region {
@@ -23,7 +24,7 @@ impl Region {
 		let tiles = vec![Tile::default(); (Self::WIDTH * Self::HEIGHT) as usize]
 			.into_boxed_slice();
 
-		Self { tiles, items: HashMap::new() }
+		Self { tiles, items: HashMap::new(), player_trail: HashMap::new() }
 	}
 
 	pub fn in_bounds(pos: impl Into<Point>) -> bool {

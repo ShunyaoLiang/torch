@@ -1,4 +1,7 @@
+use crate::ai::null_ai;
+use crate::ai::snake_ai;
 use crate::static_flyweight;
+use super::Region;
 use super::RegionKey;
 use super::point::Point;
 
@@ -46,6 +49,11 @@ impl Entity {
 	pub fn actions_mut(&mut self) -> &mut Ratio<u8> {
 		&mut self.actions
 	}
+
+	#[inline]
+	pub fn ai(&self) -> fn(&Entity, &Region) -> crate::ai::Action {
+		self.class.flyweight().ai
+	}
 }
 
 struct EntityClass {
@@ -53,13 +61,20 @@ struct EntityClass {
 	color: Color,
 	speed: u8,
 	occludes: bool,
+	ai: fn(&Entity, &Region) -> crate::ai::Action,
 }
 
 static_flyweight! {
 	#[derive(Debug)]
 	pub enum EntityClassId -> EntityClass {
-		Player = { token: "@", color: Color::new(0xffffff), speed: 12, occludes: true },
-		Torch  = { token: "i", color: Color::new(0xe25822), speed: 0,  occludes: false },
-		Snake  = { token: "s", color: Color::new(0x47ff2a), speed: 8,  occludes: false },
+		Player = { token: "@", color: Color::new(0xffffff), speed: 12, occludes: true,  ai: null_ai },
+		Torch  = { token: "i", color: Color::new(0xe25822), speed: 0,  occludes: false, ai: null_ai },
+		Snake  = { token: "s", color: Color::new(0x47ff2a), speed: 8,  occludes: false, ai: snake_ai },
+	}
+}
+
+impl std::fmt::Display for EntityClassId {
+	fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+		std::fmt::Debug::fmt(self, f)
 	}
 }

@@ -6,6 +6,8 @@ mod point;
 mod region;
 mod tile;
 
+use crate::ai::Action;
+
 use num_rational::Ratio;
 
 use petgraph::graphmap::DiGraphMap;
@@ -19,6 +21,7 @@ use slotmap::SlotMap;
 use slotmap::new_key_type;
 
 use std::collections::HashMap;
+use std::collections::HashSet;
 use std::iter::IntoIterator;
 
 pub use entity::Entity;
@@ -50,6 +53,7 @@ pub struct World {
 	pub inventory_components: SecondaryMap<EntityKey, InventoryComponent>,
 	pub items: SlotMap<ItemKey, Item>,
 	pub rng: SmallRng,
+	pub turn_counter: u64,
 }
 
 impl World {
@@ -68,6 +72,7 @@ impl World {
 			inventory_components: SecondaryMap::new(),
 			items: SlotMap::with_key(),
 			rng,
+			turn_counter: 0,
 		}
 	}
 
@@ -110,7 +115,10 @@ impl World {
 		self
 	}
 
-	pub fn update_region(&mut self, region_key: RegionKey, player_key: EntityKey) {
+	pub fn update_region(
+		&mut self, region_key: RegionKey, player_key: EntityKey, message_buffer: &mut Vec<String>,
+		visible_tiles: &HashSet<(u16, u16)>,
+	) {
 		// Update entities only after the player has used all their actions.
 		let player = self.entity_mut(player_key);
 		if player.actions.to_integer() >= 1 {
@@ -129,15 +137,26 @@ impl World {
 				}
 				// Let the entity do something if it has more than one action remaining
 				if entity.actions.to_integer() >= 1 {
-					// TODO: Do an action
-					actions.push(key);
+					let region = self.regions.get(&region_key).unwrap();
+					let action = (entity.ai())(entity, region);
+					actions.push((key, action));
 					entity.actions -= 1;
 					action_taken = true;
 				}
 			}
 			// XXX: "AI".
-			for entity in actions {
-				let _ = self.move_entity(entity, (0, -1));
+			for (entity, action) in actions {
+				match dbg!(action) {
+					Action::Move(x, y) => { let _ = self.move_entity(entity, (x, y)); },
+					Action::Attack(attackee) => {
+						let attacker_s = self.entity(entity).class.to_string();
+						let attackee_s = self.entity(attackee).class.to_string();
+						if visible_tiles.contains(&self.entity(entity).pos().into_tuple()) {
+							message_buffer.push(format!("The {} attacks the {}!", attacker_s, attackee_s))
+						}
+					}
+					_ => (),
+				}
 			}
 			// Check if round should be over; all actions have been taken.
 			if !action_taken {
@@ -145,6 +164,7 @@ impl World {
 			}
 		}
 		
+		self.turn_counter += 1;
 		self.replenish_entity_actions(region_key);
 	}
 

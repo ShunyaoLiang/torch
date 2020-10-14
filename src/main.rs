@@ -1,3 +1,4 @@
+mod ai;
 mod camera;
 mod commands;
 mod generate;
@@ -106,10 +107,15 @@ fn run(mut world: World, mut frontend: Frontend, player: EntityKey) -> Result<()
 			}
 
 			*world.entity_mut(player).actions_mut() -= 1;
+
+			let player_pos = world.entity(player).pos();
+			let turn_counter = world.turn_counter;
+			world.region_mut(current_region).player_trail.insert(player_pos, turn_counter);
+
 			break;
 		}
 
-		world.update_region(current_region, player);
+		world.update_region(current_region, player, &mut message_buffer, &visible_tiles);
 		world.update_region_lights(current_region);
 	}
 
